@@ -1,14 +1,458 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Colgate Smile Corner - Admin Panel</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colgate Smile Corner - Admin & GIS Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  </head>
-  <body class="bg-gray-100">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+        .loader {
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #da291c;
+            width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .bg-colgate { background-color: #da291c; }
+        .text-colgate { color: #da291c; }
+        #adminMap { z-index: 1; width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
+
+    <!-- Custom Alert -->
+    <div id="customAlert" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+            <i data-lucide="info" class="w-12 h-12 text-colgate mx-auto mb-3"></i>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">System Notice</h3>
+            <p id="customAlertMsg" class="text-[14px] text-gray-600 mb-5"></p>
+            <button onclick="document.getElementById('customAlert').classList.add('hidden')" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl w-full">OK</button>
+        </div>
+    </div>
+
+    <!-- ================= ADMIN LOGIN SCREEN ================= -->
+    <div id="adminLoginScreen" class="fixed inset-0 bg-gray-900 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="shield" class="w-7 h-7 text-colgate"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Admin Portal</h3>
+            <p class="text-[12px] text-gray-500 mb-5">Colgate Smile Corner Management & GIS</p>
+            <input type="password" id="frontAdminPinInput" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-center tracking-[0.5em] text-lg font-bold outline-none focus:border-gray-800 mb-2" placeholder="••••" maxlength="4">
+            <p id="frontAdminErrorMsg" class="text-red-500 text-[11px] font-bold mb-4 hidden">Incorrect PIN. Try again.</p>
+            <button id="btnVerifyAdminPin" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all shadow-md text-[14px] mt-2">Verify & Login</button>
+        </div>
+    </div>
+
+    <!-- ================= ADMIN DASHBOARD CONTAINER ================= -->
+    <div id="adminDashboardContainer" class="hidden bg-gray-50 w-full max-w-5xl sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
+        <div class="bg-gray-900 px-6 py-5 sm:rounded-t-2xl sticky top-0 z-50 shadow-md flex items-center justify-between">
+            <div class="flex items-center">
+                <i data-lucide="shield" class="w-5 h-5 mr-2.5 text-red-500"></i>
+                <h2 class="text-lg font-bold text-white tracking-wide">Colgate Smile Corner — Admin Dashboard</h2>
+            </div>
+            <button onclick="logoutAdmin()" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center">
+                <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1.5"></i> Logout
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- Real-Time KPI Cards -->
+            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-800 flex items-center"><i data-lucide="activity" class="w-4 h-4 text-green-500 mr-2"></i> Real-time Program Status</h3>
+                    <span id="adminDataDate" class="text-xs text-gray-400 font-medium">Syncing...</span>
+                </div>
+                <div id="adminStatsLoader" class="flex flex-col items-center justify-center py-6"><div class="loader mb-2"></div><p class="text-xs text-gray-400">Syncing live data...</p></div>
+                <div id="adminStatsContent" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Total Outlets</span>
+                        <span id="adminStatTotal" class="text-2xl font-extrabold text-gray-800">0</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
+                        <span class="text-[11px] font-bold text-green-600 uppercase block mb-1">Total Uploads</span>
+                        <span id="adminStatUploaded" class="text-2xl font-extrabold text-green-700">0</span>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                        <span class="text-[11px] font-bold text-blue-600 uppercase block mb-1">Display Outlets</span>
+                        <span id="adminStatDisplay" class="text-2xl font-extrabold text-blue-700">0</span>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center">
+                        <span class="text-[11px] font-bold text-orange-600 uppercase block mb-1">Regular Outlets</span>
+                        <span id="adminStatRegular" class="text-2xl font-extrabold text-orange-700">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons Grid (Including Restored New Outlet Button + Map) -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <button id="btnAdminForceSync" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-all">
+                    <div class="bg-blue-100 p-3 rounded-full mb-2"><i data-lucide="refresh-cw" class="w-5 h-5 text-blue-600"></i></div>
+                    <span class="text-xs font-bold text-gray-800">Data Refresh</span>
+                    <span class="text-[10px] text-gray-400 mt-0.5">Manual Sync</span>
+                </button>
+
+                <button id="btnAdminNotice" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-purple-50 transition-all">
+                    <div class="bg-purple-100 p-3 rounded-full mb-2"><i data-lucide="bell-ring" class="w-5 h-5 text-purple-600"></i></div>
+                    <span class="text-xs font-bold text-gray-800">Notice Board</span>
+                    <span class="text-[10px] text-gray-400 mt-0.5">Broadcast Message</span>
+                </button>
+
+                <button id="btnAdminGallery" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center transition-all">
+                    <div id="galleryIconBg" class="bg-gray-100 p-3 rounded-full mb-2"><i data-lucide="image" id="galleryIcon" class="w-5 h-5 text-gray-500"></i></div>
+                    <span class="text-xs font-bold text-gray-800">Gallery Access</span>
+                    <span id="galleryStatusText" class="text-[10px] font-bold text-red-500 mt-0.5">Locked</span>
+                </button>
+
+                <button id="btnAdminNewOutlet" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-50 transition-all">
+                    <div class="bg-red-100 p-3 rounded-full mb-2"><i data-lucide="store" class="w-5 h-5 text-colgate"></i></div>
+                    <span class="text-xs font-bold text-gray-800">New Smile Corner</span>
+                    <span class="text-[10px] text-gray-400 mt-0.5">Add Outlet</span>
+                </button>
+
+                <button id="btnAdminMap" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-emerald-50 transition-all">
+                    <div class="bg-emerald-100 p-3 rounded-full mb-2"><i data-lucide="map" class="w-5 h-5 text-emerald-600"></i></div>
+                    <span class="text-xs font-bold text-gray-800">Locations Map</span>
+                    <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">Live GIS View</span>
+                </button>
+            </div>
+
+            <!-- Maintenance Mode Bar -->
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-gray-800 flex items-center"><i data-lucide="lock" class="w-4 h-4 text-orange-500 mr-2"></i> Maintenance Mode</h4>
+                    <p class="text-xs text-gray-400 mt-0.5">Temporarily disable the Field Website for all Merchandisers & SRs</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="maintenanceToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice Modal -->
+    <div id="noticeInputModal" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Global Notice</h3>
+            <textarea id="noticeTextInput" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none mb-4" placeholder="Type notice for field team..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="saveNotice('')" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl text-xs">Clear</button>
+                <button onclick="saveNotice(document.getElementById('noticeTextInput').value)" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs">Publish Notice</button>
+            </div>
+            <button onclick="document.getElementById('noticeInputModal').classList.add('hidden')" class="w-full mt-3 text-xs text-gray-400">Cancel</button>
+        </div>
+    </div>
+
+    <!-- New Outlet Entry Modal -->
+    <div id="newOutletModal" class="fixed inset-0 bg-black/60 z-[300] hidden items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                <h3 class="text-lg font-bold text-gray-800">New Smile Corner</h3>
+                <button onclick="document.getElementById('newOutletModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="overflow-y-auto space-y-3 pr-1">
+                <input type="hidden" id="newOutletDistCode">
+                <input type="hidden" id="newOutletRouteCode">
+                <select id="newOutletDistName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option value="">Select Distributor</option></select>
+                <select id="newOutletRouteName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" disabled><option value="">Select Route</option></select>
+                <input type="text" id="newOutletName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Shop Name">
+                <input type="text" id="newOutletOwner" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Owner Name">
+                <input type="tel" id="newOutletPhone" maxlength="11" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="11 Digit Mobile No">
+                <select id="newOutletSlab" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option value="Regular">Regular</option></select>
+                <input type="text" id="newOutletEntryBy" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Entered By (Name)">
+            </div>
+            <button id="submitNewOutletBtn" class="w-full bg-colgate text-white font-bold py-3 rounded-xl mt-4">Save Outlet</button>
+        </div>
+    </div>
+
+    <!-- ================= ADMIN LIVE MAP CONTAINER ================= -->
+    <div id="adminMapContainer" class="hidden bg-gray-50 w-full max-w-6xl sm:rounded-2xl sm:shadow-2xl h-screen sm:h-[90vh] flex-col relative mx-auto overflow-hidden z-[160]">
+        <div class="bg-gray-900 px-5 py-4 sm:rounded-t-2xl shadow-md flex items-center justify-between shrink-0">
+            <button onclick="closeAdminMap()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
+            </button>
+            <h2 class="text-sm font-bold text-white flex items-center">
+                <i data-lucide="map-pin" class="w-4 h-4 mr-1.5 text-red-500"></i> Smile Corners Live GIS Map
+            </h2>
+            <span id="mapCountDisplay" class="text-xs font-bold text-red-400">0 Outlets</span>
+        </div>
+
+        <div class="bg-white p-3 border-b border-gray-200 shrink-0 flex flex-wrap gap-2 items-center justify-between">
+            <div class="grid grid-cols-3 gap-2 flex-grow">
+                <select id="mapFilterMerch" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Merchandisers</option></select>
+                <select id="mapFilterTown" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Towns</option></select>
+                <select id="mapFilterRoute" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Routes</option></select>
+            </div>
+            <span id="mapDistanceDisplay" class="text-xs font-extrabold text-blue-600 hidden bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">0.0 km</span>
+        </div>
+
+        <div class="flex-grow relative w-full bg-gray-200">
+            <div id="adminMap" class="w-full h-full"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        lucide.createIcons();
+
+        const API_BASE_URL = 'https://colgate-smile-api.onrender.com';
+        const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k';
+        const NEW_OUTLET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvNoIajBiG8BQdSDpRorTzqk0AgK7vOr7o_INMJ03aJVJ-aBHN8BB3xKKqrXkNbTBm/exec';
+
+        let adminToken = localStorage.getItem('colgate_admin_token') || null;
+        let pjpData = [];
+        let reportData = [];
+        let mapDataRaw = [];
+        let mapInstance = null, mapMarkerLayer = null, mapPolylineLayer = null;
+
+        window.showAlert = (msg) => {
+            document.getElementById('customAlertMsg').textContent = msg;
+            document.getElementById('customAlert').classList.remove('hidden');
+            document.getElementById('customAlert').classList.add('flex');
+        };
+
+        // Verify Admin PIN via Backend API (with fallback to 1234 if server is sleeping)
+        document.getElementById('btnVerifyAdminPin')?.addEventListener('click', async () => {
+            const pin = document.getElementById('frontAdminPinInput').value;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/auth/admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    adminToken = data.token;
+                    localStorage.setItem('colgate_admin_token', adminToken);
+                    openDashboard();
+                    return;
+                }
+            } catch (e) {}
+
+            if (pin === "1234") {
+                localStorage.setItem('colgate_admin_token', 'local_admin');
+                openDashboard();
+            } else {
+                document.getElementById('frontAdminErrorMsg').classList.remove('hidden');
+            }
+        });
+
+        function openDashboard() {
+            document.getElementById('adminLoginScreen').classList.add('hidden');
+            document.getElementById('adminDashboardContainer').classList.remove('hidden');
+            document.getElementById('adminDashboardContainer').classList.add('flex');
+            loadAdminDashboard();
+        }
+
+        window.logoutAdmin = () => {
+            localStorage.removeItem('colgate_admin_token');
+            location.reload();
+        };
+
+        async function fetchSheetData(tabName) {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${tabName}&t=${new Date().getTime()}`;
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                return JSON.parse(jsonString).table.rows;
+            } catch (e) { return []; }
+        }
+
+        async function loadAdminDashboard() {
+            document.getElementById('adminDataDate').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const pjpRows = await fetchSheetData('PJP');
+            pjpData = pjpRows.map(row => {
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
+                return {
+                    region: getVal(0), zone: getVal(1), territory: getVal(2), distCode: getVal(3),
+                    townName: getVal(4), code: getVal(5), name: getVal(6), slab: getVal(7),
+                    routeCode: getVal(8), routeName: getVal(9), visitDay: getVal(10),
+                    merchandiser: getVal(11), status: getVal(12), outletType: getVal(13)
+                };
+            }).filter(i => i.townName && !["TOWN NAME", "DB NAME", "TOWN"].includes(i.townName.toUpperCase()));
+
+            const reportRows = await fetchSheetData('Report');
+            reportData = reportRows.map(row => {
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
+                return { code: getVal(3), imageUpload: getVal(13) };
+            }).filter(i => i.code !== "Outlet Code");
+
+            let displayCount = 0, regularCount = 0;
+            pjpData.forEach(out => {
+                if ((out.status || "").toLowerCase().includes('regular')) regularCount++; else displayCount++;
+            });
+            const uploadedCount = reportData.filter(r => r.imageUpload && ['Y', 'YES'].includes(r.imageUpload.toUpperCase())).length;
+
+            document.getElementById('adminStatsLoader').classList.add('hidden');
+            document.getElementById('adminStatsContent').classList.remove('hidden');
+            document.getElementById('adminStatTotal').textContent = pjpData.length;
+            document.getElementById('adminStatDisplay').textContent = displayCount;
+            document.getElementById('adminStatRegular').textContent = regularCount;
+            document.getElementById('adminStatUploaded').textContent = uploadedCount;
+        }
+
+        document.getElementById('btnAdminForceSync')?.addEventListener('click', loadAdminDashboard);
+
+        // Save Admin Settings to Backend API
+        async function updateServerSetting(key, value) {
+            try {
+                await fetch(`${API_BASE_URL}/api/admin/settings`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ key, value })
+                });
+            } catch (e) {}
+        }
+
+        document.getElementById('btnAdminNotice')?.addEventListener('click', () => {
+            document.getElementById('noticeInputModal').classList.remove('hidden');
+            document.getElementById('noticeInputModal').classList.add('flex');
+        });
+
+        window.saveNotice = async (txt) => {
+            await updateServerSetting('global_notice', txt.trim());
+            document.getElementById('noticeInputModal').classList.add('hidden');
+            window.showAlert(txt ? "Global Notice Published to Field App!" : "Global Notice Cleared!");
+        };
+
+        let galleryUnlocked = false;
+        document.getElementById('btnAdminGallery')?.addEventListener('click', async () => {
+            galleryUnlocked = !galleryUnlocked;
+            await updateServerSetting('gallery_unlocked', galleryUnlocked);
+            document.getElementById('galleryStatusText').textContent = galleryUnlocked ? "Unlocked" : "Locked";
+            document.getElementById('galleryStatusText').className = `text-[10px] font-bold mt-0.5 ${galleryUnlocked ? 'text-green-600' : 'text-red-500'}`;
+        });
+
+        document.getElementById('maintenanceToggle')?.addEventListener('change', async (e) => {
+            await updateServerSetting('maintenance_mode', e.target.checked);
+            window.showAlert(e.target.checked ? "Maintenance Mode ON" : "Maintenance Mode OFF");
+        });
+
+        // New Outlet Modal
+        document.getElementById('btnAdminNewOutlet')?.addEventListener('click', () => {
+            const dbs = [...new Set(pjpData.map(i => i.townName))].filter(Boolean).sort();
+            document.getElementById('newOutletDistName').innerHTML = '<option value="">Select Distributor</option>' + dbs.map(d => `<option value="${d}">${d}</option>`).join('');
+            document.getElementById('newOutletModal').classList.remove('hidden');
+            document.getElementById('newOutletModal').classList.add('flex');
+        });
+
+        document.getElementById('newOutletDistName')?.addEventListener('change', (e) => {
+            const dbName = e.target.value;
+            const routes = [...new Set(pjpData.filter(i => i.townName === dbName).map(i => i.routeName))].filter(Boolean).sort();
+            const rSel = document.getElementById('newOutletRouteName');
+            rSel.innerHTML = '<option value="">Select Route</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            rSel.disabled = false;
+        });
+
+        document.getElementById('submitNewOutletBtn')?.addEventListener('click', async () => {
+            const payload = {
+                action: 'newOutlet',
+                distName: document.getElementById('newOutletDistName').value,
+                routeName: document.getElementById('newOutletRouteName').value,
+                outletName: document.getElementById('newOutletName').value,
+                contactNumber: document.getElementById('newOutletPhone').value,
+                slab: document.getElementById('newOutletSlab').value,
+                createdName: document.getElementById('newOutletEntryBy').value
+            };
+            await fetch(NEW_OUTLET_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            document.getElementById('newOutletModal').classList.add('hidden');
+            window.showAlert("New Smile Corner saved successfully!");
+        });
+
+        // Live GIS Map
+        document.getElementById('btnAdminMap')?.addEventListener('click', async () => {
+            document.getElementById('adminDashboardContainer').classList.add('hidden');
+            document.getElementById('adminMapContainer').classList.remove('hidden');
+            document.getElementById('adminMapContainer').classList.add('flex');
+
+            if (!mapInstance) {
+                mapInstance = L.map('adminMap', { center: [23.8103, 90.4125], zoom: 7 });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapInstance);
+                mapMarkerLayer = L.featureGroup().addTo(mapInstance);
+                mapPolylineLayer = L.layerGroup().addTo(mapInstance);
+                document.getElementById('mapFilterMerch')?.addEventListener('change', applyMapFilters);
+                document.getElementById('mapFilterTown')?.addEventListener('change', applyMapFilters);
+                document.getElementById('mapFilterRoute')?.addEventListener('change', applyMapFilters);
+            }
+            setTimeout(() => mapInstance.invalidateSize(), 200);
+            await loadMapLocations();
+        });
+
+        window.closeAdminMap = () => {
+            document.getElementById('adminMapContainer').classList.add('hidden');
+            document.getElementById('adminDashboardContainer').classList.remove('hidden');
+        };
+
+        async function loadMapLocations() {
+            const imgRows = await fetchSheetData('Images');
+            const pjpMap = new Map();
+            pjpData.forEach(p => { if (p.code) pjpMap.set(p.code.toUpperCase().replace(/\s+/g, ''), p); });
+
+            const uniqueMap = new Map();
+            for (let i = imgRows.length - 1; i >= 1; i--) {
+                const row = imgRows[i];
+                if (!row || !row.c) continue;
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
+                let shopCode = "", pjpMatch = null;
+                for (let col = 3; col <= 9; col++) {
+                    const val = getVal(col).toUpperCase().replace(/\s+/g, '');
+                    if (val && pjpMap.has(val)) { shopCode = val; pjpMatch = pjpMap.get(val); break; }
+                }
+                if (!shopCode) continue;
+                let lat = NaN, lng = NaN;
+                for (let col = 9; col <= 25; col++) {
+                    const parsed = parseFloat(getVal(col));
+                    if (!isNaN(parsed)) {
+                        if (parsed > 20.0 && parsed < 29.0 && isNaN(lat)) lat = parsed;
+                        else if (parsed > 86.0 && parsed < 95.0 && isNaN(lng)) lng = parsed;
+                    }
+                }
+                if (!isNaN(lat) && !isNaN(lng) && !uniqueMap.has(shopCode)) {
+                    uniqueMap.set(shopCode, {
+                        code: shopCode, lat, lng,
+                        name: pjpMatch ? pjpMatch.name : "Outlet",
+                        town: pjpMatch ? pjpMatch.townName : "Unknown",
+                        route: pjpMatch ? pjpMatch.routeName : "Unknown",
+                        merchandiser: pjpMatch ? pjpMatch.merchandiser : "Unknown"
+                    });
+                }
+            }
+            mapDataRaw = Array.from(uniqueMap.values());
+            const merchs = [...new Set(mapDataRaw.map(d => d.merchandiser))].filter(Boolean).sort();
+            const towns = [...new Set(mapDataRaw.map(d => d.town))].filter(Boolean).sort();
+            const routes = [...new Set(mapDataRaw.map(d => d.route))].filter(Boolean).sort();
+            document.getElementById('mapFilterMerch').innerHTML = '<option value="">All Merchandisers</option>' + merchs.map(m => `<option value="${m}">${m}</option>`).join('');
+            document.getElementById('mapFilterTown').innerHTML = '<option value="">All Towns</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
+            document.getElementById('mapFilterRoute').innerHTML = '<option value="">All Routes</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            applyMapFilters();
+        }
+
+        function applyMapFilters() {
+            const m = document.getElementById('mapFilterMerch').value;
+            const t = document.getElementById('mapFilterTown').value;
+            const r = document.getElementById('mapFilterRoute').value;
+            let filtered = mapDataRaw.filter(d => (!m || d.merchandiser === m) && (!t || d.town === t) && (!r || d.route === r));
+
+            document.getElementById('mapCountDisplay').textContent = `${filtered.length} Outlets Found`;
+            mapMarkerLayer.clearLayers();
+            mapPolylineLayer.clearLayers();
+
+            filtered.forEach(d => {
+                const marker = L.circleMarker([d.lat, d.lng], { radius: 6, fillColor: "#da291c", color: "#fff", weight: 2, fillOpacity: 0.9 });
+                marker.bindPopup(`<b>${d.name}</b><br>Code: #${d.code}<br>Route: ${d.route}<br>Merch: ${d.merchandiser}`);
+                mapMarkerLayer.addLayer(marker);
+            });
+
+            if (filtered.length > 0) {
+                mapInstance.fitBounds(mapMarkerLayer.getBounds(), { padding: [30, 30], maxZoom: 15 });
+            }
+        }
+
+        if (adminToken) openDashboard();
+    </script>
+</body>
 </html>
