@@ -953,69 +953,95 @@
         });
     </script>
 
-<!-- AUTO-ATTACH PHOTO INTERCEPTOR -->
+
+<!-- SMART PHOTO CAPTURE & UPLOAD HOOK -->
 <script>
 (function() {
-  let latestPhotoBase64 = '';
-  let latestPhotoName = '';
+  window.__capturedBase64 = '';
+  window.__capturedName = 'photo.jpg';
 
-  // 1. Whenever the user selects or takes a photo, immediately convert & store it in memory
+  // 1. Capture from File Input immediately on change
   document.addEventListener('change', function(e) {
     if (e.target && e.target.type === 'file' && e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      latestPhotoName = file.name || 'photo.jpg';
+      window.__capturedName = file.name || 'photo.jpg';
       const reader = new FileReader();
       reader.onload = function(evt) {
-        latestPhotoBase64 = evt.target.result;
-        window.__attachedPhotoBase64 = latestPhotoBase64;
-        console.log('Photo ready for upload:', latestPhotoName, Math.round(latestPhotoBase64.length / 1024) + 'KB');
+        window.__capturedBase64 = evt.target.result;
       };
       reader.readAsDataURL(file);
     }
   }, true);
 
-  // 2. Intercept fetch() calls to /api/submit and guarantee the photo is injected
-  const originalFetch = window.fetch;
+  // 2. Also hook into FileReader.prototype.readAsDataURL in case the app reads & clears the input
+  const origReadAsDataURL = FileReader.prototype.readAsDataURL;
+  FileReader.prototype.readAsDataURL = function(blob) {
+    this.addEventListener('load', function() {
+      if (typeof this.result === 'string' && this.result.startsWith('data:image')) {
+        window.__capturedBase64 = this.result;
+      }
+    });
+    return origReadAsDataURL.apply(this, arguments);
+  };
+
+  // 3. Also hook HTMLCanvasElement.prototype.toDataURL in case the app compresses the photo via Canvas
+  const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  HTMLCanvasElement.prototype.toDataURL = function() {
+    const res = origToDataURL.apply(this, arguments);
+    if (typeof res === 'string' && res.startsWith('data:image') && res.length > 500) {
+      window.__capturedBase64 = res;
+    }
+    return res;
+  };
+
+  // 4. Fallback helper to scan visible preview <img> tags or canvas elements on submit
+  function findPhotoOnPage() {
+    if (window.__capturedBase64 && window.__capturedBase64.length > 500) {
+      return window.__capturedBase64;
+    }
+    const imgs = document.querySelectorAll('img');
+    for (const img of imgs) {
+      if (img.src && img.src.startsWith('data:image') && img.src.length > 500) {
+        return img.src;
+      }
+    }
+    const canvases = document.querySelectorAll('canvas');
+    for (const c of canvases) {
+      try {
+        const data = c.toDataURL('image/jpeg', 0.85);
+        if (data && data.length > 1000) return data;
+      } catch (e) {}
+    }
+    return '';
+  }
+
+  // 5. Intercept fetch() calls to /api/submit and guarantee the captured Base64 image is inside the JSON/FormData
+  const origFetch = window.fetch;
   window.fetch = async function(url, options) {
     try {
       const urlStr = String(url || '');
       if (urlStr.includes('/api/submit') && options && options.method === 'POST') {
-        // Grab from file input if not yet in latestPhotoBase64
-        if (!latestPhotoBase64) {
-          const fileInput = document.querySelector('input[type="file"]');
-          if (fileInput && fileInput.files && fileInput.files[0]) {
-            latestPhotoBase64 = await new Promise((resolve) => {
-              const r = new FileReader();
-              r.onload = (e) => resolve(e.target.result);
-              r.readAsDataURL(fileInput.files[0]);
-            });
-          }
-        }
-
-        // If body is JSON string, inject imageBase64 + photoName inside it
-        if (typeof options.body === 'string' && latestPhotoBase64) {
+        const photoData = findPhotoOnPage();
+        if (options.body instanceof FormData) {
+          const plainObj = {};
+          options.body.forEach((v, k) => { plainObj[k] = v; });
+          if (photoData) plainObj.imageBase64 = photoData;
+          options.headers = { 'Content-Type': 'application/json' };
+          options.body = JSON.stringify(plainObj);
+        } else if (typeof options.body === 'string') {
           const parsed = JSON.parse(options.body);
-          if (!parsed.image && !parsed.imageBase64 && !parsed.photo) {
-            parsed.imageBase64 = latestPhotoBase64;
-            parsed.photoName = latestPhotoName;
-            options.body = JSON.stringify(parsed);
+          if (photoData) {
+            parsed.imageBase64 = photoData;
+            parsed.image = photoData;
           }
-        }
-        // If body is FormData, ensure the file is appended
-        else if (options.body instanceof FormData) {
-          const fileInput = document.querySelector('input[type="file"]');
-          if (fileInput && fileInput.files && fileInput.files[0] && !options.body.has('photo')) {
-            options.body.append('photo', fileInput.files[0]);
-          }
-          if (latestPhotoBase64 && !options.body.has('imageBase64')) {
-            options.body.append('imageBase64', latestPhotoBase64);
-          }
+          options.headers = { 'Content-Type': 'application/json' };
+          options.body = JSON.stringify(parsed);
         }
       }
-    } catch (err) {
-      console.warn('Interceptor warning:', err);
+    } catch (e) {
+      console.warn('Photo hook warning:', e);
     }
-    return originalFetch.apply(this, arguments);
+    return origFetch.apply(this, arguments);
   };
 })();
 </script>
