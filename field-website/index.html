@@ -2512,6 +2512,145 @@
 })();
 </script>
 
+
+<!-- GALLERY UPLOAD FIX & WATERMARK HANDLER -->
+<script id="galleryUploadFix">
+(function() {
+  function initGalleryUpload() {
+    // 1. Ensure hidden file input exists
+    let fileInput = document.getElementById('galleryInput') || document.querySelector('input[type="file"][accept*="image"]');
+    if (!fileInput) {
+      fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.id = 'galleryInput';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+    }
+
+    // 2. Find the "গ্যালারি থেকে আপলোড" button/wrapper by ID or Bengali text
+    const allClickables = Array.from(document.querySelectorAll('button, label, div, span'));
+    const galleryBtns = allClickables.filter(el => {
+      const txt = (el.textContent || '').trim();
+      return (
+        el.id === 'galleryUploadBtn' ||
+        el.id === 'galleryBtnWrapper' ||
+        (txt === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2)
+      );
+    });
+
+    galleryBtns.forEach(btn => {
+      btn.style.cursor = 'pointer';
+      btn.style.pointerEvents = 'auto';
+      if (!btn.dataset.galleryBound) {
+        btn.dataset.galleryBound = 'true';
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          fileInput.value = '';
+          fileInput.click();
+        });
+      }
+    });
+
+    // 3. Handle file selection -> Draw to Canvas with Watermark -> Show Preview -> Enable Submit
+    if (!fileInput.dataset.changeBound) {
+      fileInput.dataset.changeBound = 'true';
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.getElementById('canvas') || document.querySelector('canvas');
+            const capturedImage = document.getElementById('capturedImage');
+            const video = document.getElementById('video') || document.querySelector('video');
+            const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Scale image to max 1080px width for fast upload
+            const maxW = 1080;
+            const scale = img.width > maxW ? maxW / img.width : 1;
+            const w = Math.round(img.width * scale);
+            const h = Math.round(img.height * scale);
+
+            let dataUrl = evt.target.result;
+
+            if (canvas) {
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+
+              // Add Colgate Smile Corner watermark bar at bottom
+              const shopCodeEl = document.getElementById('shopCode');
+              const shopCode = (shopCodeEl && shopCodeEl.value ? shopCodeEl.value.trim().toUpperCase() : 'OUTLET');
+              const nowStr = new Date().toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              });
+
+              const barHeight = Math.max(54, Math.round(h * 0.08));
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+              ctx.fillRect(0, h - barHeight, w, barHeight);
+
+              ctx.fillStyle = '#ffffff';
+              const fontSize = Math.max(14, Math.round(w * 0.022));
+              ctx.font = 'bold ' + fontSize + 'px sans-serif';
+              ctx.fillText('Shop: ' + shopCode + '  |  ' + nowStr + ' (Gallery)', 16, h - Math.round(barHeight * 0.35));
+
+              dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            }
+
+            // Show preview image inside the camera box
+            if (capturedImage) {
+              capturedImage.src = dataUrl;
+              capturedImage.classList.remove('hidden');
+              capturedImage.style.display = 'block';
+            }
+
+            // Hide live video & placeholder
+            if (video) video.classList.add('hidden');
+            if (cameraPlaceholder) cameraPlaceholder.classList.add('hidden');
+
+            // Show Retake button & hide Capture button if present
+            if (retakeBtn) {
+              retakeBtn.classList.remove('hidden');
+              retakeBtn.style.display = 'inline-flex';
+            }
+            if (captureBtn) captureBtn.classList.add('hidden');
+
+            // Set global photo variable if used by form submission
+            window.capturedPhotoData = dataUrl;
+            window.isPhotoCaptured = true;
+
+            // Enable Submit button
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-300', 'bg-gray-400');
+              submitBtn.classList.add('bg-red-600', 'text-white');
+            }
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGalleryUpload);
+  } else {
+    initGalleryUpload();
+  }
+  setInterval(initGalleryUpload, 1000);
+})();
+</script>
+
 </body>
 </html>
 
