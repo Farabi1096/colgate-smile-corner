@@ -86,6 +86,76 @@
 
 
 
+
+<!-- REPORT CARD & SHARE BUTTON COLOR HARMONY -->
+<style id="reportCardHarmony">
+  /* 1. Replace leftover Petrol-Teal (#0d3b4c / bg-gray-900 / bg-slate-800) on Report Card Header with Deep Oxford Slate */
+  #snapshotCard > div:first-child,
+  .bg-gray-900,
+  .bg-slate-900,
+  .bg-slate-800,
+  [style*="#0d3b4c"],
+  [style*="rgb(13, 59, 76)"] {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    border-bottom: 2px solid #d9232e !important;
+    color: #ffffff !important;
+  }
+
+  /* 2. Style the Report Snapshot Card container cleanly */
+  #snapshotCard {
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.07) !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  /* 3. Refine the 4-column KPI box inside the Report Card */
+  #snapshotCard .grid-cols-4,
+  .grid.grid-cols-4 {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 14px 8px !important;
+    gap: 6px !important;
+  }
+
+  /* Soften the 4 stat numbers so they don't look like raw rainbow HTML colors */
+  #snapshotCard .text-green-600,
+  .grid-cols-4 .text-green-600 {
+    color: #059669 !important; /* Calm clinical emerald */
+  }
+  #snapshotCard .text-blue-600,
+  .grid-cols-4 .text-blue-600 {
+    color: #0284c7 !important; /* Calm clinical sky-blue */
+  }
+  #snapshotCard .text-red-600,
+  .grid-cols-4 .text-red-600 {
+    color: #d9232e !important; /* Tuned Colgate ruby */
+  }
+
+  /* 4. Tone down the neon green "রিপোর্ট শেয়ার করুন" button into a sleek Dark Slate / Emerald-Teal button */
+  button.bg-green-600,
+  button.bg-green-500,
+  .bg-emerald-600,
+  #btnShareReport,
+  button[onclick*="share" i] {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #334155 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    transition: all 0.15s ease !important;
+  }
+  button.bg-green-600:hover,
+  button.bg-green-500:hover {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+    transform: translateY(-1px) !important;
+  }
+</style>
+
 </head>
 <body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
 
