@@ -952,6 +952,73 @@
             getGPSLocation();
         });
     </script>
+
+<!-- AUTO-ATTACH PHOTO INTERCEPTOR -->
+<script>
+(function() {
+  let latestPhotoBase64 = '';
+  let latestPhotoName = '';
+
+  // 1. Whenever the user selects or takes a photo, immediately convert & store it in memory
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.type === 'file' && e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      latestPhotoName = file.name || 'photo.jpg';
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        latestPhotoBase64 = evt.target.result;
+        window.__attachedPhotoBase64 = latestPhotoBase64;
+        console.log('Photo ready for upload:', latestPhotoName, Math.round(latestPhotoBase64.length / 1024) + 'KB');
+      };
+      reader.readAsDataURL(file);
+    }
+  }, true);
+
+  // 2. Intercept fetch() calls to /api/submit and guarantee the photo is injected
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    try {
+      const urlStr = String(url || '');
+      if (urlStr.includes('/api/submit') && options && options.method === 'POST') {
+        // Grab from file input if not yet in latestPhotoBase64
+        if (!latestPhotoBase64) {
+          const fileInput = document.querySelector('input[type="file"]');
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            latestPhotoBase64 = await new Promise((resolve) => {
+              const r = new FileReader();
+              r.onload = (e) => resolve(e.target.result);
+              r.readAsDataURL(fileInput.files[0]);
+            });
+          }
+        }
+
+        // If body is JSON string, inject imageBase64 + photoName inside it
+        if (typeof options.body === 'string' && latestPhotoBase64) {
+          const parsed = JSON.parse(options.body);
+          if (!parsed.image && !parsed.imageBase64 && !parsed.photo) {
+            parsed.imageBase64 = latestPhotoBase64;
+            parsed.photoName = latestPhotoName;
+            options.body = JSON.stringify(parsed);
+          }
+        }
+        // If body is FormData, ensure the file is appended
+        else if (options.body instanceof FormData) {
+          const fileInput = document.querySelector('input[type="file"]');
+          if (fileInput && fileInput.files && fileInput.files[0] && !options.body.has('photo')) {
+            options.body.append('photo', fileInput.files[0]);
+          }
+          if (latestPhotoBase64 && !options.body.has('imageBase64')) {
+            options.body.append('imageBase64', latestPhotoBase64);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Interceptor warning:', err);
+    }
+    return originalFetch.apply(this, arguments);
+  };
+})();
+</script>
 </body>
 </html>
 
