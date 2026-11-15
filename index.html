@@ -2,11 +2,28 @@
 <html lang="bn">
 <head>
 
+<!-- ZERO-FLASH MODAL GUARD -->
+<script>
+(function() {
+  const observer = new MutationObserver(function() {
+    const modal = document.getElementById('customAlertModal');
+    if (modal) {
+      const txt = modal.innerText || modal.textContent || '';
+      if (txt.includes('নোটিশ:')) {
+        modal.style.setProperty('display', 'none', 'important');
+        modal.classList.add('hidden');
+      }
+    }
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+})();
+</script>
+
 <!-- BLOCK LEGACY NOTICE FLASH BEFORE RENDER -->
 <script>
 (function() {
   localStorage.removeItem('app_notice');
-  // Intercept showCustomAlert as soon as it is defined so it never flashes 'নোটিশ:' on load
+/* legacy notice popup removed */
   let _origShowAlert = null;
   Object.defineProperty(window, 'showCustomAlert', {
     configurable: true,
@@ -15,7 +32,7 @@
       return function(title, message, isSuccess) {
         const msgStr = String(message || '');
         const titleStr = String(title || '');
-        if (msgStr.includes('নোটিশ:') || msgStr === '""' || (titleStr === 'Notice' && !msgStr.includes('Error') && !msgStr.includes('সফল') && !msgStr.includes('ত্রুটি') && !msgStr.includes('অনুগ্রহ'))) {
+/* legacy notice popup removed */
           return; // Completely block legacy notice popup from flashing
         }
         if (typeof _origShowAlert === 'function') {
@@ -527,7 +544,7 @@
                         return;
                     }
                     if (settings.global_notice && !sessionStorage.getItem('notice_seen')) {
-                        window.showAlert("নোটিশ:\n" + settings.global_notice);
+/* legacy notice popup removed */;
                         sessionStorage.setItem('notice_seen', 'true');
                     }
                     if (settings.gallery_unlocked === true) {
@@ -1092,13 +1109,13 @@
   let dismissedForThisPageLoad = '';
   let currentlyRenderedNotice = '';
 
-  // 1. Block the legacy built-in duplicate "নোটিশ:" popup from ever appearing
+/* legacy notice popup removed */
   localStorage.removeItem('app_notice');
 
   function suppressDuplicateLegacyNoticePopup() {
     document.querySelectorAll('div, p, span').forEach(el => {
       const txt = (el.textContent || '').trim();
-      if (txt.startsWith('নোটিশ:') || txt === '""') {
+/* legacy notice popup removed */
         const legacyModal = el.closest('.fixed, [style*="fixed"]');
         if (legacyModal && legacyModal.id !== 'cloudFieldNoticeModal') {
           legacyModal.style.display = 'none';
