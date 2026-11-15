@@ -2213,7 +2213,7 @@
   /* 6. Primary Submit CTA & Action Buttons: Tuned Colgate Ruby */
   button[type="submit"],
   #submitBtn,
-  .bg-red-600:not(#customProfileHeaderBar) {
+  .bg-red-600:not(.custom-merch-header-active) {
     background: linear-gradient(180deg, #e02834 0%, #c81e29 100%) !important;
     border-radius: 11px !important;
     box-shadow: 0 4px 12px rgba(217, 35, 46, 0.22) !important;
@@ -2301,6 +2301,144 @@
 
   setInterval(syncProfileHeader, 400);
   document.addEventListener('DOMContentLoaded', syncProfileHeader);
+})();
+</script>
+
+
+<!-- DIRECT MERCHANDISER PROFILE, DATE & ICON HEADER -->
+<style id="directHeaderOverride">
+  .custom-merch-header-active {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    padding: 16px 18px !important;
+    border-radius: 0px !important;
+    border-bottom: 3px solid #d9232e !important;
+    text-align: left !important;
+    position: relative !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12) !important;
+  }
+</style>
+<script>
+(function() {
+  function transformTopHeader() {
+    // 1. Find the heading that says "কোলগেট স্মাইল কর্ণার"
+    const headings = document.querySelectorAll('h1, h2, h3, div, span');
+    let titleEl = null;
+    for (const el of headings) {
+      if (el.children.length === 0 && (el.textContent || '').trim() === 'কোলগেট স্মাইল কর্ণার') {
+        titleEl = el;
+        break;
+      }
+    }
+    if (!titleEl) return;
+
+    // 2. Find the outer red header container wrapping it
+    const headerContainer = titleEl.closest('.bg-red-600, .bg-red-700, .bg-red-500, header') || titleEl.parentElement;
+    if (!headerContainer) return;
+
+    // 3. Extract the logged-in Merchandiser / Sales Team text from inside the header
+    let rawRoleText = '';
+    const subEls = headerContainer.querySelectorAll('p, span, div');
+    for (const s of subEls) {
+      const t = (s.textContent || '').trim();
+      if (t.includes('Merchandiser') || t.includes('Sales Team') || t.includes('SR') || t.includes('TM') || (s.id && s.id.toLowerCase().includes('role'))) {
+        if (t !== 'কোলগেট স্মাইল কর্ণার' && t.length < 80) {
+          rawRoleText = t;
+          break;
+        }
+      }
+    }
+
+    if (!rawRoleText) return; // Wait until user logs in
+
+    let roleBadge = 'Merchandiser';
+    let personName = rawRoleText;
+    if (rawRoleText.includes(':')) {
+      const parts = rawRoleText.split(':');
+      roleBadge = parts[0].trim();
+      personName = parts.slice(1).join(':').trim();
+    }
+
+    // Format today's date nicely (e.g., "16 Nov 2026")
+    const todayStr = new Date().toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    // Apply dark slate class so red CSS never overrides it
+    headerContainer.classList.add('custom-merch-header-active');
+
+    // Find original logout button inside the header so we can trigger it
+    const origLogoutBtn = headerContainer.querySelector('button');
+
+    // Hide the old centered children ("কোলগেট স্মাইল কর্ণার", old logout icon, old pill)
+    Array.from(headerContainer.children).forEach(child => {
+      if (child.id !== 'modernMerchHeaderBar') {
+        child.style.display = 'none';
+      }
+    });
+
+    let bar = document.getElementById('modernMerchHeaderBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'modernMerchHeaderBar';
+      headerContainer.appendChild(bar);
+    }
+
+    const renderKey = roleBadge + '|' + personName + '|' + todayStr;
+    if (bar.dataset.key === renderKey) return;
+    bar.dataset.key = renderKey;
+
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;">
+        <!-- Left: Profile Icon + Merchandiser Name + Role & Date -->
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
+          <div style="position:relative;width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#e02834 0%,#b81b25 100%);display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 4px 10px rgba(217,35,46,0.35);flex-shrink:0;border:1.5px solid rgba(255,255,255,0.22);">
+            <!-- Crisp User Profile SVG Icon -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#10b981;border:2px solid #0f172a;" title="Online"></span>
+          </div>
+
+          <div style="min-width:0;flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+              <span style="font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#fda4af;background:rgba(217,35,46,0.22);padding:2px 7px;border-radius:5px;border:1px solid rgba(253,164,175,0.25);">${roleBadge}</span>
+              <span style="font-size:11px;font-weight:600;color:#94a3b8;display:inline-flex;align-items:center;gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                ${todayStr}
+              </span>
+            </div>
+            <div style="font-size:16.5px;font-weight:800;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em;">
+              ${personName}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Clean Logout Button -->
+        <button type="button" id="newHeaderLogoutBtn" title="লগআউট (Logout)" style="background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.16);color:#f8fafc;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s ease;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    const newLogout = document.getElementById('newHeaderLogoutBtn');
+    if (newLogout) {
+      newLogout.onclick = function() {
+        if (origLogoutBtn) origLogoutBtn.click();
+        else location.reload();
+      };
+    }
+  }
+
+  setInterval(transformTopHeader, 300);
+  document.addEventListener('DOMContentLoaded', transformTopHeader);
 })();
 </script>
 
