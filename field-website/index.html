@@ -1049,13 +1049,17 @@
 
 
 
+
 <!-- BULLETPROOF DIRECT SUPABASE FIELD APP ENGINE -->
 <script>
 (function() {
   const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
   const SUPA_URL = "SUPABASE_SERVICE_KEY=";
   const SUPA_KEY = "";
-  let lastPopupNotice = null;
+
+  // Track which notice text was dismissed during THIS page load only (resets on page reload!)
+  let dismissedForThisPageLoad = '';
+  let shownPopupForThisPageLoad = '';
 
   function cleanStr(v) {
     if (v === undefined || v === null) return '';
@@ -1070,7 +1074,6 @@
   function applyFieldGallery(isUnlocked) {
     localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
 
-    // 1. Update all file inputs
     document.querySelectorAll('input[type="file"]').forEach(inp => {
       if (isUnlocked) {
         inp.removeAttribute('capture');
@@ -1081,7 +1084,6 @@
       }
     });
 
-    // 2. Unhide any existing gallery button in the template (#galleryBtn, #galleryInput, etc.)
     document.querySelectorAll('[id*="gallery" i], [class*="gallery" i], label[for*="gallery" i]').forEach(el => {
       if (el.id === 'cloudFieldGalleryBtn') return;
       if (isUnlocked) {
@@ -1091,7 +1093,6 @@
       }
     });
 
-    // 3. Inject a clear Gallery Upload button right inside the camera upload box whenever Unlocked
     const fileInput = document.querySelector('input[type="file"]');
     let galBtn = document.getElementById('cloudFieldGalleryBtn');
     if (isUnlocked) {
@@ -1116,11 +1117,19 @@
     }
   }
 
+  window.__dismissCurrentNotice = function(noticeText) {
+    dismissedForThisPageLoad = noticeText;
+    const banner = document.getElementById('cloudFieldNoticeBanner');
+    const modal = document.getElementById('cloudFieldNoticeModal');
+    if (banner) banner.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+  };
+
   function applyFieldNotice(noticeText, isActive) {
     const clean = cleanStr(noticeText);
     const show = isActive && clean.length > 0;
 
-    // Close any old empty '""' notice modal from the legacy code
+    // Hide any legacy empty '""' notice modals
     document.querySelectorAll('div, p, span').forEach(el => {
       if ((el.textContent || '').trim() === '""') {
         const m = el.closest('.fixed, [style*="fixed"]');
@@ -1134,23 +1143,42 @@
     if (!show) {
       if (banner) banner.style.display = 'none';
       if (modal) modal.style.display = 'none';
-      lastPopupNotice = '';
+      dismissedForThisPageLoad = '';
+      shownPopupForThisPageLoad = '';
       return;
     }
 
-    // 1. Top Banner
+    // If user already clicked Cancel (X) for this exact notice on this page load, keep it hidden until reload!
+    if (dismissedForThisPageLoad === clean) {
+      if (banner) banner.style.display = 'none';
+      if (modal) modal.style.display = 'none';
+      return;
+    }
+
+    const escapedForJs = clean.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+
+    // 1. Top Notice Banner with Cancel (✕) Button
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'cloudFieldNoticeBanner';
-      banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:10px 14px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
+      banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:10px 14px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
       document.body.insertBefore(banner, document.body.firstChild);
     }
     banner.style.display = 'flex';
-    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Admin Notice)</div><div>${clean}</div></div>`;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">📢</span>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Admin Notice)</div>
+          <div>${clean}</div>
+        </div>
+      </div>
+      <button type="button" title="Close Notice" onclick="window.__dismissCurrentNotice('${escapedForJs}')" style="background:#fde68a;border:1px solid #f59e0b;color:#92400e;width:28px;height:28px;border-radius:50%;font-size:16px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">&times;</button>
+    `;
 
-    // 2. Center Popup Modal
-    if (lastPopupNotice !== clean) {
-      lastPopupNotice = clean;
+    // 2. Center Popup Modal with Top-Right Cancel (✕) Icon + OK Button
+    if (shownPopupForThisPageLoad !== clean) {
+      shownPopupForThisPageLoad = clean;
       if (!modal) {
         modal = document.createElement('div');
         modal.id = 'cloudFieldNoticeModal';
@@ -1159,7 +1187,8 @@
       }
       modal.style.display = 'flex';
       modal.innerHTML = `
-        <div style="background:#fff;max-width:360px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;">
+        <div style="background:#fff;max-width:360px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;position:relative;">
+          <button type="button" title="Cancel" onclick="window.__dismissCurrentNotice('${escapedForJs}')" style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:#f1f5f9;border:none;color:#475569;font-size:20px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
           <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin:0 auto 12px;">!</div>
           <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#0f172a;">Notice</h3>
           <p style="margin:0 0 6px;font-size:13px;color:#64748b;">নোটিশ:</p>
