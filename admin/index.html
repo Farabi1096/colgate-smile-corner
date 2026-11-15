@@ -950,200 +950,252 @@
 
 
 
-<!-- CLOUD-DYNAMIC ADMIN SETTINGS CONTROLLER -->
+
+<!-- BULLETPROOF DIRECT SUPABASE + RENDER SETTINGS CONTROLLER -->
 <script>
 (function() {
-  const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  let cloudState = { notice_text: '', notice_active: 'false', gallery_access: 'locked' };
+  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  const SUPA_URL = "SUPABASE_SERVICE_KEY=";
+  const SUPA_KEY = "";
 
-  function buildCloudNoticeModal() {
-    let oldModal = document.getElementById('noticeModal');
-    if (oldModal) oldModal.remove(); // Remove legacy localStorage modal
-    if (document.getElementById('cloudNoticeModal')) return;
+  let state = {
+    notice_text: '',
+    notice_active: 'false',
+    gallery_access: 'locked'
+  };
+  let isSaving = false;
+
+  function cleanStr(v) {
+    if (v === undefined || v === null) return '';
+    let s = String(v).trim();
+    while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    }
+    if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
+    return s;
+  }
+
+  // Read directly from Supabase REST API first (instant, no Render sleep/cache!), fallback to Render
+  async function readSettingsFromCloud() {
+    if (isSaving) return; // Never overwrite UI while a save is in progress!
+    try {
+      let map = {};
+      if (SUPA_KEY) {
+        const res = await fetch(SUPA_URL + '/rest/v1/settings?select=key,value', {
+          headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          (rows || []).forEach(r => { if (r.key) map[r.key] = cleanStr(r.value); });
+        }
+      }
+
+      // Fallback or merge with Render API if SUPA_KEY wasn't in local .env
+      if (Object.keys(map).length === 0) {
+        const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        const s = data.settings || data || {};
+        map.notice_text = cleanStr(s.notice_text || s.global_notice || '');
+        map.notice_active = (String(s.notice_active) === 'true' || map.notice_text.length > 0) ? 'true' : 'false';
+        map.gallery_access = (s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true') ? 'unlocked' : 'locked';
+      }
+
+      const txt = cleanStr(map.notice_text || map.global_notice || '');
+      const act = (map.notice_active === 'true' && txt.length > 0) ? 'true' : 'false';
+      const unl = (map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true');
+
+      state = {
+        notice_text: txt,
+        notice_active: act,
+        gallery_access: unl ? 'unlocked' : 'locked'
+      };
+
+      localStorage.setItem('app_gallery', state.gallery_access);
+      localStorage.setItem('app_notice', state.notice_active === 'true' ? state.notice_text : '');
+      renderAdminUI();
+    } catch (err) {
+      console.warn('Settings read warning:', err);
+    }
+  }
+
+  // Write directly to Supabase REST API + Render API simultaneously
+  async function writeSettingsToCloud(newPartial) {
+    isSaving = true;
+    try {
+      if (newPartial.notice_text !== undefined) {
+        const cleanTxt = cleanStr(newPartial.notice_text);
+        state.notice_text = cleanTxt;
+        state.notice_active = cleanTxt.length > 0 ? 'true' : 'false';
+      }
+      if (newPartial.gallery_access !== undefined) {
+        state.gallery_access = newPartial.gallery_access === 'unlocked' ? 'unlocked' : 'locked';
+      }
+
+      localStorage.setItem('app_gallery', state.gallery_access);
+      localStorage.setItem('app_notice', state.notice_active === 'true' ? state.notice_text : '');
+      renderAdminUI();
+
+      const rowsToUpsert = [
+        { key: 'notice_text', value: state.notice_text },
+        { key: 'global_notice', value: state.notice_active === 'true' ? state.notice_text : '' },
+        { key: 'notice_active', value: state.notice_active },
+        { key: 'gallery_access', value: state.gallery_access },
+        { key: 'gallery_unlocked', value: state.gallery_access === 'unlocked' ? 'true' : 'false' }
+      ];
+
+      // 1. Direct write to Supabase table (50ms instant persistence)
+      if (SUPA_KEY) {
+        const supaRes = await fetch(SUPA_URL + '/rest/v1/settings?on_conflict=key', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=representation'
+          },
+          body: JSON.stringify(rowsToUpsert)
+        });
+        if (!supaRes.ok) {
+          const errTxt = await supaRes.text();
+          console.error('Supabase direct write error:', errTxt);
+        }
+      }
+
+      // 2. Also send to Render API
+      await fetch(RENDER_SETTINGS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notice_text: state.notice_text,
+          global_notice: state.notice_active === 'true' ? state.notice_text : '',
+          notice_active: state.notice_active,
+          gallery_access: state.gallery_access,
+          gallery_unlocked: state.gallery_access === 'unlocked'
+        })
+      }).catch(() => {});
+
+      renderAdminUI();
+    } catch (err) {
+      alert('Failed to save setting: ' + err.message);
+    } finally {
+      setTimeout(() => { isSaving = false; }, 1500);
+    }
+  }
+
+  function renderAdminUI() {
+    const isUnlocked = state.gallery_access === 'unlocked';
+    const hasNotice = state.notice_active === 'true' && state.notice_text.length > 0;
+
+    document.querySelectorAll('div, span, p, h3, h4').forEach(el => {
+      const t = (el.textContent || '').trim();
+      if (t === 'Gallery Access' && el.nextElementSibling) {
+        el.nextElementSibling.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
+        el.nextElementSibling.style.color = isUnlocked ? '#16a34a' : '#dc2626';
+        el.nextElementSibling.style.fontWeight = '700';
+      }
+      if (t === 'Notice Board' && el.nextElementSibling) {
+        el.nextElementSibling.textContent = hasNotice
+          ? 'Active: "' + state.notice_text.slice(0, 22) + '"'
+          : 'Broadcast Message';
+        el.nextElementSibling.style.color = hasNotice ? '#7c3aed' : '#64748b';
+        el.nextElementSibling.style.fontWeight = hasNotice ? '700' : '500';
+      }
+    });
+  }
+
+  function createNoticeModal() {
+    const old1 = document.getElementById('noticeModal');
+    if (old1) old1.remove();
+    const old2 = document.getElementById('cloudNoticeModal');
+    if (old2) old2.remove();
 
     const modal = document.createElement('div');
     modal.id = 'cloudNoticeModal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:999999;align-items:center;justify-content:center;padding:16px;';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.72);z-index:999999;align-items:center;justify-content:center;padding:16px;';
     modal.innerHTML = `
-      <div style="background:#fff;width:100%;max-width:440px;border-radius:18px;padding:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);font-family:sans-serif;">
+      <div style="background:#fff;width:100%;max-width:440px;border-radius:18px;padding:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 style="margin:0;font-size:18px;font-weight:700;color:#0f172a;">🔔 Broadcast Notice Board</h3>
+          <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;">🔔 Broadcast Notice Board</h3>
           <button type="button" id="closeCloudNoticeBtn" style="background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#64748b;">&times;</button>
         </div>
-        <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Type your announcement below. It will pop up live on all Merchandiser & SR phones.</p>
-        <textarea id="cloudNoticeInput" rows="4" placeholder="Write notice here (e.g. hello)..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;margin-bottom:16px;outline:none;"></textarea>
+        <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Type your message below. It will pop up immediately on https://colgate-smile-corner.vercel.app/</p>
+        <textarea id="cloudNoticeInput" rows="4" placeholder="Type notice message here..." style="width:100%;box-sizing:border-box;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-bottom:16px;outline:none;"></textarea>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button type="button" id="clearCloudNoticeBtn" style="padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;font-weight:600;cursor:pointer;">Clear / Turn Off</button>
+          <button type="button" id="clearCloudNoticeBtn" style="padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer;">Turn Off / Clear</button>
           <button type="button" id="saveCloudNoticeBtn" style="padding:10px 18px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">Save & Broadcast</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
 
-    document.getElementById('closeCloudNoticeBtn').onclick = () => {
-      modal.style.display = 'none';
-    };
-
+    document.getElementById('closeCloudNoticeBtn').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('saveCloudNoticeBtn').onclick = async () => {
       const btn = document.getElementById('saveCloudNoticeBtn');
-      const text = document.getElementById('cloudNoticeInput').value.trim();
-      btn.textContent = 'Saving to Cloud...';
-      btn.disabled = true;
-      await pushCloudSettings({
-        notice_text: text,
-        notice_active: text.length > 0 ? 'true' : 'false'
-      });
+      const val = document.getElementById('cloudNoticeInput').value.trim();
+      btn.textContent = 'Saving...';
+      await writeSettingsToCloud({ notice_text: val });
       btn.textContent = 'Save & Broadcast';
-      btn.disabled = false;
       modal.style.display = 'none';
     };
-
     document.getElementById('clearCloudNoticeBtn').onclick = async () => {
-      const btn = document.getElementById('clearCloudNoticeBtn');
-      btn.textContent = 'Clearing...';
       document.getElementById('cloudNoticeInput').value = '';
-      await pushCloudSettings({ notice_text: '', notice_active: 'false' });
-      btn.textContent = 'Clear / Turn Off';
+      await writeSettingsToCloud({ notice_text: '' });
       modal.style.display = 'none';
     };
   }
 
-  function paintAdminCards() {
-    const isUnlocked = cloudState.gallery_access === 'unlocked';
-    const hasNotice = cloudState.notice_active === 'true' && cloudState.notice_text.length > 0;
-
-    // Update any element showing Notice Board or Gallery Access subtitle
-    document.querySelectorAll('div, span, p, h3, h4').forEach(el => {
-      const txt = (el.textContent || '').trim();
-      if (txt === 'Gallery Access' && el.nextElementSibling) {
-        el.nextElementSibling.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
-        el.nextElementSibling.style.color = isUnlocked ? '#16a34a' : '#dc2626';
-        el.nextElementSibling.style.fontWeight = '700';
-      }
-      if (txt === 'Notice Board' && el.nextElementSibling) {
-        el.nextElementSibling.textContent = hasNotice
-          ? 'Active: "' + cloudState.notice_text.slice(0, 20) + '"'
-          : 'Broadcast Message';
-        el.nextElementSibling.style.color = hasNotice ? '#7c3aed' : '#64748b';
-        el.nextElementSibling.style.fontWeight = hasNotice ? '700' : '500';
-      }
-    });
-
-    // Also update by specific IDs if present in original template
-    const galStatus = document.getElementById('galleryLockStatus') || document.getElementById('galleryStatusText');
-    if (galStatus) {
-      galStatus.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
-      galStatus.style.color = isUnlocked ? '#16a34a' : '#dc2626';
-    }
-  }
-
-  async function fetchCloudSettings() {
-    try {
-      const res = await fetch(SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
-      const data = await res.json();
-      const s = data.settings || data;
-      cloudState = {
-        notice_text: s.notice_text || '',
-        notice_active: String(s.notice_active || 'false'),
-        gallery_access: s.gallery_access || (s.gallery_unlocked ? 'unlocked' : 'locked')
-      };
-      // Keep localStorage mirrored so any old script on the page reads the exact same state
-      localStorage.setItem('app_gallery', cloudState.gallery_access === 'unlocked' ? 'unlocked' : 'locked');
-      localStorage.setItem('app_notice', cloudState.notice_active === 'true' ? cloudState.notice_text : '');
-      paintAdminCards();
-    } catch (e) {
-      console.error('Failed to load cloud settings:', e);
-    }
-  }
-
-  async function pushCloudSettings(payload) {
-    try {
-      const res = await fetch(SETTINGS_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      const s = data.settings || data;
-      cloudState = {
-        notice_text: s.notice_text || '',
-        notice_active: String(s.notice_active || 'false'),
-        gallery_access: s.gallery_access || (s.gallery_unlocked ? 'unlocked' : 'locked')
-      };
-      localStorage.setItem('app_gallery', cloudState.gallery_access === 'unlocked' ? 'unlocked' : 'locked');
-      localStorage.setItem('app_notice', cloudState.notice_active === 'true' ? cloudState.notice_text : '');
-      paintAdminCards();
-    } catch (e) {
-      alert('Error saving setting to Supabase: ' + e.message);
-    }
-  }
-
-  function hijackAdminCardClicks() {
-    buildCloudNoticeModal();
+  function setupClickInterceptor() {
+    createNoticeModal();
 
     document.addEventListener('click', async function(e) {
-      const target = e.target;
-      if (!target || target.closest('#cloudNoticeModal')) return;
+      if (!e.target || e.target.closest('#cloudNoticeModal')) return;
 
-      // Find the card container that was clicked
-      const card = target.closest('button, a, [onclick], .cursor-pointer, div');
-      if (!card) return;
+      let node = e.target;
+      let isNoticeCard = false;
+      let isGalleryCard = false;
 
-      // Check all parent cards up to 3 levels deep
-      let node = target;
-      let clickedNotice = false;
-      let clickedGallery = false;
-
-      for (let i = 0; i < 4 && node && node !== document.body; i++) {
-        const text = (node.innerText || node.textContent || '').trim();
-        if (text.startsWith('Notice Board') && text.length < 70) {
-          clickedNotice = true;
-          break;
-        }
-        if (text.startsWith('Gallery Access') && text.length < 70) {
-          clickedGallery = true;
-          break;
-        }
+      for (let i = 0; i < 5 && node && node !== document.body; i++) {
+        const txt = (node.innerText || node.textContent || '').trim();
+        if (txt.startsWith('Notice Board') && txt.length < 80) { isNoticeCard = true; break; }
+        if (txt.startsWith('Gallery Access') && txt.length < 80) { isGalleryCard = true; break; }
         node = node.parentElement;
       }
 
-      if (clickedNotice) {
+      if (isNoticeCard) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         const modal = document.getElementById('cloudNoticeModal');
         const input = document.getElementById('cloudNoticeInput');
-        input.value = cloudState.notice_text || '';
+        input.value = state.notice_text || '';
         modal.style.display = 'flex';
         input.focus();
-      } else if (clickedGallery) {
+      } else if (isGalleryCard) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        const nextMode = cloudState.gallery_access === 'unlocked' ? 'locked' : 'unlocked';
-        // Optimistic UI update right away
-        cloudState.gallery_access = nextMode;
-        paintAdminCards();
-        await pushCloudSettings({
-          gallery_access: nextMode,
-          gallery_unlocked: nextMode === 'unlocked'
-        });
+        const nextGallery = state.gallery_access === 'unlocked' ? 'locked' : 'unlocked';
+        await writeSettingsToCloud({ gallery_access: nextGallery });
       }
     }, true);
   }
 
+  // Keep watching DOM in case original script tries to overwrite text with 'Locked'
+  setInterval(renderAdminUI, 400);
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      hijackAdminCardClicks();
-      fetchCloudSettings();
-      setTimeout(fetchCloudSettings, 800);
-      setTimeout(fetchCloudSettings, 2000);
+      setupClickInterceptor();
+      readSettingsFromCloud();
     });
   } else {
-    hijackAdminCardClicks();
-    fetchCloudSettings();
-    setTimeout(fetchCloudSettings, 800);
-    setTimeout(fetchCloudSettings, 2000);
+    setupClickInterceptor();
+    readSettingsFromCloud();
   }
 })();
 </script>

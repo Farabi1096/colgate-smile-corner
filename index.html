@@ -1048,16 +1048,29 @@
 
 
 
-<!-- CLOUD-DYNAMIC FIELD APP NOTICE & GALLERY ENGINE -->
+
+<!-- BULLETPROOF DIRECT SUPABASE FIELD APP ENGINE -->
 <script>
 (function() {
-  const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  let shownNoticeText = null;
+  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  const SUPA_URL = "SUPABASE_SERVICE_KEY=";
+  const SUPA_KEY = "";
+  let lastPopupNotice = null;
 
-  function applyCloudGallery(isUnlocked) {
+  function cleanStr(v) {
+    if (v === undefined || v === null) return '';
+    let s = String(v).trim();
+    while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    }
+    if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
+    return s;
+  }
+
+  function applyFieldGallery(isUnlocked) {
     localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
 
-    // 1. Update all file inputs on the page
+    // 1. Update all file inputs
     document.querySelectorAll('input[type="file"]').forEach(inp => {
       if (isUnlocked) {
         inp.removeAttribute('capture');
@@ -1068,120 +1081,141 @@
       }
     });
 
-    // 2. Show/enable any hidden gallery buttons in the original template (#galleryBtn, #btnGallery, #galleryUploadBtn, etc.)
-    const possibleGalleryEls = document.querySelectorAll('[id*="gallery" i], [class*="gallery" i]');
-    possibleGalleryEls.forEach(el => {
-      if (el.id === 'liveGalleryStatusBadge') return;
+    // 2. Unhide any existing gallery button in the template (#galleryBtn, #galleryInput, etc.)
+    document.querySelectorAll('[id*="gallery" i], [class*="gallery" i], label[for*="gallery" i]').forEach(el => {
+      if (el.id === 'cloudFieldGalleryBtn') return;
       if (isUnlocked) {
         el.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
-        if (el.style.display === 'none') el.style.display = '';
+        if (el.style && el.style.display === 'none') el.style.display = '';
         el.disabled = false;
       }
     });
 
-    // 3. Add a clear interactive Gallery Upload button right next to the Camera button when Unlocked!
-    const cameraTrigger = document.querySelector('input[type="file"]');
-    let customGalleryBtn = document.getElementById('cloudGalleryPickerBtn');
+    // 3. Inject a clear Gallery Upload button right inside the camera upload box whenever Unlocked
+    const fileInput = document.querySelector('input[type="file"]');
+    let galBtn = document.getElementById('cloudFieldGalleryBtn');
     if (isUnlocked) {
-      if (!customGalleryBtn && cameraTrigger && cameraTrigger.parentElement) {
-        customGalleryBtn = document.createElement('button');
-        customGalleryBtn.type = 'button';
-        customGalleryBtn.id = 'cloudGalleryPickerBtn';
-        customGalleryBtn.style.cssText = 'margin-top:8px;width:100%;padding:10px 14px;background:#16a34a;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 6px rgba(22,163,74,0.25);';
-        customGalleryBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি নিন (Choose from Gallery)';
-        customGalleryBtn.onclick = function(e) {
+      if (!galBtn && fileInput && fileInput.parentElement) {
+        galBtn = document.createElement('button');
+        galBtn.type = 'button';
+        galBtn.id = 'cloudFieldGalleryBtn';
+        galBtn.style.cssText = 'margin-top:10px;width:100%;padding:11px 14px;background:#16a34a;color:#fff;font-weight:700;font-size:14px;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 10px rgba(22,163,74,0.25);';
+        galBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি আপলোড করুন (Upload from Gallery)';
+        galBtn.onclick = function(e) {
           e.preventDefault();
           e.stopPropagation();
-          cameraTrigger.removeAttribute('capture');
-          cameraTrigger.click();
+          fileInput.removeAttribute('capture');
+          fileInput.click();
         };
-        cameraTrigger.parentElement.appendChild(customGalleryBtn);
-      } else if (customGalleryBtn) {
-        customGalleryBtn.style.display = 'flex';
+        fileInput.parentElement.appendChild(galBtn);
+      } else if (galBtn) {
+        galBtn.style.display = 'flex';
       }
-    } else if (customGalleryBtn) {
-      customGalleryBtn.style.display = 'none';
+    } else if (galBtn) {
+      galBtn.style.display = 'none';
     }
   }
 
-  function applyCloudNotice(text, isActive) {
-    const clean = String(text || '').replace(/^["']+|["']+$/g, '').trim();
-    const shouldShow = isActive && clean.length > 0;
+  function applyFieldNotice(noticeText, isActive) {
+    const clean = cleanStr(noticeText);
+    const show = isActive && clean.length > 0;
 
-    // Hide any old broken popup showing '""'
+    // Close any old empty '""' notice modal from the legacy code
     document.querySelectorAll('div, p, span').forEach(el => {
       if ((el.textContent || '').trim() === '""') {
-        const modal = el.closest('.fixed, [style*="fixed"]');
-        if (modal) modal.style.display = 'none';
+        const m = el.closest('.fixed, [style*="fixed"]');
+        if (m && m.id !== 'cloudFieldNoticeModal') m.style.display = 'none';
       }
     });
 
-    let banner = document.getElementById('cloudTopNoticeBanner');
-    let popup = document.getElementById('cloudNoticePopupModal');
+    let banner = document.getElementById('cloudFieldNoticeBanner');
+    let modal = document.getElementById('cloudFieldNoticeModal');
 
-    if (!shouldShow) {
+    if (!show) {
       if (banner) banner.style.display = 'none';
-      if (popup) popup.style.display = 'none';
-      shownNoticeText = '';
+      if (modal) modal.style.display = 'none';
+      lastPopupNotice = '';
       return;
     }
 
-    // 1. Top Pinned Notice Banner
+    // 1. Top Banner
     if (!banner) {
       banner = document.createElement('div');
-      banner.id = 'cloudTopNoticeBanner';
+      banner.id = 'cloudFieldNoticeBanner';
       banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:10px 14px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
       document.body.insertBefore(banner, document.body.firstChild);
     }
     banner.style.display = 'flex';
-    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Notice)</div><div>${clean}</div></div>`;
+    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Admin Notice)</div><div>${clean}</div></div>`;
 
-    // 2. Center Popup Modal (shows immediately on page load or whenever Admin updates the message)
-    if (shownNoticeText !== clean) {
-      shownNoticeText = clean;
-      if (!popup) {
-        popup = document.createElement('div');
-        popup.id = 'cloudNoticePopupModal';
-        popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;';
-        document.body.appendChild(popup);
+    // 2. Center Popup Modal
+    if (lastPopupNotice !== clean) {
+      lastPopupNotice = clean;
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cloudFieldNoticeModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;';
+        document.body.appendChild(modal);
       }
-      popup.style.display = 'flex';
-      popup.innerHTML = `
+      modal.style.display = 'flex';
+      modal.innerHTML = `
         <div style="background:#fff;max-width:360px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;">
-          <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 12px;">!</div>
+          <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin:0 auto 12px;">!</div>
           <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#0f172a;">Notice</h3>
           <p style="margin:0 0 6px;font-size:13px;color:#64748b;">নোটিশ:</p>
-          <p style="margin:0 0 20px;font-size:16px;font-weight:700;color:#1e293b;white-space:pre-wrap;">${clean}</p>
-          <button type="button" onclick="document.getElementById('cloudNoticePopupModal').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে</button>
+          <p style="margin:0 0 20px;font-size:17px;font-weight:700;color:#1e293b;white-space:pre-wrap;">${clean}</p>
+          <button type="button" onclick="document.getElementById('cloudFieldNoticeModal').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে</button>
         </div>
       `;
     }
   }
 
-  async function syncFromSupabase() {
+  async function syncFieldFromCloud() {
     try {
-      const res = await fetch(SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
-      const data = await res.json();
-      const s = data.settings || data;
-      const isUnlocked = s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true';
-      const noticeText = s.notice_text || s.global_notice || '';
-      const isActive = String(s.notice_active) === 'true' && noticeText.length > 0;
+      let map = {};
+      if (SUPA_KEY) {
+        const res = await fetch(SUPA_URL + '/rest/v1/settings?select=key,value', {
+          headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          (rows || []).forEach(r => { if (r.key) map[r.key] = cleanStr(r.value); });
+        }
+      }
 
-      applyCloudGallery(isUnlocked);
-      applyCloudNotice(noticeText, isActive);
+      if (Object.keys(map).length === 0) {
+        const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        const s = data.settings || data || {};
+        map.notice_text = cleanStr(s.notice_text || s.global_notice || '');
+        map.notice_active = (String(s.notice_active) === 'true' || map.notice_text.length > 0) ? 'true' : 'false';
+        map.gallery_access = (s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true') ? 'unlocked' : 'locked';
+      }
+
+      const txt = cleanStr(map.notice_text || map.global_notice || '');
+      const act = (map.notice_active === 'true' && txt.length > 0);
+      const unl = (map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true');
+
+      applyFieldGallery(unl);
+      applyFieldNotice(txt, act);
     } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      syncFromSupabase();
-      setTimeout(syncFromSupabase, 1000);
+      syncFieldFromCloud();
+      setTimeout(syncFieldFromCloud, 800);
     });
   } else {
-    syncFromSupabase();
-    setTimeout(syncFromSupabase, 1000);
+    syncFieldFromCloud();
+    setTimeout(syncFieldFromCloud, 800);
   }
-  setInterval(syncFromSupabase, 8000);
+  setInterval(syncFieldFromCloud, 5000);
 })();
 </script>
 </body>

@@ -72,9 +72,9 @@ app.post('/api/settings', async (req, res) => {
         ? (String(b.notice_active) === 'true' && txt.length > 0 ? 'true' : 'false')
         : (txt.length > 0 ? 'true' : 'false');
 
-      updates.push({ key: 'notice_text', value: txt, updated_at: now });
-      updates.push({ key: 'global_notice', value: act === 'true' ? txt : '', updated_at: now });
-      updates.push({ key: 'notice_active', value: act, updated_at: now });
+      updates.push({ key: 'notice_text', value: txt });
+      updates.push({ key: 'global_notice', value: act === 'true' ? txt : '' });
+      updates.push({ key: 'notice_active', value: act });
     }
 
     if (b.gallery_access !== undefined || b.gallery_unlocked !== undefined) {
@@ -83,8 +83,8 @@ app.post('/api/settings', async (req, res) => {
         b.gallery_unlocked === true ||
         cleanVal(b.gallery_unlocked).toLowerCase() === 'true';
 
-      updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
-      updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
+      updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked' });
+      updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false' });
     }
 
     if (updates.length > 0) {
