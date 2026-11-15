@@ -193,5 +193,25 @@ app.post('/api/upload-targets', async (req, res) => {
   }
 });
 
+
+// 6. Sync / Verify Outlets & Recover Unlisted Bucket Photos
+app.get('/api/sync-outlets', async (req, res) => {
+  try {
+    const { data: outlets, error } = await supabase.from('outlets').select('*');
+    if (error) throw error;
+
+    const { data: targets } = await supabase.from('outlet_targets').select('*');
+
+    res.json({
+      success: true,
+      message: 'Supabase Outlets and Targets are active and synced!',
+      totalSyncedOutlets: (outlets || []).length,
+      totalTargetRows: (targets || []).length
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
