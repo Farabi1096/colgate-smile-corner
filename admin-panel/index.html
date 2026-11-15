@@ -20,6 +20,136 @@
         .text-colgate { color: #da291c; }
         #adminMap { z-index: 1; width: 100%; height: 100%; }
     </style>
+
+<!-- SUPABASE ADMIN SUBMISSIONS & IMAGE PREVIEW BRIDGE -->
+<script>
+(function() {
+  const SUBMISSIONS_API = "https://colgate-smile-api.onrender.com/api/submissions";
+  const OUTLETS_API = "https://colgate-smile-api.onrender.com/api/outlets";
+
+  // 1. Convert any legacy CSV row or Supabase JSON row so all possible image/field keys work seamlessly
+  function normalizeSubmissionRow(r) {
+    const img = r.image_url || r.imageUrl || r.Photo_Link || r.Image_URL || r.photo_url || r.Photo || r.image || '';
+    return {
+      ...r,
+      id: r.id || '',
+      Timestamp: r.created_at || r.Timestamp || r.timestamp || new Date().toISOString(),
+      created_at: r.created_at || r.Timestamp || new Date().toISOString(),
+      Shop_Code: r.shop_code || r.Shop_Code || r['Shop Code'] || '',
+      shop_code: r.shop_code || r.Shop_Code || r['Shop Code'] || '',
+      Merch_Name: r.merch_name || r.Merch_Name || r['Merch Name'] || r.merchandiser || '',
+      merch_name: r.merch_name || r.Merch_Name || r['Merch Name'] || r.merchandiser || '',
+      Unit: r.unit || r.Unit || '',
+      unit: r.unit || r.Unit || '',
+      Area_Name: r.area_name || r.Area_Name || r.zone || r.Zone || '',
+      area_name: r.area_name || r.Area_Name || r.zone || r.Zone || '',
+      Territory: r.territory || r.Territory || '',
+      territory: r.territory || r.Territory || '',
+      DB_Code: r.db_code || r.DB_Code || '',
+      db_code: r.db_code || r.DB_Code || '',
+      Distribution_Name: r.distribution_name || r.Distribution_Name || r.db_name || '',
+      distribution_name: r.distribution_name || r.Distribution_Name || r.db_name || '',
+      Route_Name: r.route_name || r.Route_Name || '',
+      route_name: r.route_name || r.Route_Name || '',
+      Slab: r.slab || r.Slab || '',
+      slab: r.slab || r.Slab || '',
+      Month: r.month || r.Month || '',
+      month: r.month || r.Month || '',
+      Latitude: r.lat ?? r.Latitude ?? r.latitude ?? '',
+      Longitude: r.lng ?? r.Longitude ?? r.longitude ?? '',
+      lat: r.lat ?? r.Latitude ?? null,
+      lng: r.lng ?? r.Longitude ?? null,
+      image_url: img,
+      imageUrl: img,
+      Image_URL: img,
+      Photo_Link: img,
+      Photo: img,
+      photo_url: img
+    };
+  }
+
+  // 2. Convert Normalized JSON rows into CSV text in case the Admin Panel uses PapaParse / CSV parser
+  function jsonToCsv(rows) {
+    if (!rows || !rows.length) {
+      return "Timestamp,Shop_Code,Merch_Name,Unit,Area_Name,Territory,DB_Code,Distribution_Name,Route_Name,Slab,Month,Latitude,Longitude,Image_URL,Photo_Link,image_url\n";
+    }
+    const headers = [
+      "Timestamp","Shop_Code","Merch_Name","Unit","Area_Name","Territory",
+      "DB_Code","Distribution_Name","Route_Name","Slab","Month",
+      "Latitude","Longitude","Image_URL","Photo_Link","image_url",
+      "shop_code","merch_name","unit","area_name","territory",
+      "db_code","distribution_name","route_name","slab","month","lat","lng"
+    ];
+    const escapeCell = (val) => {
+      const s = String(val ?? '').replace(/"/g, '""');
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+    };
+    const lines = [headers.join(',')];
+    rows.forEach(raw => {
+      const r = normalizeSubmissionRow(raw);
+      lines.push(headers.map(h => escapeCell(r[h])).join(','));
+    });
+    return lines.join('\n');
+  }
+
+  // 3. Intercept any fetch() to Google Sheets / Google Script / /api/submissions
+  const origFetch = window.fetch;
+  window.fetch = async function(input, init) {
+    let url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+
+    // Redirect any remaining Google Sheets or Google Apps Script URLs to Supabase Render API
+    if (url.includes('docs.google.com/spreadsheets') || url.includes('script.google.com')) {
+      const isOutletSheet = url.toLowerCase().includes('outlet') || url.includes('gid=0');
+      const targetApi = isOutletSheet ? OUTLETS_API : SUBMISSIONS_API;
+      const res = await origFetch(targetApi);
+      const json = await res.json();
+      const rows = (json.submissions || json.outlets || json.data || []).map(normalizeSubmissionRow);
+      const csvText = jsonToCsv(rows);
+
+      // Return a Response that works whether the caller calls .json() OR .text() (for CSV parsers)
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          status: 'success',
+          submissions: rows,
+          outlets: rows,
+          data: rows
+        }),
+        text: async () => csvText
+      };
+    }
+
+    // Also normalize direct /api/submissions calls so every image key & CSV fallback is present
+    if (url.includes('/api/submissions')) {
+      const res = await origFetch(input, init);
+      const json = await res.json();
+      const rows = (json.submissions || json.data || []).map(normalizeSubmissionRow);
+      const csvText = jsonToCsv(rows);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          ...json,
+          submissions: rows,
+          data: rows
+        }),
+        text: async () => csvText
+      };
+    }
+
+    return origFetch.apply(this, arguments);
+  };
+
+  // 4. Fix any broken Google Drive thumbnail conversion on Supabase Storage URLs
+  document.addEventListener('error', function(e) {
+    if (e.target && e.target.tagName === 'IMG' && e.target.dataset && e.target.dataset.rawUrl) {
+      e.target.src = e.target.dataset.rawUrl;
+    }
+  }, true);
+})();
+</script>
 </head>
 <body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
 
@@ -319,7 +449,7 @@
         function extractDriveThumb(url) {
             if (!url) return null;
             const match = url.match(/[-\w]{25,}/);
-            return match ? `https://drive.google.com/thumbnail?id=${match[0]}&sz=w800` : url;
+            return match ? `${row.image_url || row.Image_URL || row.Photo_Link || ""}&sz=w800` : url;
         }
 
         async function loadAdminDashboard() {
