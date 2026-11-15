@@ -16,11 +16,105 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+function cleanVal(val) {
+  if (val === undefined || val === null) return '';
+  let s = String(val).trim();
+  while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
+  return s;
+}
+
 app.get('/', (req, res) => {
-  res.json({ status: 'Colgate Smile Corner API is running 100% on Supabase!' });
+  res.json({ status: 'Colgate Smile Corner API running 100% on Supabase' });
 });
 
-// 1. Sync / Status Endpoint
+// 1. DYNAMIC SETTINGS (Single Source of Truth in Supabase settings table)
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('settings').select('*');
+    if (error) throw error;
+
+    const map = {};
+    (data || []).forEach(r => {
+      if (r.key) map[r.key] = cleanVal(r.value);
+    });
+
+    const noticeText = map.notice_text || map.global_notice || '';
+    const noticeActive = (map.notice_active === 'true' && noticeText.length > 0) ? 'true' : 'false';
+    const isUnlocked = map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true';
+    const galleryAccess = isUnlocked ? 'unlocked' : 'locked';
+
+    const result = {
+      notice_text: noticeText,
+      global_notice: noticeActive === 'true' ? noticeText : '',
+      notice_active: noticeActive,
+      gallery_access: galleryAccess,
+      gallery_unlocked: isUnlocked
+    };
+
+    res.json({ success: true, settings: result, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const now = new Date().toISOString();
+    const updates = [];
+
+    if (b.notice_text !== undefined || b.global_notice !== undefined) {
+      const txt = cleanVal(b.notice_text !== undefined ? b.notice_text : b.global_notice);
+      const act = b.notice_active !== undefined
+        ? (String(b.notice_active) === 'true' && txt.length > 0 ? 'true' : 'false')
+        : (txt.length > 0 ? 'true' : 'false');
+
+      updates.push({ key: 'notice_text', value: txt, updated_at: now });
+      updates.push({ key: 'global_notice', value: act === 'true' ? txt : '', updated_at: now });
+      updates.push({ key: 'notice_active', value: act, updated_at: now });
+    }
+
+    if (b.gallery_access !== undefined || b.gallery_unlocked !== undefined) {
+      const unlocked =
+        cleanVal(b.gallery_access).toLowerCase() === 'unlocked' ||
+        b.gallery_unlocked === true ||
+        cleanVal(b.gallery_unlocked).toLowerCase() === 'true';
+
+      updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
+      updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
+    }
+
+    if (updates.length > 0) {
+      const { error } = await supabase.from('settings').upsert(updates, { onConflict: 'key' });
+      if (error) throw error;
+    }
+
+    const { data } = await supabase.from('settings').select('*');
+    const map = {};
+    (data || []).forEach(r => { if (r.key) map[r.key] = cleanVal(r.value); });
+
+    const noticeText = map.notice_text || '';
+    const noticeActive = (map.notice_active === 'true' && noticeText.length > 0) ? 'true' : 'false';
+    const isUnlocked = map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true';
+
+    const result = {
+      notice_text: noticeText,
+      global_notice: noticeActive === 'true' ? noticeText : '',
+      notice_active: noticeActive,
+      gallery_access: isUnlocked ? 'unlocked' : 'locked',
+      gallery_unlocked: isUnlocked
+    };
+
+    res.json({ success: true, settings: result, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. SYNC STATUS
 app.get('/api/sync-outlets', async (req, res) => {
   try {
     const { data: outlets, error } = await supabase.from('outlets').select('*');
@@ -28,7 +122,6 @@ app.get('/api/sync-outlets', async (req, res) => {
     const { data: targets } = await supabase.from('outlet_targets').select('*');
     res.json({
       success: true,
-      message: 'Supabase Outlets and Targets are active and synced!',
       totalSyncedOutlets: (outlets || []).length,
       totalTargetRows: (targets || []).length
     });
@@ -37,7 +130,7 @@ app.get('/api/sync-outlets', async (req, res) => {
   }
 });
 
-// 2. Get Outlets + Merged Targets
+// 3. GET OUTLETS + TARGETS
 app.get(['/api/outlets', '/api/init-data'], async (req, res) => {
   try {
     const { data: outlets, error: err1 } = await supabase.from('outlets').select('*');
@@ -70,7 +163,7 @@ app.get(['/api/outlets', '/api/init-data'], async (req, res) => {
   }
 });
 
-// 3. Submit Field Form + Upload Photo to outlet-photos Bucket
+// 4. SUBMIT FORM + UPLOAD PHOTO TO SUPABASE BUCKET
 app.post('/api/submit', upload.any(), async (req, res) => {
   try {
     const body = req.body || {};
@@ -85,18 +178,12 @@ app.post('/api/submit', upload.any(), async (req, res) => {
       const fileName = `${shopCode}_${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from('outlet-photos')
-        .upload(fileName, uploadedFile.buffer, {
-          contentType: uploadedFile.mimetype || 'image/jpeg',
-          upsert: true
-        });
+        .upload(fileName, uploadedFile.buffer, { contentType: uploadedFile.mimetype || 'image/jpeg', upsert: true });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
       imageUrl = pub.publicUrl;
     } else {
       let rawBase64 = body.image || body.imageBase64 || body.imageData || body.photo || body.fileData || body.file || body.base64 || '';
-      if (!rawBase64 && body.shop_image && body.shop_image.data) {
-        rawBase64 = body.shop_image.data;
-      }
       if (!rawBase64 || typeof rawBase64 !== 'string') {
         for (const key of Object.keys(body)) {
           const val = body[key];
@@ -106,17 +193,13 @@ app.post('/api/submit', upload.any(), async (req, res) => {
           }
         }
       }
-
       if (rawBase64 && typeof rawBase64 === 'string' && rawBase64.length > 100) {
         const base64Clean = rawBase64.replace(/^data:[^;]+;base64,/, '').replace(/\s/g, '');
         const buffer = Buffer.from(base64Clean, 'base64');
         const fileName = `${shopCode}_${Date.now()}.jpg`;
         const { error: upErr } = await supabase.storage
           .from('outlet-photos')
-          .upload(fileName, buffer, {
-            contentType: body.mimeType || 'image/jpeg',
-            upsert: true
-          });
+          .upload(fileName, buffer, { contentType: 'image/jpeg', upsert: true });
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
         imageUrl = pub.publicUrl;
@@ -140,27 +223,19 @@ app.post('/api/submit', upload.any(), async (req, res) => {
       image_url: imageUrl
     };
 
-    const { data: inserted, error: dbErr } = await supabase
-      .from('submissions')
-      .insert([rowData])
-      .select();
-
+    const { data: inserted, error: dbErr } = await supabase.from('submissions').insert([rowData]).select();
     if (dbErr) throw dbErr;
 
     res.json({ status: 'success', success: true, image_url: imageUrl, data: inserted });
   } catch (err) {
-    console.error('Submit Error:', err);
     res.status(500).json({ status: 'error', success: false, error: err.message });
   }
 });
 
-// 4. Get All Submissions
+// 5. GET SUBMISSIONS
 app.get('/api/submissions', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('submissions')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('submissions').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ success: true, submissions: data || [], data: data || [] });
   } catch (err) {
@@ -168,22 +243,22 @@ app.get('/api/submissions', async (req, res) => {
   }
 });
 
-// 5. Add New Outlet
+// 6. ADD OUTLET
 app.post('/api/outlets', async (req, res) => {
   try {
     const b = req.body || {};
     const row = {
-      unit: b.unit || 'DCC',
+      unit: b.unit || '',
       zone: b.zone || b.area_name || '',
       territory: b.territory || '',
-      db_code: b.db_code || b.distCode || '',
-      db_name: b.db_name || b.distribution_name || b.distName || '',
-      route_code: b.route_code || b.routeCode || '',
-      route_name: b.route_name || b.routeName || '',
-      shop_code: String(b.shop_code || ('NEW-' + Date.now().toString().slice(-6))).trim(),
-      shop_name: b.shop_name || b.outletName || '',
-      slab: b.slab || 'Slab-1',
-      merchandiser: b.merchandiser || b.merch_name || b.createdName || ''
+      db_code: b.db_code || '',
+      db_name: b.db_name || b.distribution_name || '',
+      route_code: b.route_code || '',
+      route_name: b.route_name || '',
+      shop_code: String(b.shop_code || '').trim(),
+      shop_name: b.shop_name || '',
+      slab: b.slab || '',
+      merchandiser: b.merchandiser || b.merch_name || ''
     };
     const { data, error } = await supabase.from('outlets').upsert([row], { onConflict: 'shop_code' }).select();
     if (error) throw error;
@@ -193,127 +268,31 @@ app.post('/api/outlets', async (req, res) => {
   }
 });
 
-// 6. Upload Target vs Achievement CSV
-app.post(['/api/upload-targets', '/api/targets/bulk'], async (req, res) => {
+// 7. UPLOAD TARGETS
+app.post('/api/upload-targets', async (req, res) => {
   try {
-    const rows = Array.isArray(req.body.rows) ? req.body.rows : (Array.isArray(req.body.items) ? req.body.items : []);
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
     if (!rows.length) return res.status(400).json({ success: false, error: 'No rows provided' });
-
     const formatted = rows
-      .filter(r => r.shop_code || r.Shop_Code || r['Shop Code'] || r.code || r['Outlet Code'])
+      .filter(r => r.shop_code || r.Shop_Code || r['Shop Code'])
       .map(r => ({
-        shop_code: String(r.shop_code || r.Shop_Code || r['Shop Code'] || r.code || r['Outlet Code']).trim(),
+        shop_code: String(r.shop_code || r.Shop_Code || r['Shop Code']).trim(),
         month: String(r.month || r.Month || 'Current').trim(),
-        enrolled: String(r.enrolled || r.Enrolled || 'Y'),
-        target: String(r.target || r.Target || '0'),
-        tot_stt: String(r.tot_stt || r['Tot STT'] || r.Tot_STT || r.achieve || '0'),
-        ach: String(r.ach || r['Ach %'] || r.Ach || '0%'),
-        balance: String(r.balance || r.Balance || '0'),
-        eligible: String(r.eligible || r.Eligible || 'N'),
-        payout: String(r.payout || r.Payout || '0')
+        enrolled: String(r.enrolled || r.Enrolled || 'Yes'),
+        target: parseFloat(r.target || r.Target || 0) || 0,
+        tot_stt: parseFloat(r.tot_stt || r['Tot STT'] || r.Tot_STT || 0) || 0,
+        ach: parseFloat(r.ach || r['Ach %'] || r.Ach || 0) || 0,
+        balance: parseFloat(r.balance || r.Balance || 0) || 0,
+        eligible: String(r.eligible || r.Eligible || 'No'),
+        payout: parseFloat(r.payout || r.Payout || 0) || 0
       }));
-
-    const { error } = await supabase
-      .from('outlet_targets')
-      .upsert(formatted, { onConflict: 'shop_code' });
-
+    const { error } = await supabase.from('outlet_targets').upsert(formatted, { onConflict: 'shop_code,month' });
     if (error) throw error;
-    res.json({ success: true, count: formatted.length, uploadedCount: formatted.length });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 7. UNIFIED DYNAMIC SETTINGS ROUTE (Notice Board & Gallery Access)
-function cleanNoticeValue(val) {
-  if (val === undefined || val === null) return '';
-  let s = String(val).trim();
-  // Strip wrapping quotes like '""' or '"hello"'
-  while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-    s = s.slice(1, -1).trim();
-  }
-  if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
-  return s;
-}
-
-app.get('/api/settings', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('settings').select('*');
-    if (error) throw error;
-    const raw = {};
-    (data || []).forEach(row => {
-      if (row.key) raw[row.key] = row.value;
-    });
-
-    const noticeText = cleanNoticeValue(raw.notice_text) || cleanNoticeValue(raw.global_notice) || '';
-    const noticeActive = noticeText.length > 0 && String(raw.notice_active) !== 'false' ? 'true' : 'false';
-    const isUnlocked = raw.gallery_access === 'unlocked' || String(raw.gallery_unlocked).replace(/"/g, '') === 'true';
-    const galleryAccess = isUnlocked ? 'unlocked' : 'locked';
-
-    const settingsObj = {
-      notice_text: noticeActive === 'true' ? noticeText : '',
-      global_notice: noticeActive === 'true' ? noticeText : '',
-      notice_active: noticeActive,
-      gallery_access: galleryAccess,
-      gallery_unlocked: isUnlocked,
-      maintenance_mode: String(raw.maintenance_mode || 'false').replace(/"/g, '') === 'true'
-    };
-
-    res.json({ success: true, settings: settingsObj, ...settingsObj });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.post('/api/settings', async (req, res) => {
-  try {
-    const b = req.body || {};
-    const now = new Date().toISOString();
-    const updates = [];
-
-    // Handle single { key, value } format from built-in Admin functions
-    if (b.key !== undefined) {
-      const k = String(b.key);
-      const v = cleanNoticeValue(b.value);
-      updates.push({ key: k, value: v, updated_at: now });
-
-      if (k === 'global_notice' || k === 'notice_text') {
-        updates.push({ key: 'notice_text', value: v, updated_at: now });
-        updates.push({ key: 'global_notice', value: v, updated_at: now });
-        updates.push({ key: 'notice_active', value: v.length > 0 ? 'true' : 'false', updated_at: now });
-      }
-      if (k === 'gallery_unlocked' || k === 'gallery_access') {
-        const unlocked = v === 'true' || v === 'unlocked' || b.value === true;
-        updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
-        updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
-      }
-    }
-
-    // Handle object { notice_text, notice_active, gallery_access } format
-    if (b.notice_text !== undefined || b.global_notice !== undefined) {
-      const cleanTxt = cleanNoticeValue(b.notice_text !== undefined ? b.notice_text : b.global_notice);
-      const isAct = b.notice_active !== undefined ? String(b.notice_active) : (cleanTxt.length > 0 ? 'true' : 'false');
-      updates.push({ key: 'notice_text', value: cleanTxt, updated_at: now });
-      updates.push({ key: 'global_notice', value: cleanTxt, updated_at: now });
-      updates.push({ key: 'notice_active', value: isAct, updated_at: now });
-    }
-
-    if (b.gallery_access !== undefined || b.gallery_unlocked !== undefined) {
-      const unlocked = b.gallery_access === 'unlocked' || b.gallery_unlocked === true || b.gallery_unlocked === 'true';
-      updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
-      updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
-    }
-
-    if (updates.length > 0) {
-      const { error } = await supabase.from('settings').upsert(updates, { onConflict: 'key' });
-      if (error) throw error;
-    }
-
-    res.json({ success: true });
+    res.json({ success: true, count: formatted.length });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log('Server running on port ' + PORT));

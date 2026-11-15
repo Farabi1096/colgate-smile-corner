@@ -1047,21 +1047,17 @@
 </script>
 
 
-<!-- LIVE SUPABASE SETTINGS LISTENER (NOTICE POPUP & GALLERY LOCK/UNLOCK) -->
+
+<!-- CLOUD-DYNAMIC FIELD APP NOTICE & GALLERY ENGINE -->
 <script>
 (function() {
   const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  let shownNoticeText = '';
+  let shownNoticeText = null;
 
-  function syncGalleryUI(mode) {
-    const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
-
-    // 1. Update localStorage so any existing code inside index.html sees the live state
+  function applyCloudGallery(isUnlocked) {
     localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
-    localStorage.setItem('gallery_unlocked', isUnlocked ? 'true' : 'false');
-    window.galleryUnlocked = isUnlocked;
 
-    // 2. Enable/disable all file inputs and gallery buttons on the Field App
+    // 1. Update all file inputs on the page
     document.querySelectorAll('input[type="file"]').forEach(inp => {
       if (isUnlocked) {
         inp.removeAttribute('capture');
@@ -1072,114 +1068,120 @@
       }
     });
 
-    // 3. If the Field App has a dedicated Gallery button (or hidden gallery input), unlock or lock it
-    document.querySelectorAll('button, label, div').forEach(el => {
-      const txt = (el.textContent || '').trim();
-      if ((txt.includes('গ্যালারি') || txt.toLowerCase().includes('gallery')) && el.id !== 'liveGalleryStatusBadge') {
-        if (isUnlocked) {
-          el.classList.remove('hidden', 'opacity-50', 'pointer-events-none', 'cursor-not-allowed');
-          el.style.display = '';
-          el.style.opacity = '1';
-          el.style.pointerEvents = 'auto';
-          el.disabled = false;
-        }
+    // 2. Show/enable any hidden gallery buttons in the original template (#galleryBtn, #btnGallery, #galleryUploadBtn, etc.)
+    const possibleGalleryEls = document.querySelectorAll('[id*="gallery" i], [class*="gallery" i]');
+    possibleGalleryEls.forEach(el => {
+      if (el.id === 'liveGalleryStatusBadge') return;
+      if (isUnlocked) {
+        el.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+        if (el.style.display === 'none') el.style.display = '';
+        el.disabled = false;
       }
     });
 
-    // 4. Add a clear Gallery Upload button right next to the Camera button when Unlocked!
-    let extraGalleryBtn = document.getElementById('cloudGalleryPickerBtn');
-    const cameraSection = document.querySelector('input[type="file"]')?.parentElement;
-    if (isUnlocked && cameraSection && !extraGalleryBtn) {
-      extraGalleryBtn = document.createElement('label');
-      extraGalleryBtn.id = 'cloudGalleryPickerBtn';
-      extraGalleryBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;width:100%;padding:10px 14px;background:#eff6ff;border:1.5px dashed #3b82f6;color:#1d4ed8;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;';
-      extraGalleryBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি নির্বাচন করুন (Choose from Gallery) <input type="file" accept="image/*" style="display:none;" />';
-      cameraSection.appendChild(extraGalleryBtn);
-
-      const hiddenGalInput = extraGalleryBtn.querySelector('input');
-      hiddenGalInput.addEventListener('change', function(e) {
-        const mainInput = document.querySelector('input[type="file"]');
-        if (mainInput && mainInput !== hiddenGalInput && e.target.files.length > 0) {
-          try {
-            const dt = new DataTransfer();
-            dt.items.add(e.target.files[0]);
-            mainInput.files = dt.files;
-            mainInput.dispatchEvent(new Event('change', { bubbles: true }));
-          } catch (err) {}
-        }
-      });
-    }
-    if (extraGalleryBtn) {
-      extraGalleryBtn.style.display = isUnlocked ? 'inline-flex' : 'none';
+    // 3. Add a clear interactive Gallery Upload button right next to the Camera button when Unlocked!
+    const cameraTrigger = document.querySelector('input[type="file"]');
+    let customGalleryBtn = document.getElementById('cloudGalleryPickerBtn');
+    if (isUnlocked) {
+      if (!customGalleryBtn && cameraTrigger && cameraTrigger.parentElement) {
+        customGalleryBtn = document.createElement('button');
+        customGalleryBtn.type = 'button';
+        customGalleryBtn.id = 'cloudGalleryPickerBtn';
+        customGalleryBtn.style.cssText = 'margin-top:8px;width:100%;padding:10px 14px;background:#16a34a;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 6px rgba(22,163,74,0.25);';
+        customGalleryBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি নিন (Choose from Gallery)';
+        customGalleryBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          cameraTrigger.removeAttribute('capture');
+          cameraTrigger.click();
+        };
+        cameraTrigger.parentElement.appendChild(customGalleryBtn);
+      } else if (customGalleryBtn) {
+        customGalleryBtn.style.display = 'flex';
+      }
+    } else if (customGalleryBtn) {
+      customGalleryBtn.style.display = 'none';
     }
   }
 
-  function syncNoticeUI(text, active) {
-    const cleanText = String(text || '').replace(/^["']+|["']+$/g, '').trim();
-    const isActive = (String(active) === 'true' || active === true) && cleanText.length > 0;
+  function applyCloudNotice(text, isActive) {
+    const clean = String(text || '').replace(/^["']+|["']+$/g, '').trim();
+    const shouldShow = isActive && clean.length > 0;
 
-    // Also update localStorage so built-in notice banners work
-    localStorage.setItem('app_notice', isActive ? cleanText : '');
+    // Hide any old broken popup showing '""'
+    document.querySelectorAll('div, p, span').forEach(el => {
+      if ((el.textContent || '').trim() === '""') {
+        const modal = el.closest('.fixed, [style*="fixed"]');
+        if (modal) modal.style.display = 'none';
+      }
+    });
 
-    let topBanner = document.getElementById('cloudNoticeTopBanner');
-    if (!isActive) {
-      if (topBanner) topBanner.style.display = 'none';
-      const pop = document.getElementById('cloudNoticePopupModal');
-      if (pop) pop.style.display = 'none';
+    let banner = document.getElementById('cloudTopNoticeBanner');
+    let popup = document.getElementById('cloudNoticePopupModal');
+
+    if (!shouldShow) {
+      if (banner) banner.style.display = 'none';
+      if (popup) popup.style.display = 'none';
+      shownNoticeText = '';
       return;
     }
 
-    if (!topBanner) {
-      topBanner = document.createElement('div');
-      topBanner.id = 'cloudNoticeTopBanner';
-      topBanner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:12px 16px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
-      document.body.insertBefore(topBanner, document.body.firstChild);
+    // 1. Top Pinned Notice Banner
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'cloudTopNoticeBanner';
+      banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:10px 14px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
+      document.body.insertBefore(banner, document.body.firstChild);
     }
-    topBanner.style.display = 'flex';
-    topBanner.innerHTML = `<span style="font-size:22px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;font-weight:800;">জরুরী নোটিশ (Admin Notice)</div><div style="margin-top:2px;">${cleanText}</div></div>`;
+    banner.style.display = 'flex';
+    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Notice)</div><div>${clean}</div></div>`;
 
-    if (shownNoticeText !== cleanText) {
-      shownNoticeText = cleanText;
-      let popup = document.getElementById('cloudNoticePopupModal');
+    // 2. Center Popup Modal (shows immediately on page load or whenever Admin updates the message)
+    if (shownNoticeText !== clean) {
+      shownNoticeText = clean;
       if (!popup) {
         popup = document.createElement('div');
         popup.id = 'cloudNoticePopupModal';
-        popup.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;';
+        popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;';
         document.body.appendChild(popup);
       }
       popup.style.display = 'flex';
       popup.innerHTML = `
-        <div style="background:#fff;max-width:380px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);">
-          <div style="width:54px;height:54px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;">🔔</div>
-          <h3 style="margin:0 0 8px;font-size:18px;font-weight:800;color:#0f172a;">জরুরী নোটিশ (Notice)</h3>
-          <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.5;white-space:pre-wrap;">${cleanText}</p>
-          <button type="button" onclick="document.getElementById('cloudNoticePopupModal').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে (OK)</button>
+        <div style="background:#fff;max-width:360px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;">
+          <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 12px;">!</div>
+          <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#0f172a;">Notice</h3>
+          <p style="margin:0 0 6px;font-size:13px;color:#64748b;">নোটিশ:</p>
+          <p style="margin:0 0 20px;font-size:16px;font-weight:700;color:#1e293b;white-space:pre-wrap;">${clean}</p>
+          <button type="button" onclick="document.getElementById('cloudNoticePopupModal').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে</button>
         </div>
       `;
     }
   }
 
-  async function pollCloudSettings() {
+  async function syncFromSupabase() {
     try {
-      const res = await fetch(SETTINGS_API + '?t=' + Date.now());
-      const json = await res.json();
-      const s = json.settings || json;
-      if (s) {
-        const galMode = s.gallery_access || (s.gallery_unlocked === true || s.gallery_unlocked === 'true' ? 'unlocked' : 'locked');
-        const noticeText = s.notice_text || s.global_notice || '';
-        const noticeActive = s.notice_active !== undefined ? s.notice_active : (noticeText ? 'true' : 'false');
-        syncGalleryUI(galMode);
-        syncNoticeUI(noticeText, noticeActive);
-      }
+      const res = await fetch(SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const s = data.settings || data;
+      const isUnlocked = s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true';
+      const noticeText = s.notice_text || s.global_notice || '';
+      const isActive = String(s.notice_active) === 'true' && noticeText.length > 0;
+
+      applyCloudGallery(isUnlocked);
+      applyCloudNotice(noticeText, isActive);
     } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', pollCloudSettings);
+    document.addEventListener('DOMContentLoaded', () => {
+      syncFromSupabase();
+      setTimeout(syncFromSupabase, 1000);
+    });
   } else {
-    pollCloudSettings();
+    syncFromSupabase();
+    setTimeout(syncFromSupabase, 1000);
   }
-  setInterval(pollCloudSettings, 10000);
+  setInterval(syncFromSupabase, 8000);
 })();
 </script>
 </body>
