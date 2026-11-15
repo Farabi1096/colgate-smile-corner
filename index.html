@@ -1934,116 +1934,121 @@
 </script>
 
 
-<!-- PERSONALIZED MERCHANDISER PROFILE HEADER -->
+
+<!-- EXACT MERCHANDISER PROFILE HEADER ENGINE -->
 <script id="profileHeaderEngine">
 (function() {
-  function updateHeaderProfile() {
-    const header = document.querySelector('#appContainer header');
-    if (!header) return;
+  function renderProfileBanner() {
+    const roleBadge = document.getElementById('userRoleDisplay');
+    if (!roleBadge) return;
 
-    // Determine logged-in role and merchandiser name
-    const roleEl = document.getElementById('userRoleDisplay');
-    const merchSelect = document.getElementById('merchName');
-    const savedRole = localStorage.getItem('userRole') || (roleEl ? roleEl.textContent.trim() : '');
-    const selectedMerch = (merchSelect && merchSelect.value) ? merchSelect.value.trim() : (localStorage.getItem('merchName') || '');
+    // The red banner is the parent container of #userRoleDisplay and #btnLogout
+    const bannerBox = roleBadge.parentElement;
+    if (!bannerBox) return;
 
-    const isMerch = savedRole.toLowerCase().includes('merchandiser') || (roleEl && roleEl.textContent.toLowerCase().includes('merchandiser'));
-    const displayName = selectedMerch || (isMerch ? 'মার্চেন্ডাইজার (নাম নির্বাচন করুন)' : (savedRole || 'Sales Team (TM / SR)'));
-    const subTitle = selectedMerch
-      ? 'Merchandiser • Smile Corner'
-      : (isMerch ? 'কোলগেট স্মাইল কর্ণার' : 'Sales Team • Smile Corner');
+    // Parse "Merchandiser: Sheikh Daiyanul Islam" or "Sales Team (TM / SR)"
+    const rawText = (roleBadge.textContent || '').trim();
+    let roleTitle = 'Merchandiser';
+    let personName = '';
 
-    // Get initials for avatar if a name is selected
-    const initials = selectedMerch
-      ? selectedMerch.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
-      : '';
-
-    // Build custom profile bar inside header if not already created
-    let profileBar = document.getElementById('customProfileHeaderBar');
-    if (!profileBar) {
-      // Hide original center title texts inside header while keeping the logout button functional
-      Array.from(header.children).forEach(child => {
-        if (child.id !== 'customProfileHeaderBar') {
-          child.style.display = 'none';
-        }
-      });
-
-      profileBar = document.createElement('div');
-      profileBar.id = 'customProfileHeaderBar';
-      profileBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;padding:2px 4px;gap:12px;';
-      header.appendChild(profileBar);
+    if (rawText.includes(':')) {
+      const parts = rawText.split(':');
+      roleTitle = parts[0].trim();
+      personName = parts.slice(1).join(':').trim();
+    } else if (rawText) {
+      roleTitle = rawText;
     }
 
-    const avatarContent = initials
-      ? `<span style="font-size:14px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">${initials}</span>`
-      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+    // Fallback to dropdown if selected
+    const merchSelect = document.getElementById('merchName');
+    if (!personName && merchSelect && merchSelect.value) {
+      personName = merchSelect.value.trim();
+    }
 
-    profileBar.innerHTML = `
-      <div style="display:flex;align-items:center;gap:11px;min-width:0;flex:1;">
-        <div style="position:relative;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#e03e36 0%,#b91c1c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(224,62,54,0.35);border:2px solid rgba(255,255,255,0.2);">
-          ${avatarContent}
-          <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:#22c55e;border:2px solid #0f172a;border-radius:50%;"></span>
+    const mainHeading = personName || roleTitle || 'মার্চেন্ডাইজার প্যানেল';
+    const subHeading = personName ? (roleTitle + ' • Smile Corner') : 'কোলগেট স্মাইল কর্ণার';
+
+    // Compute 2-letter initials from Merchandiser name
+    const initials = personName
+      ? personName.split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+      : '';
+
+    // Style the banner container for a modern balanced look
+    bannerBox.style.cssText = 'background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important; padding:14px 16px !important; border-bottom:3px solid #e03e36 !important; border-radius:0 !important; position:relative !important;';
+
+    // Hide the original children (the old logout button, "কোলগেট স্মাইল কর্ণার" h1, and old pill) without deleting them so event listeners stay intact
+    Array.from(bannerBox.children).forEach(child => {
+      if (child.id !== 'customMerchProfileRow') {
+        child.style.display = 'none';
+      }
+    });
+
+    let profileRow = document.getElementById('customMerchProfileRow');
+    if (!profileRow) {
+      profileRow = document.createElement('div');
+      profileRow.id = 'customMerchProfileRow';
+      bannerBox.appendChild(profileRow);
+    }
+
+    profileRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;';
+
+    const avatarInner = initials
+      ? `<span style="font-size:14px;font-weight:800;color:#ffffff;letter-spacing:0.5px;">${initials}</span>`
+      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+
+    profileRow.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
+        <div style="position:relative;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e03e36 0%,#b91c1c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(224,62,54,0.35);border:2px solid rgba(255,255,255,0.22);">
+          ${avatarInner}
+          <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;background:#22c55e;border:2px solid #0f172a;border-radius:50%;" title="Online"></span>
         </div>
         <div style="min-width:0;flex:1;text-align:left;">
-          <div style="font-size:15px;font-weight:700;color:#ffffff;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${displayName}
+          <div style="font-size:15.5px;font-weight:700;color:#ffffff;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${mainHeading}
           </div>
-          <div style="font-size:11px;font-weight:500;color:#94a3b8;margin-top:2px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            <span>${subTitle}</span>
+          <div style="font-size:11.5px;font-weight:500;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${subHeading}
           </div>
         </div>
       </div>
-      <button id="customHeaderLogoutBtn" type="button" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);hover:background:rgba(255,255,255,0.14);color:#e2e8f0;border:1px solid rgba(255,255,255,0.12);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;transition:all 0.15s ease;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      <button id="customMerchLogoutBtn" type="button" title="Logout" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.09);color:#f8fafc;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         <span>লগআউট</span>
       </button>
     `;
 
-    // Connect Logout button to existing logout logic
-    const customLogout = document.getElementById('customHeaderLogoutBtn');
-    if (customLogout) {
-      customLogout.onclick = function() {
-        localStorage.removeItem('merchName');
-        const origLogout = document.getElementById('btnLogout');
-        if (origLogout) {
-          origLogout.click();
-        } else if (typeof window.logout === 'function') {
-          window.logout();
-        } else {
-          location.reload();
-        }
+    const logoutBtn = document.getElementById('customMerchLogoutBtn');
+    if (logoutBtn) {
+      logoutBtn.onclick = function() {
+        const origBtn = document.getElementById('btnLogout');
+        if (origBtn) origBtn.click();
       };
     }
   }
 
-  function bindProfileListeners() {
-    updateHeaderProfile();
+  function initHeaderWatcher() {
+    renderProfileBanner();
 
-    // Update header immediately when Merchandiser selects their name from dropdown
+    // Watch #userRoleDisplay so whenever the user logs in or changes Merchandiser name, the header updates immediately
+    const roleBadge = document.getElementById('userRoleDisplay');
+    if (roleBadge) {
+      const obs = new MutationObserver(() => renderProfileBanner());
+      obs.observe(roleBadge, { childList: true, characterData: true, subtree: true });
+    }
+
     document.addEventListener('change', function(e) {
       if (e.target && e.target.id === 'merchName') {
-        localStorage.setItem('merchName', e.target.value || '');
-        updateHeaderProfile();
-      }
-    });
-
-    // Also watch for role login clicks
-    document.addEventListener('click', function(e) {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      if (btn.id === 'btnRoleMerch' || btn.id === 'btnRoleSR' || (btn.textContent || '').includes('Merchandiser') || (btn.textContent || '').includes('Sales Team')) {
-        setTimeout(updateHeaderProfile, 150);
-        setTimeout(updateHeaderProfile, 500);
+        setTimeout(renderProfileBanner, 50);
       }
     });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindProfileListeners);
+    document.addEventListener('DOMContentLoaded', initHeaderWatcher);
   } else {
-    bindProfileListeners();
+    initHeaderWatcher();
   }
-  setTimeout(updateHeaderProfile, 800);
+  setTimeout(renderProfileBanner, 400);
 })();
 </script>
 </body>
