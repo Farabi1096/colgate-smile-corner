@@ -1394,16 +1394,121 @@
 })();
 </script>
 
-<!-- LIVE SUPABASE SETTINGS LISTENER (TOP MINIMAL PILL + GALLERY TOGGLE) -->
+
+<!-- CALM OCEAN-SLATE & MODERN ARCHITECTURAL UI THEME -->
+<style id="calmModernThemeStyles">
+  :root {
+    --bg-canvas: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-subtle: #f8fafc;
+    --primary-ocean: #154c61;
+    --primary-ocean-dark: #0d3545;
+    --primary-accent: #0284c7;
+    --coral-cta: #e05a47;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-soft: #e2e8f0;
+  }
+
+  /* 1. Calm Off-White / Ice-Blue App Background */
+  body, html {
+    background-color: var(--bg-canvas) !important;
+    color: var(--text-main) !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 2. Tame Huge Rounded Corners into Clean 10px-12px Architectural Corners */
+  .rounded-3xl, .rounded-2xl, .rounded-xl,
+  div[class*="rounded-3xl"], div[class*="rounded-2xl"] {
+    border-radius: 12px !important;
+  }
+  button, input, select, textarea, .rounded-lg {
+    border-radius: 9px !important;
+  }
+
+  /* 3. Replace Loud Red Headers & Backgrounds with Deep Ocean Teal-Slate */
+  header,
+  .bg-red-600, .bg-red-700, .bg-red-500,
+  [class*="from-red-"], [class*="to-red-"], [class*="via-red-"] {
+    background: linear-gradient(135deg, #0d3545 0%, #17546b 100%) !important;
+    border-color: #154c61 !important;
+    color: #ffffff !important;
+  }
+
+  /* Soften light red tints into calm ice-blue tints */
+  .bg-red-50, .bg-red-100/50, .bg-rose-50 {
+    background-color: #f0f7fa !important;
+    border-color: #cfe3ec !important;
+    color: #154c61 !important;
+  }
+
+  /* Replace harsh red text/icons with calm Ocean Slate or Sky Blue */
+  .text-red-600, .text-red-700, .text-red-500, .text-rose-600 {
+    color: #154c61 !important;
+  }
+
+  /* Borders & Focus Rings */
+  .border-red-500, .border-red-600, .border-red-200, .border-red-100 {
+    border-color: #cbd5e1 !important;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.14) !important;
+    outline: none !important;
+  }
+
+  /* 4. Primary Action / Submit Buttons (Warm Coral-Terracotta like Habitat Screenshot, or Deep Ocean) */
+  button[type="submit"], #submitBtn, .submit-btn {
+    background: linear-gradient(135deg, #154c61 0%, #0284c7 100%) !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(21, 76, 97, 0.22) !important;
+    letter-spacing: 0.2px;
+  }
+
+  /* Camera Scanner Box - Clean Dashed Slate-Blue Instead of Loud Red */
+  [class*="border-dashed"] {
+    border-color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+    border-radius: 12px !important;
+  }
+
+  /* Clean Subtle Card Shadows */
+  .shadow-xl, .shadow-2xl, .shadow-lg {
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  /* 5. Habitat-Style Dark Slate Notification Card */
+  @keyframes calmNoticeIn {
+    from { opacity: 0; transform: translate(-50%, -14px) scale(0.98); }
+    to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  }
+  #minimalTopNoticePill {
+    position: fixed !important;
+    top: 18px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 999999 !important;
+    width: calc(100% - 32px) !important;
+    max-width: 390px !important;
+    background: #131b2e !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 14px !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 18px 38px rgba(9, 13, 22, 0.38) !important;
+    animation: calmNoticeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+</style>
+
+<!-- LIVE SUPABASE SETTINGS LISTENER (HABITAT-STYLE DARK NOTICE CARD + GALLERY TOGGLE) -->
 <script>
 (function() {
-  const SUPABASE_URL = "https://pkccyqwblmglysibsldh.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrY2N5cXdibG1nbHlzaWJzbGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzkxNzIsImV4cCI6MjA5MTY1NTE3Mn0.c3r14231e3ff74H9_1kR1m25r8q4kF7sA0L_wAxv6zU";
   const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-
   let dismissedSessionNotice = '';
 
-  // 1. Keep #customAlertModal from ever showing legacy notice popups
+  // Block old loud white/red center modal from flashing on Notice
   const origShowCustomAlert = window.showCustomAlert;
   window.showCustomAlert = function(title, message) {
     const t = String(title || '');
@@ -1416,17 +1521,13 @@
     }
   };
 
-  // 2. Gallery Lock / Unlock Handler (Uses your original #galleryUploadBtn)
+  // Gallery Lock / Unlock Handler
   function applyGalleryState(mode) {
     const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
-
-    // Remove any duplicate green bar if present
     const extraBadge = document.getElementById('liveGalleryStatusBadge');
     if (extraBadge) extraBadge.remove();
 
-    // Find original gallery button
-    const allBtns = document.querySelectorAll('button, label, div, span');
-    allBtns.forEach(el => {
+    document.querySelectorAll('button, label, div, span').forEach(el => {
       const txt = (el.textContent || '').trim();
       if (txt === 'গ্যালারি থেকে আপলোড' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
         const container = el.closest('button, label') || el;
@@ -1436,7 +1537,6 @@
       }
     });
 
-    // Update file input capture attribute
     document.querySelectorAll('input[type="file"]').forEach(inp => {
       if (isUnlocked) {
         inp.removeAttribute('capture');
@@ -1446,79 +1546,59 @@
     });
   }
 
-  // 3. Render Minimal Top-Center Notification Pill
+  // Render Sleek Dark-Slate Notification Card (Inspired by Screenshot #2)
   function renderTopNoticePill(text, isActive) {
     const cleanText = String(text || '').replace(/^"+|"+$/g, '').trim();
     const shouldShow = (String(isActive) === 'true' || isActive === true) && cleanText.length > 0;
 
-    let pill = document.getElementById('minimalTopNoticePill');
+    let card = document.getElementById('minimalTopNoticePill');
     if (!shouldShow || dismissedSessionNotice === cleanText) {
-      if (pill) pill.style.display = 'none';
+      if (card) card.style.display = 'none';
       return;
     }
 
-    if (!pill) {
-      pill = document.createElement('div');
-      pill.id = 'minimalTopNoticePill';
-      pill.style.cssText = [
-        'position:fixed',
-        'top:16px',
-        'left:50%',
-        'transform:translateX(-50%)',
-        'z-index:999999',
-        'width:calc(100% - 32px)',
-        'max-width:400px',
-        'background:#ffffff',
-        'border-radius:16px',
-        'border-left:5px solid #dc2626',
-        'box-shadow:0 12px 28px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08)',
-        'padding:12px 14px',
-        'display:flex',
-        'align-items:center',
-        'justify-content:space-between',
-        'gap:12px',
-        'font-family:inherit',
-        'animation:slideDownPill 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
-      ].join(';');
-
-      const styleTag = document.createElement('style');
-      styleTag.textContent = '@keyframes slideDownPill { from { opacity:0; transform:translate(-50%, -24px); } to { opacity:1; transform:translate(-50%, 0); } }';
-      document.head.appendChild(styleTag);
-      document.body.appendChild(pill);
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'minimalTopNoticePill';
+      document.body.appendChild(card);
     }
 
-    pill.style.display = 'flex';
-    pill.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
-        <div style="width:38px;height:38px;border-radius:12px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">
-          🔔
+    card.style.display = 'block';
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#38bdf8;display:inline-block;"></span>
+          <span style="font-size:11px;font-weight:600;letter-spacing:0.5px;color:#94a3b8;text-transform:uppercase;">
+            Program Update
+          </span>
         </div>
-        <div style="min-width:0;flex:1;text-align:left;">
-          <div style="font-size:10px;font-weight:800;letter-spacing:0.6px;color:#dc2626;text-transform:uppercase;margin-bottom:2px;">
-            ADMIN NOTICE
-          </div>
-          <div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;word-break:break-word;">
-            ${cleanText}
-          </div>
-        </div>
+        <button id="closeMinimalNoticeBtn" title="Dismiss" style="background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer;">
+          &#10005;
+        </button>
       </div>
-      <button id="closeMinimalNoticeBtn" title="Close" style="width:30px;height:30px;border-radius:8px;border:none;background:#f1f5f9;color:#475569;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        &times;
-      </button>
+      <div style="font-size:15px;font-weight:600;color:#f8fafc;line-height:1.45;margin-bottom:14px;text-align:left;word-break:break-word;">
+        ${cleanText}
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button id="ackMinimalNoticeBtn" style="background:#e05a47;color:#ffffff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;">
+          ঠিক আছে (Got it)
+        </button>
+      </div>
     `;
 
+    const dismissFn = function() {
+      dismissedSessionNotice = cleanText;
+      card.style.display = 'none';
+    };
+
     const closeBtn = document.getElementById('closeMinimalNoticeBtn');
-    if (closeBtn) {
-      closeBtn.onclick = function() {
-        dismissedSessionNotice = cleanText;
-        pill.style.display = 'none';
-      };
-    }
+    const ackBtn = document.getElementById('ackMinimalNoticeBtn');
+    if (closeBtn) closeBtn.onclick = dismissFn;
+    if (ackBtn) ackBtn.onclick = dismissFn;
   }
 
   async function fetchAndApplySettings() {
     try {
-      // Try Render API first
       const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now());
       const json = await res.json();
       const s = json.settings || json || {};
@@ -1528,9 +1608,7 @@
 
       applyGalleryState(galleryMode);
       renderTopNoticePill(noticeText, noticeActive);
-    } catch (e) {
-      console.warn('Settings sync fallback:', e);
-    }
+    } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
