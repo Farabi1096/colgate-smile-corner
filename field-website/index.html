@@ -445,8 +445,8 @@
 
         // API URL (Connects to your Render Backend API if set, plus Google Sheets)
         const API_BASE_URL = 'https://colgate-smile-api.onrender.com';
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkLhnjgv9VdgHoO1BscC5hKQJJk-0uEFsL4YSQo7GAgdGvK4eZt6OkNvbFEYaLv1Ih/exec';
-        const LOCATION_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu8lVlJwbm2BpxgLFAB_AhsLQpVY4eoxdeQubPRUUQQ3B6dKf7I4ELV7jr-b18IRHc/exec';
+        const SCRIPT_URL = 'https://colgate-smile-api.onrender.com/api/submit';
+        const LOCATION_SCRIPT_URL = 'https://colgate-smile-api.onrender.com/api/submit';
         const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k'; 
 
         let pjpData = [];
@@ -919,7 +919,7 @@
                 document.getElementById('customForm').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
             } catch (err) {
-                window.showAlert("Error sending data.");
+                window.showAlert((err && err.message ? 'Error: ' + err.message : 'Error sending data.'));
             } finally {
                 btn.disabled = false; loader.classList.add('hidden'); text.textContent = "জমা দিন (Submit)";
             }
