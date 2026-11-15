@@ -1050,6 +1050,7 @@
 
 
 
+
 <!-- BULLETPROOF DIRECT SUPABASE FIELD APP ENGINE -->
 <script>
 (function() {
@@ -1057,7 +1058,6 @@
   const SUPA_URL = "SUPABASE_SERVICE_KEY=";
   const SUPA_KEY = "";
 
-  // Track which notice text was dismissed during THIS page load only (resets on page reload!)
   let dismissedForThisPageLoad = '';
   let shownPopupForThisPageLoad = '';
 
@@ -1074,47 +1074,56 @@
   function applyFieldGallery(isUnlocked) {
     localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
 
-    document.querySelectorAll('input[type="file"]').forEach(inp => {
-      if (isUnlocked) {
-        inp.removeAttribute('capture');
-        inp.setAttribute('accept', 'image/*');
-      } else {
-        inp.setAttribute('capture', 'environment');
-        inp.setAttribute('accept', 'image/*');
-      }
-    });
+    // 1. Always remove the extra injected green button if it exists
+    const extraBtn = document.getElementById('cloudFieldGalleryBtn');
+    if (extraBtn) extraBtn.remove();
+    const extraBadge = document.getElementById('liveGalleryStatusBadge');
+    if (extraBadge) extraBadge.remove();
 
-    document.querySelectorAll('[id*="gallery" i], [class*="gallery" i], label[for*="gallery" i]').forEach(el => {
-      if (el.id === 'cloudFieldGalleryBtn') return;
-      if (isUnlocked) {
-        el.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
-        if (el.style && el.style.display === 'none') el.style.display = '';
-        el.disabled = false;
-      }
-    });
-
+    // 2. Configure the file input
     const fileInput = document.querySelector('input[type="file"]');
-    let galBtn = document.getElementById('cloudFieldGalleryBtn');
-    if (isUnlocked) {
-      if (!galBtn && fileInput && fileInput.parentElement) {
-        galBtn = document.createElement('button');
-        galBtn.type = 'button';
-        galBtn.id = 'cloudFieldGalleryBtn';
-        galBtn.style.cssText = 'margin-top:10px;width:100%;padding:11px 14px;background:#16a34a;color:#fff;font-weight:700;font-size:14px;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 10px rgba(22,163,74,0.25);';
-        galBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি আপলোড করুন (Upload from Gallery)';
-        galBtn.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          fileInput.removeAttribute('capture');
-          fileInput.click();
-        };
-        fileInput.parentElement.appendChild(galBtn);
-      } else if (galBtn) {
-        galBtn.style.display = 'flex';
+    if (fileInput) {
+      if (isUnlocked) {
+        fileInput.removeAttribute('capture');
+        fileInput.setAttribute('accept', 'image/*');
+      } else {
+        fileInput.setAttribute('capture', 'environment');
+        fileInput.setAttribute('accept', 'image/*');
       }
-    } else if (galBtn) {
-      galBtn.style.display = 'none';
     }
+
+    // 3. Find the original "গ্যালারি থেকে আপলোড" element and show/hide + bind click
+    const allElements = document.querySelectorAll('button, label, a, div, span');
+    allElements.forEach(el => {
+      const directText = (el.textContent || '').trim();
+      if (directText === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2) {
+        const targetBtn = el.closest('button, label, a') || el;
+
+        if (isUnlocked) {
+          targetBtn.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+          targetBtn.style.display = 'inline-flex';
+          targetBtn.style.cursor = 'pointer';
+          targetBtn.disabled = false;
+
+          // Make sure clicking "গ্যালারি থেকে আপলোড" opens the file picker for gallery upload
+          if (!targetBtn.dataset.galleryBound) {
+            targetBtn.dataset.galleryBound = 'true';
+            targetBtn.addEventListener('click', function(e) {
+              const inp = document.querySelector('input[type="file"]');
+              if (inp && targetBtn.tagName !== 'LABEL') {
+                e.preventDefault();
+                e.stopPropagation();
+                inp.removeAttribute('capture');
+                inp.click();
+              }
+            });
+          }
+        } else {
+          targetBtn.classList.add('hidden');
+          targetBtn.style.display = 'none';
+        }
+      }
+    });
   }
 
   window.__dismissCurrentNotice = function(noticeText) {
@@ -1129,7 +1138,6 @@
     const clean = cleanStr(noticeText);
     const show = isActive && clean.length > 0;
 
-    // Hide any legacy empty '""' notice modals
     document.querySelectorAll('div, p, span').forEach(el => {
       if ((el.textContent || '').trim() === '""') {
         const m = el.closest('.fixed, [style*="fixed"]');
@@ -1148,7 +1156,6 @@
       return;
     }
 
-    // If user already clicked Cancel (X) for this exact notice on this page load, keep it hidden until reload!
     if (dismissedForThisPageLoad === clean) {
       if (banner) banner.style.display = 'none';
       if (modal) modal.style.display = 'none';
@@ -1157,7 +1164,6 @@
 
     const escapedForJs = clean.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
 
-    // 1. Top Notice Banner with Cancel (✕) Button
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'cloudFieldNoticeBanner';
@@ -1176,7 +1182,6 @@
       <button type="button" title="Close Notice" onclick="window.__dismissCurrentNotice('${escapedForJs}')" style="background:#fde68a;border:1px solid #f59e0b;color:#92400e;width:28px;height:28px;border-radius:50%;font-size:16px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">&times;</button>
     `;
 
-    // 2. Center Popup Modal with Top-Right Cancel (✕) Icon + OK Button
     if (shownPopupForThisPageLoad !== clean) {
       shownPopupForThisPageLoad = clean;
       if (!modal) {
