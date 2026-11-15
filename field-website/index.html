@@ -1398,7 +1398,7 @@
 
 
 
-<!-- DEEP HUMAN-CRAFTED UI SYSTEM: OCEAN-SLATE & HABITAT EDITION -->
+<!-- DEEP HUMAN-CRAFTED UI SYSTEM: OCEAN-SLATE & MOBILE FLUSH EDITION -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1429,36 +1429,66 @@
     background-color: var(--slate-canvas) !important;
     color: var(--text-primary) !important;
     -webkit-font-smoothing: antialiased;
-    letter-spacing: -0.01em;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* 2. Eliminate ALL Huge Bubble Corners (Including Tailwind [2rem] / [28px] / 3xl) */
+  /* 2. Remove ALL Rounded Bars & Pill Shapes (Including .rounded-full on Bars/Buttons/Tabs) */
   .rounded-3xl, .rounded-2xl, .rounded-xl,
+  .rounded-b-3xl, .rounded-b-2xl, .rounded-t-3xl, .rounded-t-2xl,
   [class*="rounded-["], [class*="rounded-3xl"], [class*="rounded-2xl"] {
-    border-radius: 12px !important;
+    border-radius: 10px !important;
   }
+
+  /* Fix pill-shaped bars (.rounded-full) on buttons, tabs, and containers */
+  button.rounded-full,
+  a.rounded-full,
+  div.rounded-full:not(.w-2):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7):not(.w-8),
+  nav.rounded-full,
+  span.rounded-full:not(.w-2):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7) {
+    border-radius: 8px !important;
+  }
+
   button, input, select, textarea, .rounded-lg, .rounded-md {
     border-radius: 8px !important;
   }
-  /* Keep small step number circles & avatars round */
-  .w-6.h-6.rounded-full, .w-7.h-7.rounded-full, .w-8.h-8.rounded-full, .w-10.h-10.rounded-full, .w-12.h-12.rounded-full {
-    border-radius: 9999px !important;
+
+  /* 3. Mobile Viewport Fix: Flush Edge-to-Edge Header & App Wrapper (No Rounded Top/Bottom Bars) */
+  header,
+  .sticky.top-0,
+  .fixed.top-0,
+  .fixed.bottom-0,
+  .sticky.bottom-0,
+  [class*="rounded-b-"],
+  [class*="rounded-t-"] {
+    border-radius: 0px !important;
   }
 
-  /* 3. Login Screen Redesign — Inspired by IdeaBoard Ocean Teal-Slate Reference */
+  @media (max-width: 640px) {
+    /* Make main mobile wrapper sit flush without outer rounded bar edges */
+    .max-w-md, .max-w-lg, main > div:first-child {
+      border-radius: 0px !important;
+    }
+    header {
+      border-radius: 0px !important;
+      margin: 0 !important;
+    }
+  }
+
+  /* 4. Login Screen Redesign — Inspired by IdeaBoard Ocean Teal-Slate Reference */
   #loginScreen, #roleSelectionScreen, [id*="login" i][class*="fixed"] {
     background: radial-gradient(circle at 50% 18%, #1e5a70 0%, #0f3140 58%, #091f29 100%) !important;
     color: #ffffff !important;
+    border-radius: 0px !important;
   }
   #loginScreen > div, #roleSelectionScreen > div {
-    background: rgba(255, 255, 255, 0.96) !important;
-    backdrop-filter: blur(16px) !important;
+    background: rgba(255, 255, 255, 0.97) !important;
     border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    border-radius: 14px !important;
-    box-shadow: 0 24px 48px rgba(5, 18, 24, 0.45) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 40px rgba(5, 18, 24, 0.4) !important;
   }
 
-  /* 4. App Top Header & Navigation Bar — Calm Deep Ocean Slate (Zero Harsh Red) */
+  /* 5. App Top Header & Navigation Bar — Calm Deep Ocean Slate & Flat Bottom Edge */
   header,
   .bg-red-600, .bg-red-700, .bg-red-500, .bg-rose-600,
   [class*="from-red-"], [class*="to-red-"], [class*="via-red-"],
@@ -1466,18 +1496,18 @@
     background: linear-gradient(135deg, var(--ocean-900) 0%, var(--ocean-800) 100%) !important;
     border-color: var(--ocean-800) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 10px rgba(15, 49, 64, 0.14) !important;
+    box-shadow: 0 2px 8px rgba(15, 49, 64, 0.12) !important;
   }
 
-  /* Remove all red drop-shadows and glows */
+  /* Remove red shadows & rings */
   [class*="shadow-red-"], [class*="shadow-rose-"] {
-    box-shadow: 0 4px 14px rgba(15, 49, 64, 0.12) !important;
+    box-shadow: 0 3px 10px rgba(15, 49, 64, 0.1) !important;
   }
   [class*="ring-red-"], [class*="ring-rose-"] {
     --tw-ring-color: rgba(2, 132, 199, 0.25) !important;
   }
 
-  /* 5. Convert Light Red Badges / Step Numbers / Highlights into Calm Ice-Teal */
+  /* 6. Convert Light Red Badges / Step Numbers / Highlights into Calm Ice-Teal */
   .bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100,
   [class*="bg-red-50"], [class*="bg-red-100"] {
     background-color: var(--ocean-50) !important;
@@ -1491,12 +1521,12 @@
     border-color: var(--border-hairline) !important;
   }
 
-  /* 6. Clean Architectural Cards & Form Controls */
+  /* 7. Clean Architectural Cards & Form Controls */
   .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white.shadow-lg, .bg-white.shadow-md {
     background-color: var(--card-bg) !important;
     border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
-    border-radius: 12px !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 10px !important;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -1509,7 +1539,6 @@
     padding-top: 10px !important;
     padding-bottom: 10px !important;
     font-size: 14px !important;
-    transition: all 0.18s ease !important;
   }
   input:focus, select:focus, textarea:focus {
     background-color: #ffffff !important;
@@ -1518,55 +1547,43 @@
     outline: none !important;
   }
 
-  /* 7. Step 2 Camera Scanner Box — Clean Slate-Blue Surface Instead of Red Dashed Box */
+  /* 8. Camera Scanner Box */
   [class*="border-dashed"] {
     border: 1.5px dashed #94a3b8 !important;
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    border-radius: 10px !important;
-    transition: all 0.2s ease !important;
-  }
-  [class*="border-dashed"]:hover {
-    border-color: var(--ocean-600) !important;
-    background: var(--ocean-50) !important;
+    border-radius: 8px !important;
   }
 
-  /* 8. Primary Submit CTA — Warm Habitat Coral-Terracotta or Deep Ocean Slate */
+  /* 9. Primary Submit Button — Clean Rectangular 8px Radius (No Pill Bar) */
   button[type="submit"], #submitBtn {
     background: var(--coral-accent) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 9px !important;
+    border-radius: 8px !important;
     font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(224, 90, 71, 0.28) !important;
-    transition: transform 0.15s ease, background-color 0.15s ease !important;
-  }
-  button[type="submit"]:hover, #submitBtn:hover {
-    background: var(--coral-hover) !important;
-  }
-  button[type="submit"]:active, #submitBtn:active {
-    transform: scale(0.99) !important;
+    box-shadow: 0 3px 10px rgba(224, 90, 71, 0.25) !important;
   }
 
-  /* 9. Habitat-Inspired Matte Dark Notification Sheet (From Reference Image #2) */
+  /* 10. Habitat Matte Dark Notification Sheet */
   @keyframes habitatSlideDown {
     0%   { opacity: 0; transform: translate(-50%, -18px) scale(0.97); }
     100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   }
   #minimalTopNoticePill {
     position: fixed !important;
-    top: 16px !important;
+    top: 12px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 999999 !important;
-    width: calc(100% - 28px) !important;
+    width: calc(100% - 24px) !important;
     max-width: 375px !important;
     background: #141923 !important;
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    padding: 18px 20px 16px 20px !important;
-    box-shadow: 0 20px 40px rgba(7, 10, 17, 0.45) !important;
-    animation: habitatSlideDown 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border-radius: 10px !important;
+    padding: 16px 18px 14px 18px !important;
+    box-shadow: 0 18px 36px rgba(7, 10, 17, 0.45) !important;
+    animation: habitatSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 </style>
 
