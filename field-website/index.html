@@ -904,12 +904,18 @@
                             })
                         });
                     } catch (apiErr) { console.warn('Render API sync warning:', apiErr); }
-                    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' });
-                await fetch(LOCATION_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ shop_code: data.shop_code, latitude: globalLatitude, longitude: globalLongitude }),
-                    mode: 'no-cors'
-                });
+                    data.merch_name = localStorage.getItem('colgate_app_merch_name') || data.role || 'Merchandiser';
+                    data.latitude = globalLatitude;
+                    data.longitude = globalLongitude;
+                    const apiRes = await fetch(RENDER_API_BASE + '/api/submissions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const apiResult = await apiRes.json();
+                    if (!apiRes.ok || !apiResult.success) {
+                        throw new Error(apiResult.error || 'Upload failed');
+                    }
                 document.getElementById('customForm').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
             } catch (err) {

@@ -536,7 +536,7 @@
                 slab: document.getElementById("newOutletSlab").value,
                 createdName: document.getElementById("newOutletEntryBy").value
             };
-            await fetch(NEW_OUTLET_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+            await fetch(RENDER_API_BASE + "/api/outlets", { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
             document.getElementById("newOutletModal").classList.add("hidden");
             window.showAlert("New Smile Corner saved successfully!");
         });
@@ -607,3 +607,91 @@
 </body>
 </html>
 
+
+<script>
+        const RENDER_API_BASE = window.RENDER_API_URL || 'https://colgate-smile-api.onrender.com';
+
+        async function loadAllData() {
+            document.getElementById('adminStatsLoader')?.classList.remove('hidden');
+            document.getElementById('adminStatsContent')?.classList.add('hidden');
+            try {
+                const [outletsRes, subsRes] = await Promise.all([
+                    fetch(RENDER_API_BASE + '/api/outlets'),
+                    fetch(RENDER_API_BASE + '/api/submissions')
+                ]);
+                const outletsJson = await outletsRes.json();
+                const subsJson = await subsRes.json();
+
+                const uploadedCodes = new Set(
+                    (Array.isArray(subsJson) ? subsJson : []).map(s => String(s.shop_code || '').toUpperCase().trim())
+                );
+
+                pjpData = (Array.isArray(outletsJson) ? outletsJson : []).map(o => ({
+                    region: o.region || '',
+                    zone: o.zone || '',
+                    territory: o.territory || '',
+                    distCode: o.db_code || '',
+                    townName: o.db_name || '',
+                    code: String(o.shop_code || '').toUpperCase().trim(),
+                    name: o.shop_name || '',
+                    slab: o.slab || '',
+                    routeCode: o.route_code || '',
+                    routeName: o.route_name || '',
+                    visitDay: o.visit_day || '',
+                    merchandiser: o.merchandiser || '',
+                    status: o.status || 'Display',
+                    outletType: o.unit || 'DCC',
+                    lat: o.lat,
+                    lng: o.lng
+                }));
+
+                reportData = pjpData.map(p => ({
+                    code: p.code,
+                    imageUpload: uploadedCodes.has(p.code) ? 'Y' : 'N'
+                }));
+
+                isDataLoaded = true;
+                updateAdminStats();
+                if (typeof loadSubmissionsGallery === 'function') loadSubmissionsGallery();
+            } catch (e) {
+                console.error("Admin Supabase load error:", e);
+            }
+        }
+
+        async function loadMapDataFromSheet() {
+            const loader = document.getElementById('mapLoader');
+            if (loader) { loader.classList.remove('hidden'); loader.classList.add('flex'); }
+            try {
+                if (!isDataLoaded) await loadAllData();
+                const res = await fetch(RENDER_API_BASE + '/api/submissions');
+                const subs = await res.json();
+                const pjpMap = new Map();
+                pjpData.forEach(p => { if (p.code) pjpMap.set(p.code, p); });
+
+                const uniqueLocationsMap = new Map();
+                (Array.isArray(subs) ? subs : []).forEach(s => {
+                    const code = String(s.shop_code || '').toUpperCase().trim();
+                    const lat = parseFloat(s.lat);
+                    const lng = parseFloat(s.lng);
+                    if (code && !isNaN(lat) && !isNaN(lng) && !uniqueLocationsMap.has(code)) {
+                        const pjpMatch = pjpMap.get(code);
+                        uniqueLocationsMap.set(code, {
+                            code,
+                            lat,
+                            lng,
+                            name: pjpMatch ? pjpMatch.name : (s.distribution_name || 'Outlet #' + code),
+                            town: pjpMatch ? pjpMatch.townName : (s.distribution_name || 'Unknown'),
+                            route: pjpMatch ? pjpMatch.routeName : (s.route_name || 'Unknown'),
+                            merchandiser: pjpMatch ? pjpMatch.merchandiser : (s.merch_name || 'Unknown')
+                        });
+                    }
+                });
+                mapDataRaw = Array.from(uniqueLocationsMap.values());
+                populateMapFilters();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                if (loader) { loader.classList.add('hidden'); loader.classList.remove('flex'); }
+            }
+        }
+  </script>
