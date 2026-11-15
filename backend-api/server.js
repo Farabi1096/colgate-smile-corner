@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -148,6 +148,65 @@ app.get("/api/submissions", async (req, res) => {
     res.json(data || []);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ==========================================
+// 7. SYNC GOOGLE SHEET PJP OUTLETS TO SUPABASE
+// ==========================================
+app.get('/api/sync-outlets', async (req, res) => {
+  if (!supabase) return res.status(400).json({ error: 'Supabase not connected' });
+  try {
+    const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k';
+    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=PJP';
+    const response = await fetch(url);
+    const text = await response.text();
+    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const data = JSON.parse(jsonString);
+    const rows = data.table.rows || [];
+
+    const outletsToUpsert = [];
+    const seenCodes = new Set();
+
+    rows.forEach((row) => {
+      const getVal = (idx) => (row.c && row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : '');
+      const shop_code = getVal(5).toUpperCase();
+      const townName = getVal(4);
+      if (!shop_code || !townName || ['OUTLET CODE', 'CODE'].includes(shop_code)) return;
+      if (seenCodes.has(shop_code)) return;
+      seenCodes.add(shop_code);
+
+      outletsToUpsert.push({
+        shop_code,
+        shop_name: getVal(6) || 'Unknown Outlet',
+        region: getVal(0),
+        zone: getVal(1),
+        territory: getVal(2),
+        db_code: getVal(3),
+        db_name: townName,
+        slab: getVal(7),
+        route_code: getVal(8),
+        route_name: getVal(9),
+        visit_day: getVal(10),
+        merchandiser: getVal(11),
+        status: getVal(12) || 'Display',
+        unit: getVal(13) || 'DCC'
+      });
+    });
+
+    // Upsert in batches of 500
+    let inserted = 0;
+    for (let i = 0; i < outletsToUpsert.length; i += 500) {
+      const batch = outletsToUpsert.slice(i, i + 500);
+      const { error } = await supabase.from('outlets').upsert(batch, { onConflict: 'shop_code' });
+      if (error) throw error;
+      inserted += batch.length;
+    }
+
+    res.json({ success: true, totalSyncedOutlets: inserted });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
