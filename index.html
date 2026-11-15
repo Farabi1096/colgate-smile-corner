@@ -4,38 +4,1457 @@
 
 
 
+<!-- BLOCK LEGACY NOTICE FLASH BEFORE RENDER -->
+<script>
+(function() {
+  localStorage.removeItem('app_notice');
+/* legacy notice popup removed */
+  let _origShowAlert = null;
+  Object.defineProperty(window, 'showCustomAlert', {
+    configurable: true,
+    enumerable: true,
+    get: function() {
+      return function(title, message, isSuccess) {
+        const msgStr = String(message || '');
+        const titleStr = String(title || '');
+/* legacy notice popup removed */
+          return; // Completely block legacy notice popup from flashing
+        }
+        if (typeof _origShowAlert === 'function') {
+          return _origShowAlert.apply(this, arguments);
+        }
+      };
+    },
+    set: function(fn) {
+      _origShowAlert = fn;
+    }
+  });
+})();
+</script>
 
-<!-- COLGATE CLINICAL BALANCED UI SYSTEM -->
+  <script>window.RENDER_API_BASE = "https://colgate-smile-api.onrender.com"; const RENDER_API_BASE = "https://colgate-smile-api.onrender.com";</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কোলগেট স্মাইল কর্ণার - Field App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            background: linear-gradient(180deg, #ffe6e6 0%, #f9fafb 25%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #da291c; 
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes float-sparkle {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-5px) scale(1.15) rotate(10deg); opacity: 1; }
+        }
+        .animate-sparkle { animation: float-sparkle 3s ease-in-out infinite; }
+        .sparkle-delay-1 { animation-delay: 1s; }
+        .sparkle-delay-2 { animation-delay: 2s; }
+        @keyframes subtlePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(218, 41, 28, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(218, 41, 28, 0); }
+        }
+        .animate-subtle-pulse { animation: subtlePulse 2s infinite; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .bg-colgate { background-color: #da291c; }
+        .text-colgate { color: #da291c; }
+        .border-colgate { border-color: #da291c; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
+
+    <!-- Custom Alert Box -->
+    <div id="customAlert" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
+            <i data-lucide="info" class="w-12 h-12 text-colgate mx-auto mb-3"></i>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Notice</h3>
+            <p id="customAlertMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed whitespace-pre-line"></p>
+            <button onclick="closeCustomAlert()" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl hover:bg-red-700 transition-all shadow-md w-full">ঠিক আছে</button>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Box -->
+    <div id="customConfirm" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
+            <i data-lucide="help-circle" class="w-12 h-12 text-blue-500 mx-auto mb-3"></i>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">নিশ্চিত করুন</h3>
+            <p id="customConfirmMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed"></p>
+            <div class="flex gap-3">
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition-all">না</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-colgate text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all shadow-md">হ্যাঁ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ROLE SELECTION SCREEN (FIELD STAFF ONLY) ================= -->
+    <div id="roleSelectionContainer" class="flex flex-col h-screen w-full items-center justify-center p-6 text-center bg-white z-[100] fixed inset-0">
+        <div class="mb-8 relative w-full max-w-[280px] mx-auto flex flex-col items-center">
+            <div class="h-24 w-24 mx-auto mb-4 relative z-10 flex items-center justify-center">
+                <img src="https://i.postimg.cc/85V7jkK5/Smile-Image.png" alt="Colgate Smile" class="w-full h-full object-contain drop-shadow-sm">
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight relative z-10">Smile Corner</h1>
+            <p class="text-xs text-gray-400 mt-1">Field Operations Portal</p>
+        </div>
+
+        <div class="w-full max-w-[280px] space-y-4 relative z-10">
+            <button type="button" id="btnRoleMerch" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-white border-[1.5px] border-gray-200 rounded-xl hover:border-colgate hover:bg-red-50 transition-all duration-200 shadow-sm group">
+                <i data-lucide="user" class="h-[18px] w-[18px] absolute left-4 text-gray-400 group-hover:text-colgate transition-colors"></i>
+                <span class="font-semibold text-[14px] text-gray-800 group-hover:text-colgate transition-colors">Merchandiser</span>
+            </button>
+
+            <button type="button" id="btnRoleSR" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-white border-[1.5px] border-gray-200 rounded-xl hover:border-colgate hover:bg-red-50 transition-all duration-200 shadow-sm group">
+                <i data-lucide="briefcase" class="h-[18px] w-[18px] absolute left-4 text-gray-400 group-hover:text-colgate transition-colors"></i>
+                <span class="font-semibold text-[14px] text-gray-800 group-hover:text-colgate transition-colors">Sales Team (TM / SR)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Merchandiser Login Modal -->
+    <div id="merchLoginModal" class="fixed inset-0 bg-black/60 z-[400] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="user" class="w-5 h-5 text-colgate mr-2"></i> Merchandiser Login</h3>
+                <button onclick="closeMerchLoginModal()" class="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 p-1.5 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <p class="text-[13px] text-gray-500 mb-4 text-center">আপনার নাম সিলেক্ট করে লগইন করুন</p>
+            <div id="merchModalLoader" class="hidden flex-col items-center justify-center py-6">
+                <div class="loader mb-3"></div>
+                <span class="text-[12px] text-gray-500 mt-2">নাম লোড হচ্ছে...</span>
+            </div>
+            <select id="modalMerchSelect" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[14px] outline-none focus:border-colgate focus:ring-1 focus:ring-colgate transition-all mb-3 font-medium text-gray-700 custom-scrollbar">
+                <option value="" disabled selected>আপনার নাম খুঁজুন...</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ================= MAIN FIELD APP CONTAINER ================= -->
+    <div id="mainAppContainer" class="hidden bg-white w-full max-w-md sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
+        <!-- Header -->
+        <div class="bg-colgate px-5 py-4 sm:py-6 text-center sm:rounded-t-2xl sticky top-0 z-50 shadow-md relative">
+            <button onclick="logoutRole()" class="absolute left-4 top-4 sm:top-6 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors flex items-center justify-center backdrop-blur-sm">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+            <div class="flex items-center justify-center mb-1.5">
+                <h2 class="text-lg sm:text-xl font-bold text-white tracking-wide">কোলগেট স্মাইল কর্ণার</h2>
+            </div>
+            <p id="headerSubtitle" class="text-white/90 text-[11px] sm:text-[12px] leading-relaxed px-3 py-0.5 bg-red-800/30 rounded-full inline-block font-medium">
+                Loading Panel...
+            </p>
+        </div>
+
+        <!-- Content Area -->
+        <div class="px-4 sm:px-5 py-5 flex-grow overflow-y-auto">
+            <!-- Toggle Tabs -->
+            <div id="tabsContainer" class="flex p-1 bg-gray-100 rounded-xl mb-6 shadow-inner overflow-x-auto hide-scrollbar">
+                <button type="button" id="tabForm" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg bg-white shadow-sm text-colgate transition-all whitespace-nowrap px-2">
+                    <i data-lucide="camera" class="h-4 w-4 mr-1.5"></i> ফর্ম
+                </button>
+                <button type="button" id="tabMyDay" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
+                    <i data-lucide="clock" class="h-4 w-4 mr-1.5"></i> আমার দিন
+                </button>
+                <button type="button" id="tabReport" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
+                    <i data-lucide="bar-chart-2" class="h-4 w-4 mr-1.5"></i> রিপোর্ট
+                </button>
+            </div>
+
+            <!-- VIEW 1: FORM -->
+            <div id="formView" class="animate-fade-in">
+                <form id="customForm" class="space-y-6">
+                    <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
+                        <div class="border-b border-gray-200 pb-3 mb-4 flex justify-between items-center gap-2">
+                            <h3 class="text-[15px] sm:text-[17px] font-bold text-gray-800 flex items-center leading-tight">
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2 font-bold shrink-0">১</span>
+                                দোকানের তথ্য
+                            </h3>
+                            <div class="flex bg-gray-100 p-1 rounded-xl w-[170px] sm:w-[210px] shrink-0 shadow-inner border border-gray-200 mr-1">
+                                <label class="flex-1 text-center cursor-pointer m-0">
+                                    <input type="radio" name="outlet_type" value="DCC" class="peer hidden" required>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">DCC</div>
+                                </label>
+                                <label class="flex-1 text-center cursor-pointer m-0">
+                                    <input type="radio" name="outlet_type" value="ROB" class="peer hidden" required>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">ROB</div>
+                                </label>
+                                <label class="flex-1 text-center cursor-pointer m-0">
+                                    <input type="radio" name="outlet_type" value="SMT" class="peer hidden" required>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">SMT</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="input-group relative">
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">মাস <span class="text-colgate">*</span></label>
+                                <select name="display_month" id="formMonth" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium"></select>
+                            </div>
+
+                            <div class="input-group relative">
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">এরিয়া <span class="text-colgate">*</span></label>
+                                <select name="area_name" id="areaSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                    <option value="" disabled selected>প্রথমে টাইপ সিলেক্ট করুন</option>
+                                </select>
+                            </div>
+
+                            <div id="srTerritoryGroup" class="input-group relative hidden">
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">টেরিটোরি <span class="text-colgate">*</span></label>
+                                <select name="territory" id="territorySelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                    <option value="" disabled selected>প্রথমে এরিয়া সিলেক্ট করুন</option>
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="db_code" id="formDbCode">
+
+                            <div class="input-group relative">
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">ডিস্ট্রিবিউশন নাম <span class="text-colgate">*</span></label>
+                                <select name="distribution_name" id="distSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                    <option value="" disabled selected>প্রথমে এরিয়া/টেরিটোরি সিলেক্ট করুন</option>
+                                </select>
+                            </div>
+
+                            <div id="srFieldsGroup" class="space-y-4 hidden">
+                                <div class="input-group relative">
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">রুট নাম <span class="text-colgate">*</span></label>
+                                    <select name="sr_route" id="srRouteSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                        <option value="" disabled selected>প্রথমে ডিস্ট্রিবিউটর সিলেক্ট করুন</option>
+                                    </select>
+                                </div>
+                                <div class="input-group relative">
+                                    <label id="srOutletLabel" class="block text-[13px] font-bold text-gray-700 mb-1.5">আউটলেট (শুধুমাত্র স্ল্যাব) <span class="text-colgate">*</span></label>
+                                    <select name="sr_outlet" id="srOutletSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                        <option value="" disabled selected>প্রথমে রুট সিলেক্ট করুন</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="merchFieldsGroup" class="space-y-4">
+                                <div class="input-group relative">
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">স্ল্যাব <span class="text-colgate">*</span></label>
+                                    <select name="slab" id="formSlab" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium">
+                                        <option value="" disabled selected>লোড হচ্ছে...</option>
+                                    </select>
+                                </div>
+                                <div class="input-group relative">
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">কোড <span class="text-colgate">*</span></label>
+                                    <input type="text" name="shop_code" id="formShopCode" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none uppercase font-semibold tracking-wide" placeholder="BDC...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Camera -->
+                    <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
+                        <div class="border-b border-gray-200 pb-3 mb-4">
+                            <h3 class="text-[17px] font-bold text-gray-800 flex items-center">
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2.5 font-bold">২</span>
+                                ছবি স্ক্যান
+                            </h3>
+                        </div>
+
+                        <div class="input-group relative">
+                            <input type="file" id="manualFileInput" accept="image/*" class="hidden">
+                            <div id="cameraTriggerContainer" class="flex flex-col items-center">
+                                <button type="button" id="openCameraBtn" class="flex flex-row items-center justify-center w-full py-4 border-[1.5px] border-dashed border-red-300 rounded-2xl bg-white hover:bg-red-50 transition-colors group">
+                                    <div class="bg-red-50 p-2 rounded-full mr-3 shadow-sm border border-red-100">
+                                        <i data-lucide="scan" class="h-[22px] w-[22px] text-colgate"></i>
+                                    </div>
+                                    <div class="flex flex-col items-start ml-3">
+                                        <span class="text-[15px] font-bold text-colgate leading-tight">স্মার্ট ক্যামেরা স্ক্যানার</span>
+                                        <span class="text-[11px] text-red-400 font-medium">ছবি তুলতে এখানে ক্লিক করুন</span>
+                                    </div>
+                                </button>
+                                <button type="button" id="manualUploadBtn" class="hidden mt-3 text-[13px] font-medium text-gray-500 hover:text-colgate transition-colors flex items-center justify-center">
+                                    <i data-lucide="cloud-upload" class="h-4 w-4 mr-1.5"></i> গ্যালারি থেকে আপলোড
+                                </button>
+                            </div>
+
+                            <div id="cameraContainer" class="hidden mt-2 relative">
+                                <div class="relative rounded-2xl overflow-hidden bg-black aspect-[3/4] w-full flex items-center justify-center shadow-inner">
+                                    <video id="cameraFeed" autoplay playsinline class="w-full h-full object-cover"></video>
+                                    <div class="absolute top-3 inset-x-0 flex justify-center z-20 pointer-events-none px-4">
+                                        <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5">
+                                            <i data-lucide="map-pin" class="h-3.5 w-3.5 text-colgate"></i>
+                                            <span id="cameraLocationBadge" class="text-white text-[11px] font-medium truncate">লোকেশন খোঁজা হচ্ছে...</span>
+                                        </div>
+                                    </div>
+                                    <div class="absolute inset-x-0 bottom-6 flex justify-center items-center z-20 px-6">
+                                        <button type="button" id="captureBtn" class="bg-white rounded-full p-1 animate-subtle-pulse shadow-lg mx-auto">
+                                            <div class="w-12 h-12 rounded-full border-[3px] border-colgate flex items-center justify-center bg-white">
+                                                <div class="w-9 h-9 rounded-full bg-colgate flex items-center justify-center text-white"><i data-lucide="camera" class="h-4 w-4"></i></div>
+                                            </div>
+                                        </button>
+                                        <button type="button" id="switchCameraBtn" class="absolute right-6 bg-black/40 p-2.5 rounded-full text-white backdrop-blur-md border border-white/20">
+                                            <i data-lucide="switch-camera" class="h-5 w-5"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button type="button" id="closeCameraBtn" class="mt-4 text-[13px] font-semibold text-gray-500 w-full text-center hover:text-red-500">ক্যামেরা বন্ধ করুন</button>
+                            </div>
+
+                            <div id="previewContainer" class="hidden mt-4 relative animate-fade-in">
+                                <div class="relative rounded-2xl overflow-hidden border-2 border-colgate shadow-md w-full bg-black mb-4">
+                                    <img id="capturedImagePreview" class="w-full h-auto block" alt="Preview">
+                                    <button type="button" id="retakeBtn" class="absolute top-3 right-3 bg-white/90 text-colgate rounded-full p-2.5 shadow-lg">
+                                        <i data-lucide="refresh-cw" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <canvas id="processCanvas" class="hidden"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 pb-2">
+                        <button type="submit" id="submitBtn" class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-md text-[15px] font-bold text-white bg-colgate hover:bg-red-700 transition-all">
+                            <i data-lucide="send" class="h-[18px] w-[18px] mr-2" id="btnIcon"></i>
+                            <span id="btnText">জমা দিন (Submit)</span>
+                            <div id="btnLoader" class="loader hidden !border-t-white ml-2"></div>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="successMessage" class="hidden text-center py-8 animate-fade-in">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 mb-4 border border-green-100">
+                        <i data-lucide="check-circle-2" class="h-8 w-8 text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">সফলভাবে জমা দেওয়া হয়েছে!</h3>
+                    <button onclick="resetForm()" class="bg-gray-50 text-gray-700 border border-gray-200 font-semibold py-2.5 px-6 rounded-full mt-4 text-[14px]">আরেকটি ফর্ম পূরণ করুন</button>
+                </div>
+            </div>
+
+            <!-- VIEW 2: MY DAY -->
+            <div id="myDayView" class="hidden animate-fade-in">
+                <div class="mb-3 text-left">
+                    <div class="flex justify-between items-center mb-2.5 gap-2">
+                        <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
+                            <i data-lucide="map" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> আজকের PJP
+                        </h3>
+                        <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="myday_outlet_type" value="ALL" class="peer hidden" checked>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">All</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="myday_outlet_type" value="DCC" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="myday_outlet_type" value="ROB" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="myday_outlet_type" value="SMT" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-100 p-2 rounded-xl shadow-sm mb-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <select id="myDayTownSelect" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (টাউন)</option></select>
+                            <select id="myDayVisitDaySelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (বার)</option></select>
+                            <select id="myDayRouteSelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Route (রুট)</option></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 p-2.5 rounded-xl shadow-sm mb-2.5">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-gray-50 p-1.5 text-center flex flex-col rounded-lg">
+                            <span class="text-[9px] text-gray-500 font-bold uppercase">Total Outlet</span>
+                            <span id="pjpTotalCount" class="text-[14px] font-extrabold text-gray-800">0</span>
+                        </div>
+                        <div class="bg-green-50 p-1.5 text-center flex flex-col rounded-lg">
+                            <span class="text-[9px] text-green-600 font-bold uppercase">Uploaded</span>
+                            <span id="pjpUploadedCount" class="text-[14px] font-extrabold text-green-700">0</span>
+                        </div>
+                        <div class="bg-red-50 p-1.5 text-center flex flex-col rounded-lg">
+                            <span class="text-[9px] text-red-500 font-bold uppercase">Remaining</span>
+                            <span id="pjpRemainingCount" class="text-[14px] font-extrabold text-red-600">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="myDayLoader" class="hidden flex flex-col items-center justify-center py-6"><div class="loader mb-3"></div></div>
+                <div id="myDayPjpContainer" class="hidden bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                    <div class="border-b border-gray-100 pb-2 mb-2.5">
+                        <h4 class="font-bold text-[13px] text-gray-800 mb-2 truncate">রুট: <span id="myDaySelectedRouteLabel" class="text-colgate">All</span></h4>
+                        <div class="flex gap-2">
+                            <div class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Display: <span id="myDayDisplayCount">0</span></div>
+                            <div class="bg-gray-50 text-gray-600 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Regular: <span id="myDayRegularCount">0</span></div>
+                        </div>
+                    </div>
+                    <div id="myDayPjpList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar pb-10"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: REPORT -->
+            <div id="reportView" class="hidden animate-fade-in">
+                <div class="mb-3 text-left">
+                    <div class="flex justify-between items-center mb-2.5 gap-2">
+                        <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
+                            <i data-lucide="bar-chart-2" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> আউটলেট রিপোর্ট
+                        </h3>
+                        <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="report_outlet_type" value="ALL" class="peer hidden" checked>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">All</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="report_outlet_type" value="DCC" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="report_outlet_type" value="ROB" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer m-0">
+                                <input type="radio" name="report_outlet_type" value="SMT" class="peer hidden">
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="onePagerContainer" class="animate-fade-in pb-1">
+                        <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl shadow-sm mb-3">
+                            <div class="grid grid-cols-2 gap-2 mb-2">
+                                <select id="onePagerTown" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (টাউন)</option></select>
+                                <input type="date" id="onePagerDate" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <select id="onePagerDay" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (বার)</option></select>
+                                <select id="onePagerCluster" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Cluster</option></select>
+                            </div>
+                        </div>
+
+                        <div id="snapshotArea" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            <div class="bg-gradient-to-r from-red-600 to-red-500 p-4">
+                                <h3 id="snapshotHeaderMerch" class="text-white text-[16px] font-extrabold">Merchandiser Name</h3>
+                                <p id="snapshotHeaderDetails" class="text-red-100 text-[12px] mt-1 font-medium">All Data</p>
+                            </div>
+                            <div id="onePagerStatsContent" class="bg-white p-4"></div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="button" onclick="shareSnapshot(this)" class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-md text-[15px] font-bold text-white bg-[#25D366] hover:bg-[#128C7E] transition-all">
+                                রিপোর্ট শেয়ার করুন
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pb-6 pt-2 flex flex-col items-center bg-white sm:rounded-b-2xl">
+            <p class="text-[11px] text-center text-gray-400 font-medium">Colgate Smile Corner Program &copy; 2026</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // API URL (Connects to your Render Backend API if set, plus Google Sheets)
+        const API_BASE_URL = 'https://colgate-smile-api.onrender.com';
+        const SCRIPT_URL = 'https://colgate-smile-api.onrender.com/api/submit';
+        const LOCATION_SCRIPT_URL = 'https://colgate-smile-api.onrender.com/api/submit';
+        const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k'; 
+
+        let pjpData = [];
+        let reportData = [];
+        let isDataLoaded = false;
+        let stream = null;
+        let capturedImageData = null;
+        let finalLocationName = "Location Unknown";
+        let globalLatitude = "Not Found";
+        let globalLongitude = "Not Found";
+        let isLocationAcquired = false;
+        let currentFacingMode = 'environment';
+
+        window.showAlert = (msg) => {
+            document.getElementById('customAlertMsg').textContent = msg;
+            const modal = document.getElementById('customAlert');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); }, 10);
+        };
+        window.closeCustomAlert = () => {
+            const modal = document.getElementById('customAlert');
+            modal.classList.add('opacity-0'); modal.children[0].classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        };
+
+        let confirmCallback = null;
+        window.showConfirm = (msg, callback) => {
+            document.getElementById('customConfirmMsg').textContent = msg;
+            confirmCallback = callback;
+            const modal = document.getElementById('customConfirm');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); }, 10);
+        };
+        window.closeCustomConfirm = (isConfirmed) => {
+            const modal = document.getElementById('customConfirm');
+            modal.classList.add('opacity-0'); modal.children[0].classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); if (confirmCallback) confirmCallback(isConfirmed); }, 300);
+        };
+
+        // Sync global settings (Maintenance, Notice, Gallery Lock) from Backend API
+        async function syncServerSettings() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/settings`);
+                if (res.ok) {
+                    const settings = await res.json();
+                    if (settings.maintenance_mode === true) {
+                        document.body.innerHTML = `<div class="flex flex-col items-center justify-center h-screen bg-white text-center p-6"><h2 class="text-xl font-bold text-gray-800 mb-2">System Maintenance</h2><p class="text-gray-500 text-[13px]">অ্যাপটিতে বর্তমানে আপডেটের কাজ চলছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।</p></div>`;
+                        return;
+                    }
+                    if (settings.global_notice && !sessionStorage.getItem('notice_seen')) {
+/* legacy notice popup removed */;
+                        sessionStorage.setItem('notice_seen', 'true');
+                    }
+                    if (settings.gallery_unlocked === true) {
+                        document.getElementById('manualUploadBtn')?.classList.remove('hidden');
+                    }
+                }
+            } catch (e) {
+                // Fallback if API is waking up
+            }
+        }
+
+        function getGPSLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) { resolve(false); return; }
+                const locBadge = document.getElementById('cameraLocationBadge');
+                navigator.geolocation.getCurrentPosition(
+                    (p) => {
+                        globalLatitude = p.coords.latitude.toFixed(6);
+                        globalLongitude = p.coords.longitude.toFixed(6);
+                        finalLocationName = `${globalLatitude}, ${globalLongitude}`;
+                        if (locBadge) locBadge.textContent = finalLocationName;
+                        isLocationAcquired = true;
+                        resolve(true);
+                    },
+                    () => {
+                        if (locBadge) locBadge.textContent = "GPS Off / Denied";
+                        isLocationAcquired = false;
+                        resolve(false);
+                    },
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                );
+            });
+        }
+
+        function populateMonthDropdown() {
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const d = new Date();
+            const currentMonth = monthNames[d.getMonth()];
+            const prevMonth = monthNames[(d.getMonth() + 11) % 12];
+            const formMonth = document.getElementById('formMonth');
+            if (formMonth) {
+                formMonth.innerHTML = `<option value="${currentMonth}">${currentMonth}</option><option value="${prevMonth}">${prevMonth}</option>`;
+            }
+        }
+
+        function getFilteredPJP() {
+            const role = localStorage.getItem('colgate_app_role');
+            const merchName = localStorage.getItem('colgate_app_merch_name');
+            if (role === 'merchandiser' && merchName) {
+                return pjpData.filter(i => i.merchandiser === merchName);
+            }
+            return pjpData;
+        }
+
+        async function fetchSheetData(tabName) {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${tabName}&t=${new Date().getTime()}`;
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                return JSON.parse(jsonString).table.rows;
+            } catch (error) { return []; }
+        }
+
+        async function loadAllData() {
+            const pjpRows = await fetchSheetData('PJP');
+            pjpData = pjpRows.map(row => {
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
+                return {
+                    region: getVal(0), zone: getVal(1), territory: getVal(2), distCode: getVal(3),
+                    townName: getVal(4), code: getVal(5), name: getVal(6), slab: getVal(7),
+                    routeCode: getVal(8), routeName: getVal(9), visitDay: getVal(10),
+                    merchandiser: getVal(11), status: getVal(12), outletType: getVal(13),
+                    clusterName: getVal(14) || getVal(9)
+                };
+            }).filter(i => i.townName && !["TOWN NAME", "DB NAME", "TOWN"].includes(i.townName.toUpperCase()));
+
+            const reportRows = await fetchSheetData('Report');
+            reportData = reportRows.map(row => {
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
+                return { code: getVal(3), imageUpload: getVal(13) };
+            }).filter(i => i.code !== "Outlet Code");
+
+            isDataLoaded = true;
+            populateDropdowns();
+            initOnePagerFilters();
+        }
+
+        function checkRole() {
+            const role = localStorage.getItem('colgate_app_role');
+            const roleSelection = document.getElementById('roleSelectionContainer');
+            const mainApp = document.getElementById('mainAppContainer');
+            const tabsContainer = document.getElementById('tabsContainer');
+
+            if (!role) {
+                roleSelection.classList.remove('hidden'); roleSelection.classList.add('flex');
+                mainApp.classList.add('hidden'); mainApp.classList.remove('flex');
+                return;
+            }
+            roleSelection.classList.add('hidden'); roleSelection.classList.remove('flex');
+            mainApp.classList.remove('hidden'); mainApp.classList.add('flex');
+
+            if (role === 'merchandiser') {
+                const merchName = localStorage.getItem('colgate_app_merch_name');
+                document.getElementById('headerSubtitle').textContent = merchName ? `Merchandiser: ${merchName}` : "Merchandiser Panel";
+                tabsContainer.classList.remove('hidden');
+                document.getElementById('srFieldsGroup').classList.add('hidden');
+                document.getElementById('srTerritoryGroup').classList.add('hidden');
+                document.getElementById('merchFieldsGroup').classList.remove('hidden');
+            } else {
+                document.getElementById('headerSubtitle').textContent = "Sales Team (TM / SR) Panel";
+                tabsContainer.classList.add('hidden');
+                document.getElementById('srFieldsGroup').classList.remove('hidden');
+                document.getElementById('srTerritoryGroup').classList.remove('hidden');
+                document.getElementById('merchFieldsGroup').classList.add('hidden');
+            }
+            if (!isDataLoaded) loadAllData();
+            else populateDropdowns();
+        }
+
+        window.closeMerchLoginModal = () => {
+            const modal = document.getElementById('merchLoginModal');
+            modal.classList.add('opacity-0'); modal.children[0].classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        };
+
+        document.getElementById('btnRoleMerch')?.addEventListener('click', async () => {
+            const modal = document.getElementById('merchLoginModal');
+            const select = document.getElementById('modalMerchSelect');
+            const loader = document.getElementById('merchModalLoader');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); }, 10);
+
+            if (pjpData.length === 0) {
+                select.classList.add('hidden'); loader.classList.remove('hidden'); loader.classList.add('flex');
+                await loadAllData();
+                loader.classList.add('hidden'); loader.classList.remove('flex'); select.classList.remove('hidden');
+            }
+            const merchs = [...new Set(pjpData.map(p => p.merchandiser))].filter(Boolean).sort();
+            select.innerHTML = '<option value="" disabled selected>আপনার নাম খুঁজুন...</option>' + merchs.map(m => `<option value="${m}">${m}</option>`).join('');
+        });
+
+        document.getElementById('modalMerchSelect')?.addEventListener('change', (e) => {
+            if (e.target.value) {
+                localStorage.setItem('colgate_app_role', 'merchandiser');
+                localStorage.setItem('colgate_app_merch_name', e.target.value);
+                closeMerchLoginModal();
+                checkRole();
+            }
+        });
+
+        document.getElementById('btnRoleSR')?.addEventListener('click', () => {
+            localStorage.setItem('colgate_app_role', 'sr');
+            localStorage.removeItem('colgate_app_merch_name');
+            checkRole();
+        });
+
+        window.logoutRole = () => {
+            window.showConfirm("আপনি কি লগআউট করতে চান?", (confirmed) => {
+                if (confirmed) {
+                    localStorage.removeItem('colgate_app_role');
+                    localStorage.removeItem('colgate_app_merch_name');
+                    checkRole();
+                }
+            });
+        };
+
+        function populateDropdowns() {
+            const currentPJP = getFilteredPJP();
+            const formSelectedType = document.querySelector('input[name="outlet_type"]:checked')?.value;
+            const areaSelect = document.getElementById('areaSelect');
+            if (areaSelect && formSelectedType) {
+                const formPjp = currentPJP.filter(i => i.outletType && i.outletType.toUpperCase() === formSelectedType.toUpperCase());
+                const areas = [...new Set(formPjp.map(i => i.region))].filter(Boolean).sort();
+                areaSelect.innerHTML = '<option value="" disabled selected>এরিয়া সিলেক্ট করুন</option>' + areas.map(a => `<option value="${a}">${a}</option>`).join('');
+                areaSelect.disabled = areas.length === 0;
+            }
+
+            const uniqueSlabs = [...new Set(currentPJP.map(i => i.slab))].filter(Boolean).sort();
+            const formSlab = document.getElementById('formSlab');
+            if (formSlab) {
+                formSlab.innerHTML = '<option value="" disabled selected>স্ল্যাব সিলেক্ট করুন</option>' + uniqueSlabs.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+
+            const myDayTownSelect = document.getElementById('myDayTownSelect');
+            if (myDayTownSelect) {
+                const towns = [...new Set(currentPJP.map(i => i.townName))].filter(Boolean).sort();
+                myDayTownSelect.innerHTML = '<option value="">Town (টাউন)</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
+                myDayTownSelect.disabled = towns.length === 0;
+            }
+        }
+
+        document.getElementsByName('outlet_type').forEach(r => r.addEventListener('change', populateDropdowns));
+
+        document.getElementById('areaSelect')?.addEventListener('change', (e) => {
+            const selectedArea = e.target.value;
+            const selectedType = document.querySelector('input[name="outlet_type"]:checked')?.value;
+            let filtered = getFilteredPJP().filter(i => i.region === selectedArea && (!selectedType || i.outletType.toUpperCase() === selectedType));
+            const dists = [...new Set(filtered.map(i => i.townName))].filter(Boolean).sort();
+            const distSelect = document.getElementById('distSelect');
+            distSelect.innerHTML = '<option value="" disabled selected>ডিস্ট্রিবিউশন সিলেক্ট করুন</option>' + dists.map(d => `<option value="${d}">${d}</option>`).join('');
+            distSelect.disabled = dists.length === 0;
+        });
+
+        document.getElementById('distSelect')?.addEventListener('change', (e) => {
+            const match = getFilteredPJP().find(item => item.townName === e.target.value);
+            if (match) document.getElementById('formDbCode').value = match.distCode;
+        });
+
+        // My Day Filters & Render
+        document.getElementById('myDayTownSelect')?.addEventListener('change', (e) => {
+            const town = e.target.value;
+            let filtered = getFilteredPJP().filter(i => !town || i.townName === town);
+            const days = [...new Set(filtered.map(i => i.visitDay))].filter(Boolean).sort();
+            const daySelect = document.getElementById('myDayVisitDaySelect');
+            daySelect.innerHTML = '<option value="">Day (বার)</option>' + days.map(d => `<option value="${d}">${d}</option>`).join('');
+            daySelect.disabled = false;
+            renderMyDayPJP();
+        });
+        document.getElementById('myDayVisitDaySelect')?.addEventListener('change', (e) => {
+            const town = document.getElementById('myDayTownSelect').value;
+            const day = e.target.value;
+            let filtered = getFilteredPJP().filter(i => (!town || i.townName === town) && (!day || i.visitDay === day));
+            const routes = [...new Set(filtered.map(i => i.routeName))].filter(Boolean).sort();
+            const routeSelect = document.getElementById('myDayRouteSelect');
+            routeSelect.innerHTML = '<option value="">Route (রুট)</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            routeSelect.disabled = false;
+            renderMyDayPJP();
+        });
+        document.getElementById('myDayRouteSelect')?.addEventListener('change', renderMyDayPJP);
+        document.getElementsByName('myday_outlet_type').forEach(r => r.addEventListener('change', renderMyDayPJP));
+
+        function renderMyDayPJP() {
+            const town = document.getElementById('myDayTownSelect')?.value;
+            const day = document.getElementById('myDayVisitDaySelect')?.value;
+            const route = document.getElementById('myDayRouteSelect')?.value;
+            const selectedType = document.querySelector('input[name="myday_outlet_type"]:checked')?.value;
+
+            let outlets = getFilteredPJP();
+            if (town) outlets = outlets.filter(i => i.townName === town);
+            if (day) outlets = outlets.filter(i => i.visitDay === day);
+            if (route) outlets = outlets.filter(i => i.routeName === route);
+            if (selectedType && selectedType !== 'ALL') outlets = outlets.filter(i => i.outletType.toUpperCase() === selectedType);
+
+            let completedCount = 0, displayCount = 0, regularCount = 0, html = '';
+            outlets.forEach(out => {
+                const outCode = (out.code || "").toUpperCase().trim();
+                const reportInfo = reportData.find(r => r.code && r.code.toUpperCase().trim() === outCode);
+                const isCompleted = reportInfo && (reportInfo.imageUpload === 'Y' || reportInfo.imageUpload === 'Yes');
+                if (isCompleted) completedCount++;
+                if ((out.status || "").toLowerCase().includes('regular')) regularCount++; else displayCount++;
+
+                html += `<div class="flex items-center justify-between p-3 rounded-lg border ${isCompleted ? 'border-green-400 bg-green-50/60' : 'border-red-200 bg-white'} mb-2">
+                    <div>
+                        <div class="font-bold text-[13px] text-gray-800">${out.name}</div>
+                        <div class="text-[11px] text-gray-500">#${outCode} • ${out.slab || 'Regular'}</div>
+                    </div>
+                    <span class="px-2 py-1 rounded text-[10px] font-bold ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-colgate text-white'}">${isCompleted ? 'Uploaded' : 'Pending'}</span>
+                </div>`;
+            });
+
+            document.getElementById('pjpTotalCount').textContent = outlets.length;
+            document.getElementById('pjpUploadedCount').textContent = completedCount;
+            document.getElementById('pjpRemainingCount').textContent = outlets.length - completedCount;
+            document.getElementById('myDayDisplayCount').textContent = displayCount;
+            document.getElementById('myDayRegularCount').textContent = regularCount;
+            document.getElementById('myDayPjpContainer').classList.remove('hidden');
+            document.getElementById('myDayPjpList').innerHTML = html || '<div class="text-center py-4 text-xs text-gray-400">No outlets found</div>';
+        }
+
+        // One Pager Report
+        function initOnePagerFilters() {
+            const towns = [...new Set(getFilteredPJP().map(i => i.townName))].filter(Boolean).sort();
+            const townSel = document.getElementById('onePagerTown');
+            if (townSel) {
+                townSel.innerHTML = '<option value="">All Towns</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
+                townSel.disabled = false;
+            }
+            renderOnePagerReport();
+        }
+        document.getElementById('onePagerTown')?.addEventListener('change', renderOnePagerReport);
+
+        function renderOnePagerReport() {
+            const outlets = getFilteredPJP();
+            const total = outlets.length;
+            let visited = 0;
+            outlets.forEach(o => {
+                const rep = reportData.find(r => r.code.toUpperCase() === o.code.toUpperCase());
+                if (rep && rep.imageUpload === 'Y') visited++;
+            });
+            const pct = total > 0 ? Math.round((visited / total) * 100) : 0;
+            document.getElementById('snapshotHeaderMerch').textContent = localStorage.getItem('colgate_app_merch_name') || 'Sales Team';
+            document.getElementById('onePagerStatsContent').innerHTML = `
+                <div class="grid grid-cols-4 gap-2 text-center bg-gray-50 p-3 rounded-xl border">
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Count</div><div class="text-lg font-black">${total}</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Visited</div><div class="text-lg font-black text-green-600">${visited}</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Visit %</div><div class="text-lg font-black text-blue-600">${pct}%</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Remain</div><div class="text-lg font-black text-red-600">${total - visited}</div></div>
+                </div>`;
+        }
+
+        // Tabs
+        const tabBtns = ['tabForm', 'tabMyDay', 'tabReport'];
+        const viewIds = ['formView', 'myDayView', 'reportView'];
+        tabBtns.forEach((tabId, idx) => {
+            document.getElementById(tabId)?.addEventListener('click', () => {
+                tabBtns.forEach(t => document.getElementById(t).classList.remove('bg-white', 'shadow-sm', 'text-colgate'));
+                document.getElementById(tabId).classList.add('bg-white', 'shadow-sm', 'text-colgate');
+                viewIds.forEach(v => document.getElementById(v).classList.add('hidden'));
+                document.getElementById(viewIds[idx]).classList.remove('hidden');
+                if (idx === 1) renderMyDayPJP();
+                if (idx === 2) renderOnePagerReport();
+            });
+        });
+
+        // Camera & Watermark
+        async function startCamera(facingMode) {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } });
+                document.getElementById('cameraFeed').srcObject = stream;
+            } catch (e) { window.showAlert("ক্যামেরা ওপেন করা যাচ্ছে না।"); }
+        }
+
+        document.getElementById('openCameraBtn')?.addEventListener('click', async () => {
+            getGPSLocation();
+            document.getElementById('cameraContainer').classList.remove('hidden');
+            document.getElementById('cameraTriggerContainer').classList.add('hidden');
+            await startCamera(currentFacingMode);
+        });
+
+        document.getElementById('switchCameraBtn')?.addEventListener('click', async () => {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            await startCamera(currentFacingMode);
+        });
+
+        function applyWatermark(ctx, w, h) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB');
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, h - 60, w, 60);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText(`Colgate Smile Corner | Shop: ${document.getElementById('formShopCode').value.toUpperCase()}`, 15, h - 35);
+            ctx.fillStyle = '#fde047';
+            ctx.font = '13px sans-serif';
+            ctx.fillText(`${dateStr} ${timeStr} | GPS: ${finalLocationName}`, 15, h - 12);
+        }
+
+        document.getElementById('captureBtn')?.addEventListener('click', () => {
+            const v = document.getElementById('cameraFeed'), c = document.getElementById('processCanvas'), ctx = c.getContext('2d');
+            c.width = v.videoWidth || 800; c.height = v.videoHeight || 600;
+            ctx.drawImage(v, 0, 0, c.width, c.height);
+            applyWatermark(ctx, c.width, c.height);
+            capturedImageData = c.toDataURL('image/jpeg', 0.6);
+            document.getElementById('capturedImagePreview').src = capturedImageData;
+            document.getElementById('previewContainer').classList.remove('hidden');
+            document.getElementById('cameraContainer').classList.add('hidden');
+            if (stream) stream.getTracks().forEach(t => t.stop());
+        });
+
+        document.getElementById('closeCameraBtn')?.addEventListener('click', () => {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById('cameraContainer').classList.add('hidden');
+            document.getElementById('cameraTriggerContainer').classList.remove('hidden');
+        });
+
+        document.getElementById('retakeBtn')?.addEventListener('click', () => {
+            capturedImageData = null;
+            document.getElementById('previewContainer').classList.add('hidden');
+            document.getElementById('cameraTriggerContainer').classList.remove('hidden');
+        });
+
+        document.getElementById('customForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!capturedImageData) return window.showAlert("দয়া করে আউটলেটের ছবি তুলুন!");
+            if (!isLocationAcquired) return window.showAlert("অনুগ্রহ করে আপনার ফোনের GPS/Location চালু করুন!");
+
+            const btn = document.getElementById('submitBtn'), loader = document.getElementById('btnLoader'), text = document.getElementById('btnText');
+            btn.disabled = true; loader.classList.remove('hidden'); text.textContent = "আপলোড হচ্ছে...";
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.shop_image = { data: capturedImageData, name: `pjp_${Date.now()}.jpg` };
+
+            try {
+                try {
+                        await fetch('https://colgate-smile-api.onrender.com/api/submissions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                shop_code: data.shop_code,
+                                merch_name: localStorage.getItem('colgate_app_merch_name') || data.role,
+                                role: data.role,
+                                unit: data.outlet_type,
+                                area_name: data.area_name,
+                                distribution_name: data.distribution_name,
+                                slab: data.slab,
+                                month: data.display_month,
+                                lat: globalLatitude,
+                                lng: globalLongitude,
+                                photo_base64: capturedImageData
+                            })
+                        });
+                    } catch (apiErr) { console.warn('Render API sync warning:', apiErr); }
+                    data.merch_name = localStorage.getItem('colgate_app_merch_name') || data.role || 'Merchandiser';
+                    data.latitude = globalLatitude;
+                    data.longitude = globalLongitude;
+                    const apiRes = await fetch('https://colgate-smile-api.onrender.com/api/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const apiResult = await apiRes.json();
+                    if (!apiRes.ok || !apiResult.success) {
+                        throw new Error(apiResult.error || 'Upload failed');
+                    }
+                document.getElementById('customForm').classList.add('hidden');
+                document.getElementById('successMessage').classList.remove('hidden');
+            } catch (err) {
+                window.showAlert((err && err.message ? 'Error: ' + err.message : 'Error sending data.'));
+            } finally {
+                btn.disabled = false; loader.classList.add('hidden'); text.textContent = "জমা দিন (Submit)";
+            }
+        });
+
+        window.resetForm = () => {
+            document.getElementById('customForm').reset();
+            populateMonthDropdown();
+            document.getElementById('customForm').classList.remove('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+            document.getElementById('previewContainer').classList.add('hidden');
+            document.getElementById('cameraTriggerContainer').classList.remove('hidden');
+            capturedImageData = null;
+        };
+
+        window.shareSnapshot = async (btn) => {
+            const area = document.getElementById('snapshotArea');
+            const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+            const link = document.createElement('a');
+            link.download = 'Report.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            syncServerSettings();
+            populateMonthDropdown();
+            checkRole();
+            getGPSLocation();
+        });
+    </script>
+
+
+<!-- SMART PHOTO CAPTURE & UPLOAD HOOK -->
+<script>
+(function() {
+  window.__capturedBase64 = '';
+  window.__capturedName = 'photo.jpg';
+
+  // 1. Capture from File Input immediately on change
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.type === 'file' && e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      window.__capturedName = file.name || 'photo.jpg';
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        window.__capturedBase64 = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }, true);
+
+  // 2. Also hook into FileReader.prototype.readAsDataURL in case the app reads & clears the input
+  const origReadAsDataURL = FileReader.prototype.readAsDataURL;
+  FileReader.prototype.readAsDataURL = function(blob) {
+    this.addEventListener('load', function() {
+      if (typeof this.result === 'string' && this.result.startsWith('data:image')) {
+        window.__capturedBase64 = this.result;
+      }
+    });
+    return origReadAsDataURL.apply(this, arguments);
+  };
+
+  // 3. Also hook HTMLCanvasElement.prototype.toDataURL in case the app compresses the photo via Canvas
+  const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  HTMLCanvasElement.prototype.toDataURL = function() {
+    const res = origToDataURL.apply(this, arguments);
+    if (typeof res === 'string' && res.startsWith('data:image') && res.length > 500) {
+      window.__capturedBase64 = res;
+    }
+    return res;
+  };
+
+  // 4. Fallback helper to scan visible preview <img> tags or canvas elements on submit
+  function findPhotoOnPage() {
+    if (window.__capturedBase64 && window.__capturedBase64.length > 500) {
+      return window.__capturedBase64;
+    }
+    const imgs = document.querySelectorAll('img');
+    for (const img of imgs) {
+      if (img.src && img.src.startsWith('data:image') && img.src.length > 500) {
+        return img.src;
+      }
+    }
+    const canvases = document.querySelectorAll('canvas');
+    for (const c of canvases) {
+      try {
+        const data = c.toDataURL('image/jpeg', 0.85);
+        if (data && data.length > 1000) return data;
+      } catch (e) {}
+    }
+    return '';
+  }
+
+  // 5. Intercept fetch() calls to /api/submit and guarantee the captured Base64 image is inside the JSON/FormData
+  const origFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    try {
+      const urlStr = String(url || '');
+      if (urlStr.includes('/api/submit') && options && options.method === 'POST') {
+        const photoData = findPhotoOnPage();
+        if (options.body instanceof FormData) {
+          const plainObj = {};
+          options.body.forEach((v, k) => { plainObj[k] = v; });
+          if (photoData) plainObj.imageBase64 = photoData;
+          options.headers = { 'Content-Type': 'application/json' };
+          options.body = JSON.stringify(plainObj);
+        } else if (typeof options.body === 'string') {
+          const parsed = JSON.parse(options.body);
+          if (photoData) {
+            parsed.imageBase64 = photoData;
+            parsed.image = photoData;
+          }
+          options.headers = { 'Content-Type': 'application/json' };
+          options.body = JSON.stringify(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Photo hook warning:', e);
+    }
+    return origFetch.apply(this, arguments);
+  };
+})();
+</script>
+
+
+
+
+
+
+
+
+<!-- BULLETPROOF DIRECT SUPABASE FIELD APP ENGINE -->
+<script>
+(function() {
+  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  const SUPA_URL = "SUPABASE_SERVICE_KEY=";
+  const SUPA_KEY = "";
+
+  let dismissedForThisPageLoad = '';
+  let currentlyRenderedNotice = '';
+
+/* legacy notice popup removed */
+  localStorage.removeItem('app_notice');
+
+  function suppressDuplicateLegacyNoticePopup() {
+    document.querySelectorAll('div, p, span').forEach(el => {
+      const txt = (el.textContent || '').trim();
+/* legacy notice popup removed */
+        const legacyModal = el.closest('.fixed, [style*="fixed"]');
+        if (legacyModal && legacyModal.id !== 'cloudFieldNoticeModal') {
+          legacyModal.style.display = 'none';
+          legacyModal.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  // 2. Minimal Top-Center Floating Notification Styles
+  function ensureNoticeStyles() {
+    const oldStyle = document.getElementById('colgateSmoothNoticeStyles');
+    if (oldStyle) oldStyle.remove();
+    if (document.getElementById('colgateMinimalNoticeStyles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'colgateMinimalNoticeStyles';
+    style.textContent = `
+      @keyframes minimalSlideDown {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -28px) scale(0.96);
+        }
+        100% {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+      }
+      #cloudFieldNoticeModal {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999999;
+        width: calc(100% - 28px);
+        max-width: 380px;
+        display: none;
+        animation: minimalSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+      }
+      #cloudFieldNoticeModal.closing {
+        opacity: 0;
+        transform: translate(-50%, -20px) scale(0.96);
+      }
+      .minimal-notice-box {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #fee2e2;
+        border-left: 4px solid #dc2626;
+        border-radius: 16px;
+        padding: 13px 14px;
+        box-shadow: 0 14px 30px -6px rgba(15, 23, 42, 0.14), 0 4px 10px -2px rgba(220, 38, 38, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: inherit;
+      }
+      .minimal-notice-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .minimal-notice-content {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+      }
+      .minimal-notice-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #dc2626;
+        margin-bottom: 2px;
+      }
+      .minimal-notice-text {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+      .minimal-notice-close {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 8px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+      .minimal-notice-close:hover {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function cleanStr(v) {
+    if (v === undefined || v === null) return '';
+    let s = String(v).trim();
+    while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    }
+    if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
+    return s;
+  }
+
+  function applyFieldGallery(isUnlocked) {
+    localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
+
+    const extraBtn = document.getElementById('cloudFieldGalleryBtn');
+    if (extraBtn) extraBtn.remove();
+    const extraBadge = document.getElementById('liveGalleryStatusBadge');
+    if (extraBadge) extraBadge.remove();
+
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+      if (isUnlocked) {
+        fileInput.removeAttribute('capture');
+        fileInput.setAttribute('accept', 'image/*');
+      } else {
+        fileInput.setAttribute('capture', 'environment');
+        fileInput.setAttribute('accept', 'image/*');
+      }
+    }
+
+    const allElements = document.querySelectorAll('button, label, a, div, span');
+    allElements.forEach(el => {
+      const directText = (el.textContent || '').trim();
+      if (directText === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2) {
+        const targetBtn = el.closest('button, label, a') || el;
+
+        if (isUnlocked) {
+          targetBtn.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+          targetBtn.style.display = 'inline-flex';
+          targetBtn.style.cursor = 'pointer';
+          targetBtn.disabled = false;
+
+          if (!targetBtn.dataset.galleryBound) {
+            targetBtn.dataset.galleryBound = 'true';
+            targetBtn.addEventListener('click', function(e) {
+              const inp = document.querySelector('input[type="file"]');
+              if (inp && targetBtn.tagName !== 'LABEL') {
+                e.preventDefault();
+                e.stopPropagation();
+                inp.removeAttribute('capture');
+                inp.click();
+              }
+            });
+          }
+        } else {
+          targetBtn.classList.add('hidden');
+          targetBtn.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  window.__dismissCurrentNotice = function(noticeText) {
+    dismissedForThisPageLoad = noticeText;
+    const modal = document.getElementById('cloudFieldNoticeModal');
+    if (modal) {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        modal.classList.remove('closing');
+      }, 220);
+    }
+  };
+
+  function applyFieldNotice(noticeText, isActive) {
+    ensureNoticeStyles();
+    suppressDuplicateLegacyNoticePopup();
+
+    const clean = cleanStr(noticeText);
+    const show = isActive && clean.length > 0;
+
+    const oldBanner = document.getElementById('cloudFieldNoticeBanner');
+    if (oldBanner) oldBanner.remove();
+
+    let modal = document.getElementById('cloudFieldNoticeModal');
+
+    if (!show) {
+      if (modal) modal.style.display = 'none';
+      dismissedForThisPageLoad = '';
+      currentlyRenderedNotice = '';
+      return;
+    }
+
+    if (dismissedForThisPageLoad === clean) {
+      if (modal) modal.style.display = 'none';
+      return;
+    }
+
+    if (currentlyRenderedNotice === clean && modal && modal.style.display === 'block') {
+      return;
+    }
+
+    currentlyRenderedNotice = clean;
+    const escapedForJs = clean.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'cloudFieldNoticeModal';
+      document.body.appendChild(modal);
+    }
+
+    modal.classList.remove('closing');
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="minimal-notice-box">
+        <div class="minimal-notice-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+          </svg>
+        </div>
+        <div class="minimal-notice-content">
+          <div class="minimal-notice-label">নোটিশ • Notice</div>
+          <div class="minimal-notice-text">${clean}</div>
+        </div>
+        <button type="button" class="minimal-notice-close" title="Close" onclick="window.__dismissCurrentNotice('${escapedForJs}')">&times;</button>
+      </div>
+    `;
+  }
+
+  async function syncFieldFromCloud() {
+    suppressDuplicateLegacyNoticePopup();
+    try {
+      let map = {};
+      if (SUPA_KEY) {
+        const res = await fetch(SUPA_URL + '/rest/v1/settings?select=key,value', {
+          headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          (rows || []).forEach(r => { if (r.key) map[r.key] = cleanStr(r.value); });
+        }
+      }
+
+      if (Object.keys(map).length === 0) {
+        const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        const s = data.settings || data || {};
+        map.notice_text = cleanStr(s.notice_text || s.global_notice || '');
+        map.notice_active = (String(s.notice_active) === 'true' || map.notice_text.length > 0) ? 'true' : 'false';
+        map.gallery_access = (s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true') ? 'unlocked' : 'locked';
+      }
+
+      const txt = cleanStr(map.notice_text || map.global_notice || '');
+      const act = (map.notice_active === 'true' && txt.length > 0);
+      const unl = (map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true');
+
+      applyFieldGallery(unl);
+      applyFieldNotice(txt, act);
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      suppressDuplicateLegacyNoticePopup();
+      syncFieldFromCloud();
+      setTimeout(syncFieldFromCloud, 600);
+    });
+  } else {
+    suppressDuplicateLegacyNoticePopup();
+    syncFieldFromCloud();
+    setTimeout(syncFieldFromCloud, 600);
+  }
+  setInterval(syncFieldFromCloud, 5000);
+})();
+</script>
+
+
+
+
+
+<!-- DEEP HUMAN-CRAFTED UI SYSTEM: OCEAN-SLATE & MOBILE FLUSH EDITION -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style id="deepCraftedUiSystem">
   :root {
-    --colgate-crimson: #c82333;
-    --colgate-crimson-dark: #a61b29;
-    --clinical-blue: #0284c7;
-    --clinical-ice: #f0f7ff;
-    --clinical-border: #bae6fd;
-    --app-canvas: #f1f5f9;
-    --card-surface: #ffffff;
-    --input-surface: #f8fafc;
-    --slate-900: #0f172a;
-    --hairline: #e2e8f0;
+    --ocean-950: #0a222c;
+    --ocean-900: #0f3140;
+    --ocean-800: #164457;
+    --ocean-700: #1d5870;
+    --ocean-600: #0284c7;
+    --ocean-100: #e0f2fe;
+    --ocean-50:  #f0f7fa;
+    --slate-canvas: #eef3f7;
+    --card-bg: #ffffff;
+    --input-bg: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-hairline: #dbe3ec;
+    --coral-accent: #e05a47;
+    --coral-hover: #cc4b38;
   }
 
-  html, body {
-    font-family: 'Inter', 'Hind Siliguri', sans-serif !important;
-    background-color: var(--app-canvas) !important;
-    color: var(--slate-900) !important;
+  /* 1. Typography & Smooth Canvas */
+  body, html {
+    font-family: 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    background-color: var(--slate-canvas) !important;
+    color: var(--text-primary) !important;
+    -webkit-font-smoothing: antialiased;
     margin: 0 !important;
     padding: 0 !important;
-    overflow-x: hidden !important;
   }
 
-  /* Flatten bulky curved mobile header/footer bars */
+  /* 2. Remove ALL Rounded Bars & Pill Shapes (Including .rounded-full on Bars/Buttons/Tabs) */
+  .rounded-3xl, .rounded-2xl, .rounded-xl,
+  .rounded-b-3xl, .rounded-b-2xl, .rounded-t-3xl, .rounded-t-2xl,
+  [class*="rounded-["], [class*="rounded-3xl"], [class*="rounded-2xl"] {
+    border-radius: 10px !important;
+  }
+
+  /* Fix pill-shaped bars (.rounded-full) on buttons, tabs, and containers */
+  button.rounded-full,
+  a.rounded-full,
+  div.rounded-full:not(.w-2):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7):not(.w-8),
+  nav.rounded-full,
+  span.rounded-full:not(.w-2):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7) {
+    border-radius: 8px !important;
+  }
+
+  button, input, select, textarea, .rounded-lg, .rounded-md {
+    border-radius: 8px !important;
+  }
+
+  /* 3. Mobile Viewport Fix: Flush Edge-to-Edge Header & App Wrapper (No Rounded Top/Bottom Bars) */
   header,
-  header > div,
   .sticky.top-0,
   .fixed.top-0,
   .fixed.bottom-0,
@@ -45,83 +1464,277 @@
     border-radius: 0px !important;
   }
 
-  /* Crisp 10px card corners instead of huge bubble corners */
+  @media (max-width: 640px) {
+    /* Make main mobile wrapper sit flush without outer rounded bar edges */
+    .max-w-md, .max-w-lg, main > div:first-child {
+      border-radius: 0px !important;
+    }
+    header {
+      border-radius: 0px !important;
+      margin: 0 !important;
+    }
+  }
+
+  /* 4. Login Screen Redesign — Inspired by IdeaBoard Ocean Teal-Slate Reference */
+  #loginScreen, #roleSelectionScreen, [id*="login" i][class*="fixed"] {
+    background: radial-gradient(circle at 50% 18%, #1e5a70 0%, #0f3140 58%, #091f29 100%) !important;
+    color: #ffffff !important;
+    border-radius: 0px !important;
+  }
+  #loginScreen > div, #roleSelectionScreen > div {
+    background: rgba(255, 255, 255, 0.97) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 40px rgba(5, 18, 24, 0.4) !important;
+  }
+
+  /* 5. App Top Header & Navigation Bar — Calm Deep Ocean Slate & Flat Bottom Edge */
+  header,
+  .bg-red-600, .bg-red-700, .bg-red-500, .bg-rose-600,
+  [class*="from-red-"], [class*="to-red-"], [class*="via-red-"],
+  [style*="background: #dc2626"], [style*="background:#dc2626"], [style*="background-color: rgb(220, 38, 38)"] {
+    background: linear-gradient(135deg, var(--ocean-900) 0%, var(--ocean-800) 100%) !important;
+    border-color: var(--ocean-800) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(15, 49, 64, 0.12) !important;
+  }
+
+  /* Remove red shadows & rings */
+  [class*="shadow-red-"], [class*="shadow-rose-"] {
+    box-shadow: 0 3px 10px rgba(15, 49, 64, 0.1) !important;
+  }
+  [class*="ring-red-"], [class*="ring-rose-"] {
+    --tw-ring-color: rgba(2, 132, 199, 0.25) !important;
+  }
+
+  /* 6. Convert Light Red Badges / Step Numbers / Highlights into Calm Ice-Teal */
+  .bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100,
+  [class*="bg-red-50"], [class*="bg-red-100"] {
+    background-color: var(--ocean-50) !important;
+    border-color: #cde2ec !important;
+    color: var(--ocean-800) !important;
+  }
+  .text-red-600, .text-red-700, .text-red-500, .text-rose-600, .text-rose-500 {
+    color: var(--ocean-800) !important;
+  }
+  .border-red-500, .border-red-600, .border-red-400, .border-red-300, .border-red-200, .border-red-100 {
+    border-color: var(--border-hairline) !important;
+  }
+
+  /* 7. Clean Architectural Cards & Form Controls */
+  .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white.shadow-lg, .bg-white.shadow-md {
+    background-color: var(--card-bg) !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 10px !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-hairline) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 14px !important;
+  }
+  input:focus, select:focus, textarea:focus {
+    background-color: #ffffff !important;
+    border-color: var(--ocean-600) !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
+    outline: none !important;
+  }
+
+  /* 8. Camera Scanner Box */
+  [class*="border-dashed"] {
+    border: 1.5px dashed #94a3b8 !important;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-radius: 8px !important;
+  }
+
+  /* 9. Primary Submit Button — Clean Rectangular 8px Radius (No Pill Bar) */
+  button[type="submit"], #submitBtn {
+    background: var(--coral-accent) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 10px rgba(224, 90, 71, 0.25) !important;
+  }
+
+  /* 10. Habitat Matte Dark Notification Sheet */
+  @keyframes habitatSlideDown {
+    0%   { opacity: 0; transform: translate(-50%, -18px) scale(0.97); }
+    100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  }
+  #minimalTopNoticePill {
+    position: fixed !important;
+    top: 12px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 999999 !important;
+    width: calc(100% - 24px) !important;
+    max-width: 375px !important;
+    background: #141923 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    padding: 16px 18px 14px 18px !important;
+    box-shadow: 0 18px 36px rgba(7, 10, 17, 0.45) !important;
+    animation: habitatSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+</style>
+
+<!-- LIVE SUPABASE SETTINGS LISTENER (HABITAT NOTICE + GALLERY TOGGLE) -->
+<script>
+(function() {
+  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  let dismissedSessionNotice = '';
+
+  // Prevent old white/red center modal from ever popping up for Notices
+  const origShowCustomAlert = window.showCustomAlert;
+  window.showCustomAlert = function(title, message) {
+    const t = String(title || '');
+    const m = String(message || '');
+    if (t === 'Notice' && !m.toLowerCase().includes('error') && !m.includes('সফল') && !m.includes('ব্যর্থ')) {
+      return;
+    }
+    if (typeof origShowCustomAlert === 'function') {
+      return origShowCustomAlert.apply(this, arguments);
+    }
+  };
+
+  function applyGalleryState(mode) {
+    const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
+    const extraBadge = document.getElementById('liveGalleryStatusBadge');
+    if (extraBadge) extraBadge.remove();
+
+    document.querySelectorAll('button, label, div, span').forEach(el => {
+      const txt = (el.textContent || '').trim();
+      if (txt === 'গ্যালারি থেকে আপলোড' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
+        const container = el.closest('button, label') || el;
+        container.style.display = isUnlocked ? 'inline-flex' : 'none';
+        container.classList.remove('hidden');
+        if (!isUnlocked) container.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('input[type="file"]').forEach(inp => {
+      if (isUnlocked) {
+        inp.removeAttribute('capture');
+      } else {
+        inp.setAttribute('capture', 'environment');
+      }
+    });
+  }
+
+  function renderTopNoticePill(text, isActive) {
+    const cleanText = String(text || '').replace(/^"+|"+$/g, '').trim();
+    const shouldShow = (String(isActive) === 'true' || isActive === true) && cleanText.length > 0;
+
+    let card = document.getElementById('minimalTopNoticePill');
+    if (!shouldShow || dismissedSessionNotice === cleanText) {
+      if (card) card.style.display = 'none';
+      return;
+    }
+
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'minimalTopNoticePill';
+      document.body.appendChild(card);
+    }
+
+    card.style.display = 'block';
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;">
+        <div style="font-size:16px;font-weight:600;color:#ffffff;line-height:1.4;letter-spacing:-0.01em;text-align:left;word-break:break-word;">
+          ${cleanText}
+        </div>
+        <button id="closeMinimalNoticeBtn" title="Close" style="background:transparent;border:none;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px;cursor:pointer;margin-top:1px;">
+          &#10005;
+        </button>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;text-align:left;">
+        অ্যাডমিন নোটিশ • আজকের আপডেট
+      </div>
+      <button id="ackMinimalNoticeBtn" style="width:100%;background:#e05a47;color:#ffffff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">
+        ঠিক আছে (Got it)
+      </button>
+    `;
+
+    const dismissFn = function() {
+      dismissedSessionNotice = cleanText;
+      card.style.display = 'none';
+    };
+
+    const closeBtn = document.getElementById('closeMinimalNoticeBtn');
+    const ackBtn = document.getElementById('ackMinimalNoticeBtn');
+    if (closeBtn) closeBtn.onclick = dismissFn;
+    if (ackBtn) ackBtn.onclick = dismissFn;
+  }
+
+  async function fetchAndApplySettings() {
+    try {
+      const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now());
+      const json = await res.json();
+      const s = json.settings || json || {};
+      const noticeText = s.notice_text || s.global_notice || '';
+      const noticeActive = s.notice_active !== undefined ? s.notice_active : Boolean(noticeText && noticeText !== '""');
+      const galleryMode = s.gallery_access || (s.gallery_unlocked ? 'unlocked' : 'locked');
+
+      applyGalleryState(galleryMode);
+      renderTopNoticePill(noticeText, noticeActive);
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fetchAndApplySettings);
+  } else {
+    fetchAndApplySettings();
+  }
+  setInterval(fetchAndApplySettings, 10000);
+})();
+</script>
+
+<!-- COLGATE SAFE UI & SUPABASE LISTENER -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style id="colgateCleanUi">
+  :root {
+    --colgate-crimson: #c82333;
+    --colgate-crimson-dark: #a61b29;
+    --clinical-blue: #0284c7;
+    --clinical-ice: #f0f7ff;
+    --app-canvas: #f1f5f9;
+    --slate-900: #0f172a;
+  }
+
+  html, body {
+    font-family: 'Inter', 'Hind Siliguri', sans-serif !important;
+    background-color: var(--app-canvas) !important;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--colgate-crimson) 0%, var(--colgate-crimson-dark) 100%) !important;
+    border-radius: 0px !important;
+  }
+
   .rounded-3xl, .rounded-2xl, .rounded-xl {
     border-radius: 10px !important;
   }
 
-  .rounded-full:not(img):not(svg):not(.w-2):not(.w-2\.5):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7):not(.w-8) {
+  button, input, select, textarea, .rounded-lg {
     border-radius: 8px !important;
   }
 
-  button, input, select, textarea, .rounded-lg, .rounded-md {
-    border-radius: 8px !important;
-  }
-
-  @media (max-width: 640px) {
-    .max-w-md, .max-w-lg, #appContainer, main {
-      max-width: 100% !important;
-      width: 100% !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      border-radius: 0px !important;
-    }
-  }
-
-  /* Header & Primary Buttons — Tuned Colgate Crimson */
-  header {
-    background: linear-gradient(135deg, var(--colgate-crimson) 0%, var(--colgate-crimson-dark) 100%) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 10px rgba(166, 27, 41, 0.15) !important;
-  }
-
-  .bg-red-600, .bg-red-700, .bg-red-500,
-  button[type="submit"], #submitBtn {
-    background: var(--colgate-crimson) !important;
-    border-color: var(--colgate-crimson) !important;
-    color: #ffffff !important;
-  }
-
-  /* Balance Red Tint Boxes with Calm Clinical Sky-Ice */
   .bg-red-50, .bg-red-100 {
     background-color: var(--clinical-ice) !important;
-    border-color: var(--clinical-border) !important;
   }
 
-  span.bg-red-50, span.bg-red-100, div.bg-red-50.w-8, div.bg-red-100.w-8 {
-    background-color: var(--clinical-ice) !important;
-    color: var(--clinical-blue) !important;
-    font-weight: 700 !important;
-  }
-
-  .text-red-600, .text-red-700, .text-red-500 {
-    color: var(--colgate-crimson) !important;
-  }
-
-  .border-red-500, .border-red-600, .border-red-400, .border-red-300, .border-red-200, .border-red-100 {
-    border-color: var(--hairline) !important;
-  }
-
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-  select, textarea {
-    background-color: var(--input-surface) !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-  }
-  input:focus, select:focus, textarea:focus {
-    background-color: #ffffff !important;
-    border-color: var(--clinical-blue) !important;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.14) !important;
-    outline: none !important;
-  }
-
-  [class*="border-dashed"] {
-    border: 1.5px dashed #94a3b8 !important;
-    background: linear-gradient(180deg, #f8fafc 0%, var(--clinical-ice) 100%) !important;
-    border-radius: 8px !important;
-  }
-
-  /* Top-Center Smooth Notification Card */
   @keyframes noticeDropIn {
     0%   { opacity: 0; transform: translate(-50%, -16px) scale(0.98); }
     100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
@@ -145,7 +1758,6 @@
   }
 </style>
 
-<!-- SAFE SUPABASE SETTINGS LISTENER (NO REGEX DELETION) -->
 <script>
 (function() {
   const SUPABASE_URL = "https://vzwplpljvgqalgfuxmsf.supabase.co";
@@ -153,8 +1765,16 @@
   const REST_URL = SUPABASE_URL + "/rest/v1/settings";
   let dismissedForCurrentLoad = false;
 
+  // Hide old center alert ONLY if it contains 'নোটিশ:'
+  setInterval(() => {
+    const oldAlert = document.getElementById('customAlertModal');
+    if (oldAlert && oldAlert.textContent && oldAlert.textContent.includes('নোটিশ:')) {
+      oldAlert.classList.add('hidden');
+      oldAlert.style.display = 'none';
+    }
+  }, 50);
+
   function applyFieldSettings(s) {
-    // 1. Gallery Unlock Control (Original 'গ্যালারি থেকে আপলোড' button only)
     const isUnlocked = String(s.gallery_access).toLowerCase() === 'unlocked' || String(s.gallery_unlocked) === 'true';
     localStorage.setItem('app_gallery', isUnlocked ? 'true' : 'false');
 
@@ -169,7 +1789,6 @@
       }
     });
 
-    // 2. Top Minimal Notice Card
     const rawText = String(s.notice_text || s.global_notice || '').replace(/^"+|"+$/g, '').trim();
     const isActive = (String(s.notice_active) === 'true' || rawText.length > 0) && rawText.length > 0;
 
