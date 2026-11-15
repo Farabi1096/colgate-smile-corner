@@ -84,74 +84,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 
-<!-- UNIFIED LOGIN, MODAL BACKDROP & HEADER THEME -->
-<style id="unifiedColgateTheme">
-  /* 1. Base Canvas & Outer Container: Flush square top/bottom, soft cool-alabaster background */
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #f1f5f9 !important;
-    color: #0f172a !important;
-  }
-  #appContainer,
-  body > div.max-w-md,
-  .max-w-md.mx-auto {
-    border-radius: 0px !important;
-    margin-top: 0px !important;
-    margin-bottom: 0px !important;
-    min-height: 100vh !important;
-    background: #ffffff !important;
-    box-shadow: 0 0 32px rgba(15, 23, 42, 0.06) !important;
-  }
 
-  /* 2. Login Screen (#roleSelectionScreen): Clean, bright clinical surface instead of dark teal */
-  #roleSelectionScreen {
-    background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
-  }
-  #roleSelectionScreen > div {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.08) !important;
-  }
-
-  /* 3. Merchandiser Login Modal & All Popup Overlays: Modern Frosted Slate Glass (NO ocean teal!) */
-  #merchLoginModal,
-  #customAlertModal,
-  #adminPinModal,
-  div[id*="Modal"].fixed.inset-0 {
-    background: rgba(15, 23, 42, 0.52) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-  }
-
-  /* 4. Merchandiser Selection Modal Card: Refined border, search input, and header alignment */
-  #merchLoginModal > div {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22) !important;
-    padding: 22px !important;
-  }
-  #merchLoginModal input[type="text"],
-  #merchLoginModal input[type="search"],
-  #merchSearchInput {
-    background: #f8fafc !important;
-    border: 1.5px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    color: #0f172a !important;
-    padding: 11px 14px !important;
-    font-size: 14px !important;
-    transition: all 0.18s ease !important;
-  }
-  #merchLoginModal input:focus,
-  #merchSearchInput:focus {
-    background: #ffffff !important;
-    border-color: #e11d48 !important;
-    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12) !important;
-    outline: none !important;
-  }
-</style>
 
 </head>
 <body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
@@ -2138,6 +2071,236 @@
     upgradeHeader();
   }
   setInterval(upgradeHeader, 500);
+})();
+</script>
+
+
+<!-- AIRBNB + STRIPE CLINICAL RUBY UI SYSTEM -->
+<style id="colgatePremiumUiSystem">
+  :root {
+    --bg-canvas: #f4f6f9;
+    --bg-card: #ffffff;
+    --bg-subtle: #f8fafc;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-soft: #e2e8f0;
+    --colgate-ruby: #d9232e;
+    --colgate-ruby-hover: #b81b25;
+    --colgate-ruby-soft: #fff1f2;
+    --slate-navy: #0f172a;
+  }
+
+  /* 1. Outer Page & Mobile Frame: Flush square top/bottom, calm cool-gray canvas */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--bg-canvas) !important;
+    color: var(--text-main) !important;
+    font-family: 'Hind Siliguri', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #appContainer,
+  body > div.max-w-md,
+  .max-w-md.mx-auto {
+    border-radius: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    min-height: 100vh !important;
+    background: var(--bg-card) !important;
+    box-shadow: 0 0 40px rgba(15, 23, 42, 0.06) !important;
+    border-left: 1px solid var(--border-soft) !important;
+    border-right: 1px solid var(--border-soft) !important;
+  }
+
+  /* 2. Login Screen (#roleSelectionScreen) & Frosted Glass Modals */
+  #roleSelectionScreen {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
+  }
+  #roleSelectionScreen > div {
+    background: #ffffff !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.08) !important;
+  }
+  #merchLoginModal,
+  #customAlertModal,
+  #adminPinModal,
+  div[id*="Modal"].fixed.inset-0 {
+    background: rgba(15, 23, 42, 0.48) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  #merchLoginModal > div {
+    background: #ffffff !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.20) !important;
+  }
+
+  /* 3. Segmented Navigation Tabs (ফর্ম / আমার দিন / রিপোর্ট) — Airbnb/iOS Style */
+  .grid-cols-3,
+  div[class*="grid-cols-3"] {
+    background: #f1f5f9 !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    gap: 4px !important;
+  }
+  #tabForm, #tabMyDay, #tabReport {
+    border-radius: 9px !important;
+    font-weight: 700 !important;
+    font-size: 13.5px !important;
+    transition: all 0.2s ease !important;
+  }
+  /* Active Tab */
+  #tabForm.bg-white, #tabMyDay.bg-white, #tabReport.bg-white,
+  #tabForm.text-red-600, #tabMyDay.text-red-600, #tabReport.text-red-600 {
+    background: #ffffff !important;
+    color: var(--slate-navy) !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+  }
+  #tabForm.text-red-600 svg, #tabMyDay.text-red-600 svg, #tabReport.text-red-600 svg,
+  #tabForm.text-red-600 i, #tabMyDay.text-red-600 i, #tabReport.text-red-600 i {
+    color: var(--colgate-ruby) !important;
+  }
+
+  /* 4. Form Cards, Step Badges & Inputs (Stripe Style) */
+  select,
+  input[type="text"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="password"] {
+    background-color: var(--bg-subtle) !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    color: var(--text-main) !important;
+    font-size: 14px !important;
+    transition: all 0.18s ease !important;
+  }
+  select:focus,
+  input:focus {
+    background-color: #ffffff !important;
+    border-color: var(--colgate-ruby) !important;
+    box-shadow: 0 0 0 3px rgba(217, 35, 46, 0.12) !important;
+    outline: none !important;
+  }
+
+  /* Soften Step Number Circles (১, ২) */
+  .bg-red-50.text-red-600,
+  span.rounded-full.bg-red-50,
+  div.rounded-full.bg-red-50 {
+    background: var(--colgate-ruby-soft) !important;
+    color: var(--colgate-ruby) !important;
+    border: 1px solid #fecdd3 !important;
+    font-weight: 800 !important;
+  }
+
+  /* 5. Smart Camera Scanner Box: Clean Slate Dashed Card with Ruby Icon */
+  div.border-dashed,
+  label.border-dashed {
+    background: #f8fafc !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+  }
+  div.border-dashed:hover,
+  label.border-dashed:hover {
+    background: #fff1f2 !important;
+    border-color: var(--colgate-ruby) !important;
+  }
+
+  /* 6. Primary Submit CTA & Action Buttons: Tuned Colgate Ruby */
+  button[type="submit"],
+  #submitBtn,
+  .bg-red-600:not(#customProfileHeaderBar) {
+    background: linear-gradient(180deg, #e02834 0%, #c81e29 100%) !important;
+    border-radius: 11px !important;
+    box-shadow: 0 4px 12px rgba(217, 35, 46, 0.22) !important;
+    border: none !important;
+  }
+</style>
+
+<script>
+(function() {
+  // Automatically transform the top red header into a sleek Oxford Slate Merchandiser Profile Bar
+  function syncProfileHeader() {
+    const roleEl = document.getElementById('userRoleDisplay');
+    if (!roleEl) return;
+
+    const rawText = (roleEl.textContent || '').trim();
+    if (!rawText) return;
+
+    const headerBox = roleEl.closest('.bg-red-600, .bg-red-700, header') || roleEl.parentElement?.parentElement;
+    if (!headerBox) return;
+
+    let roleLabel = 'MERCHANDISER';
+    let displayName = rawText;
+    if (rawText.includes(':')) {
+      const parts = rawText.split(':');
+      roleLabel = parts[0].trim().toUpperCase();
+      displayName = parts.slice(1).join(':').trim();
+    } else if (rawText.toLowerCase().includes('sales') || rawText.toLowerCase().includes('sr')) {
+      roleLabel = 'FIELD SALES TEAM';
+    }
+
+    const words = displayName.replace(/[^a-zA-Z0-9\u0980-\u09FF ]/g, ' ').trim().split(/\s+/).filter(Boolean);
+    const initials = words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : (words[0] ? words[0].slice(0, 2).toUpperCase() : 'SC');
+
+    headerBox.id = 'customProfileHeaderBar';
+    headerBox.style.cssText = 'background:#0f172a !important;padding:14px 18px !important;border-radius:0px !important;border-bottom:3px solid #d9232e !important;position:relative !important;';
+
+    // Hide original children ("কোলগেট স্মাইল কর্ণার" & old pill) without breaking DOM IDs
+    Array.from(headerBox.children).forEach(ch => {
+      if (ch.id !== 'liveMerchProfileRow') ch.style.display = 'none';
+    });
+
+    let row = document.getElementById('liveMerchProfileRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'liveMerchProfileRow';
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;';
+      headerBox.appendChild(row);
+    }
+
+    const nextKey = roleLabel + '|' + displayName;
+    if (row.dataset.renderedKey !== nextKey) {
+      row.dataset.renderedKey = nextKey;
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div style="position:relative;width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#1e293b 0%,#334155 100%);border:1.5px solid rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;color:#ffffff;font-weight:800;font-size:15px;flex-shrink:0;">
+            <span>${initials}</span>
+            <span style="position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#10b981;border:2px solid #0f172a;"></span>
+          </div>
+          <div style="text-align:left;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#fda4af;background:rgba(217,35,46,0.18);padding:2px 7px;border-radius:5px;">${roleLabel}</span>
+            </div>
+            <div style="font-size:16px;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;">${displayName}</div>
+          </div>
+        </div>
+        <button type="button" id="profileHeaderLogoutBtn" title="লগআউট (Logout)" style="background:rgba(255,255,255,0.08); hover:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.14); color:#f8fafc; padding:8px 12px; border-radius:9px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:600; flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>লগআউট</span>
+        </button>
+      `;
+
+      document.getElementById('profileHeaderLogoutBtn').onclick = function() {
+        const origLogout = headerBox.querySelector('button:not(#profileHeaderLogoutBtn)');
+        if (origLogout) origLogout.click();
+        else location.reload();
+      };
+    }
+  }
+
+  setInterval(syncProfileHeader, 400);
+  document.addEventListener('DOMContentLoaded', syncProfileHeader);
 })();
 </script>
 
