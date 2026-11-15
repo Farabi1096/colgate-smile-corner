@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -28,37 +29,27 @@ app.get("/", (req, res) => {
   });
 });
 
-// Save Submission & Upload Photo to Supabase Storage + Submissions Table
+// POST /api/submissions -> Uploads image to bucket AND saves all form data to submissions table
 app.post("/api/submissions", upload.single("photo"), async (req, res) => {
   try {
-    const {
-      shop_code,
-      merch_name,
-      role,
-      unit,
-      area_name,
-      distribution_name,
-      slab,
-      month,
-      lat,
-      lng,
-      photo_base64,
-    } = req.body;
+    if (!supabase) {
+      return res.status(500).json({ error: "Supabase keys missing in Render Environment" });
+    }
 
-    if (!shop_code) return res.status(400).json({ error: "shop_code is required" });
-    if (!supabase) return res.status(500).json({ error: "Supabase keys missing on Render" });
+    const body = req.body || {};
+    const rawCode = body.shop_code || body.sr_outlet || "UNKNOWN";
+    const cleanCode = String(rawCode).toUpperCase().trim().replace(/[^A-Z0-9_-]/g, "") || "OUTLET";
 
     let imageUrl = null;
     let fileBuffer = null;
 
-    if (req.file) {
+    if (req.file && req.file.buffer) {
       fileBuffer = req.file.buffer;
-    } else if (photo_base64 && photo_base64.includes("base64,")) {
-      const base64Data = photo_base64.split("base64,")[1];
-      fileBuffer = Buffer.from(base64Data, "base64");
+    } else if (body.photo_base64 && body.photo_base64.includes("base64,")) {
+      fileBuffer = Buffer.from(body.photo_base64.split("base64,")[1], "base64");
+    } else if (body.shop_image && body.shop_image.data && body.shop_image.data.includes("base64,")) {
+      fileBuffer = Buffer.from(body.shop_image.data.split("base64,")[1], "base64");
     }
-
-    const cleanCode = String(shop_code).toUpperCase().trim().replace(/[^A-Z0-9_-]/g, "");
 
     if (fileBuffer) {
       const fileName = `${cleanCode}_${Date.now()}.jpg`;
@@ -74,58 +65,49 @@ app.post("/api/submissions", upload.single("photo"), async (req, res) => {
       imageUrl = publicUrlData.publicUrl;
     }
 
-    const parsedLat = parseFloat(lat);
-    const parsedLng = parseFloat(lng);
+    const parsedLat = parseFloat(body.lat || body.latitude);
+    const parsedLng = parseFloat(body.lng || body.longitude);
 
-    const fullRow = {
+    const submissionRow = {
       shop_code: cleanCode,
-      merch_name: merch_name || "Field Team",
-      role: role || "merchandiser",
-      unit: unit || "DCC",
-      area_name: area_name || "",
-      distribution_name: distribution_name || "",
-      slab: slab || "Regular",
-      month: month || "",
+      merch_name: body.merch_name || "Field Team",
+      role: body.role || "merchandiser",
+      unit: body.unit || body.outlet_type || "DCC",
+      area_name: body.area_name || "",
+      territory: body.territory || "",
+      db_code: body.db_code || "",
+      distribution_name: body.distribution_name || "",
+      route_name: body.route_name || body.sr_route || "",
+      slab: body.slab || "Regular",
+      month: body.month || body.display_month || "",
       image_url: imageUrl,
       lat: !isNaN(parsedLat) ? parsedLat : null,
       lng: !isNaN(parsedLng) ? parsedLng : null,
     };
 
-    // Try full insert first; if any extra column is missing, fall back to core columns
-    let { data: inserted, error: insertErr } = await supabase
+    const { data: insertedRow, error: insertErr } = await supabase
       .from("submissions")
-      .insert([fullRow])
+      .insert([submissionRow])
       .select()
       .single();
 
     if (insertErr) {
-      console.warn("Full insert warning, retrying with core columns:", insertErr.message);
-      const minimalRow = {
-        shop_code: cleanCode,
-        merch_name: merch_name || "Field Team",
-        month: month || "",
-        image_url: imageUrl,
-        lat: !isNaN(parsedLat) ? parsedLat : null,
-        lng: !isNaN(parsedLng) ? parsedLng : null,
-      };
-      const retry = await supabase.from("submissions").insert([minimalRow]).select().single();
-      if (retry.error) throw retry.error;
-      inserted = retry.data;
+      console.error("Supabase Table Insert Error:", insertErr);
+      return res.status(500).json({ success: false, error: insertErr.message });
     }
 
-    res.json({ success: true, imageUrl, submission: inserted });
+    res.json({ success: true, imageUrl, submission: insertedRow });
   } catch (err) {
     console.error("Submission error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Get All Submissions (Also auto-imports any orphaned photos from outlet-photos bucket!)
+// GET /api/submissions -> Returns all rows + syncs any older bucket photos into the table
 app.get("/api/submissions", async (req, res) => {
   try {
     if (!supabase) return res.json([]);
 
-    // 1. Check bucket for any photos that are not yet in the submissions table
     const { data: files } = await supabase.storage
       .from("outlet-photos")
       .list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
@@ -156,7 +138,6 @@ app.get("/api/submissions", async (req, res) => {
       }
     }
 
-    // 2. Return all rows from submissions table
     const { data, error } = await supabase
       .from("submissions")
       .select("*")
