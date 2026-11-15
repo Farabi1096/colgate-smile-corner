@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
+
+<!-- BLOCK LEGACY NOTICE FLASH BEFORE RENDER -->
+<script>
+(function() {
+  localStorage.removeItem('app_notice');
+  // Intercept showCustomAlert as soon as it is defined so it never flashes 'নোটিশ:' on load
+  let _origShowAlert = null;
+  Object.defineProperty(window, 'showCustomAlert', {
+    configurable: true,
+    enumerable: true,
+    get: function() {
+      return function(title, message, isSuccess) {
+        const msgStr = String(message || '');
+        const titleStr = String(title || '');
+        if (msgStr.includes('নোটিশ:') || msgStr === '""' || (titleStr === 'Notice' && !msgStr.includes('Error') && !msgStr.includes('সফল') && !msgStr.includes('ত্রুটি') && !msgStr.includes('অনুগ্রহ'))) {
+          return; // Completely block legacy notice popup from flashing
+        }
+        if (typeof _origShowAlert === 'function') {
+          return _origShowAlert.apply(this, arguments);
+        }
+      };
+    },
+    set: function(fn) {
+      _origShowAlert = fn;
+    }
+  });
+})();
+</script>
+
   <script>window.RENDER_API_BASE = "https://colgate-smile-api.onrender.com"; const RENDER_API_BASE = "https://colgate-smile-api.onrender.com";</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
