@@ -20,7 +20,24 @@ app.get('/', (req, res) => {
   res.json({ status: 'Colgate Smile Corner API is running 100% on Supabase!' });
 });
 
-// 1. Get all Outlets + Merged Target vs Achievement Data
+// 1. Sync / Status Endpoint
+app.get('/api/sync-outlets', async (req, res) => {
+  try {
+    const { data: outlets, error } = await supabase.from('outlets').select('*');
+    if (error) throw error;
+    const { data: targets } = await supabase.from('outlet_targets').select('*');
+    res.json({
+      success: true,
+      message: 'Supabase Outlets and Targets are active and synced!',
+      totalSyncedOutlets: (outlets || []).length,
+      totalTargetRows: (targets || []).length
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Get Outlets + Merged Targets
 app.get(['/api/outlets', '/api/init-data'], async (req, res) => {
   try {
     const { data: outlets, error: err1 } = await supabase.from('outlets').select('*');
@@ -53,18 +70,20 @@ app.get(['/api/outlets', '/api/init-data'], async (req, res) => {
   }
 });
 
-// 2. Submit Field Form + Upload Photo (Supports BOTH Multipart FormData AND Base64 JSON)
+// 3. Universal Submit Endpoint (Auto-Detects Multipart Files, Data URLs, AND Raw Base64)
 app.post('/api/submit', upload.any(), async (req, res) => {
   try {
     const body = req.body || {};
-    const shopCode = String(body.shop_code || body.shopCode || body.outlet_code || 'unknown').trim();
+    const shopCode = String(
+      body.shop_code || body.shopCode || body.outlet_code || body.outletCode || body.code || 'outlet'
+    ).trim().replace(/[^a-zA-Z0-9_-]/g, '');
+
     let imageUrl = body.image_url || body.imageUrl || '';
 
     // Case A: Multipart file uploaded via FormData
     const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
     if (uploadedFile && uploadedFile.buffer) {
-      const ext = (uploadedFile.originalname || 'jpg').split('.').pop() || 'jpg';
-      const fileName = `${shopCode}_${Date.now()}.${ext}`;
+      const fileName = `${shopCode}_${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from('outlet-photos')
         .upload(fileName, uploadedFile.buffer, {
@@ -72,29 +91,41 @@ app.post('/api/submit', upload.any(), async (req, res) => {
           upsert: true
         });
       if (upErr) throw upErr;
-      const { data: pubUrl } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
-      imageUrl = pubUrl.publicUrl;
-    }
-    // Case B: Base64 image sent inside JSON body
-    else if (body.image || body.imageBase64 || body.photo || body.fileData) {
-      const rawBase64 = body.image || body.imageBase64 || body.photo || body.fileData;
-      const base64Clean = rawBase64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Clean, 'base64');
-      const fileName = `${shopCode}_${Date.now()}.jpg`;
-      const { error: upErr } = await supabase.storage
-        .from('outlet-photos')
-        .upload(fileName, buffer, {
-          contentType: body.mimeType || 'image/jpeg',
-          upsert: true
-        });
-      if (upErr) throw upErr;
-      const { data: pubUrl } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
-      imageUrl = pubUrl.publicUrl;
+      const { data: pub } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
+      imageUrl = pub.publicUrl;
+    } else {
+      // Case B: Auto-detect Base64 string in ANY body property (with or without data:image prefix)
+      let rawBase64 = body.image || body.imageBase64 || body.imageData || body.photo || body.fileData || body.file || body.base64 || '';
+
+      if (!rawBase64 || typeof rawBase64 !== 'string') {
+        for (const key of Object.keys(body)) {
+          const val = body[key];
+          if (typeof val === 'string' && val.length > 500 && !val.startsWith('http')) {
+            rawBase64 = val;
+            break;
+          }
+        }
+      }
+
+      if (rawBase64 && typeof rawBase64 === 'string' && rawBase64.length > 100) {
+        const base64Clean = rawBase64.replace(/^data:[^;]+;base64,/, '').replace(/\s/g, '');
+        const buffer = Buffer.from(base64Clean, 'base64');
+        const fileName = `${shopCode}_${Date.now()}.jpg`;
+        const { error: upErr } = await supabase.storage
+          .from('outlet-photos')
+          .upload(fileName, buffer, {
+            contentType: body.mimeType || 'image/jpeg',
+            upsert: true
+          });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
+        imageUrl = pub.publicUrl;
+      }
     }
 
     const rowData = {
-      shop_code: shopCode,
-      merch_name: body.merch_name || body.merchName || body.user_name || body.userName || '',
+      shop_code: String(body.shop_code || body.shopCode || body.outlet_code || shopCode).trim(),
+      merch_name: body.merch_name || body.merchName || body.merchandiser || body.user_name || body.userName || '',
       role: body.role || 'merchandiser',
       unit: body.unit || '',
       area_name: body.area_name || body.areaName || body.zone || '',
@@ -104,8 +135,8 @@ app.post('/api/submit', upload.any(), async (req, res) => {
       route_name: body.route_name || body.routeName || body.route || '',
       slab: body.slab || '',
       month: body.month || '',
-      lat: body.lat ? parseFloat(body.lat) : null,
-      lng: body.lng ? parseFloat(body.lng) : null,
+      lat: body.lat ? parseFloat(body.lat) : (body.latitude ? parseFloat(body.latitude) : null),
+      lng: body.lng ? parseFloat(body.lng) : (body.longitude ? parseFloat(body.longitude) : null),
       image_url: imageUrl
     };
 
@@ -123,7 +154,7 @@ app.post('/api/submit', upload.any(), async (req, res) => {
   }
 });
 
-// 3. Get All Submissions for Admin Panel & Map
+// 4. Get All Submissions
 app.get('/api/submissions', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -137,7 +168,7 @@ app.get('/api/submissions', async (req, res) => {
   }
 });
 
-// 4. Add New Outlet from Admin Panel
+// 5. Add New Outlet
 app.post('/api/outlets', async (req, res) => {
   try {
     const b = req.body || {};
@@ -162,7 +193,7 @@ app.post('/api/outlets', async (req, res) => {
   }
 });
 
-// 5. Upload Target vs Achievement CSV Data
+// 6. Upload Target vs Achievement CSV
 app.post('/api/upload-targets', async (req, res) => {
   try {
     const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
@@ -175,7 +206,7 @@ app.post('/api/upload-targets', async (req, res) => {
         month: String(r.month || r.Month || 'Current').trim(),
         enrolled: String(r.enrolled || r.Enrolled || 'Yes'),
         target: parseFloat(r.target || r.Target || 0) || 0,
-        tot_stt: parseFloat(r.tot_stt || r['Tot STT'] || r.Tot_STT || r.achievement || 0) || 0,
+        tot_stt: parseFloat(r.tot_stt || r['Tot STT'] || r.Tot_STT || 0) || 0,
         ach: parseFloat(r.ach || r['Ach %'] || r.Ach || 0) || 0,
         balance: parseFloat(r.balance || r.Balance || 0) || 0,
         eligible: String(r.eligible || r.Eligible || 'No'),
@@ -188,26 +219,6 @@ app.post('/api/upload-targets', async (req, res) => {
 
     if (error) throw error;
     res.json({ success: true, count: formatted.length });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-
-// 6. Sync / Verify Outlets & Recover Unlisted Bucket Photos
-app.get('/api/sync-outlets', async (req, res) => {
-  try {
-    const { data: outlets, error } = await supabase.from('outlets').select('*');
-    if (error) throw error;
-
-    const { data: targets } = await supabase.from('outlet_targets').select('*');
-
-    res.json({
-      success: true,
-      message: 'Supabase Outlets and Targets are active and synced!',
-      totalSyncedOutlets: (outlets || []).length,
-      totalTargetRows: (targets || []).length
-    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
