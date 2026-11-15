@@ -1935,122 +1935,142 @@
 
 
 
-<!-- EXACT MERCHANDISER PROFILE HEADER ENGINE -->
-<script id="profileHeaderEngine">
+
+
+<!-- FLUSH CORNERS & MERCHANDISER PROFILE HEADER -->
+<style id="flushAppCornersStyle">
+  /* 1. Remove ALL top & bottom outer rounded corners and pink background gap */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #f8fafc !important;
+  }
+  #appContainer,
+  body > div.max-w-md,
+  .max-w-md.mx-auto {
+    border-radius: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    min-height: 100vh !important;
+    box-shadow: 0 0 24px rgba(15, 23, 42, 0.06) !important;
+  }
+</style>
+
+<script id="merchProfileHeaderScript">
 (function() {
-  function renderProfileBanner() {
-    const roleBadge = document.getElementById('userRoleDisplay');
-    if (!roleBadge) return;
+  function upgradeHeader() {
+    // Find the heading text "কোলগেট স্মাইল কর্ণার" or #userRoleDisplay
+    const roleEl = document.getElementById('userRoleDisplay');
+    if (!roleEl) return;
 
-    // The red banner is the parent container of #userRoleDisplay and #btnLogout
-    const bannerBox = roleBadge.parentElement;
-    if (!bannerBox) return;
+    // Walk up to find the red header container (.bg-red-600 or header wrapper)
+    let redHeader = roleEl.closest('.bg-red-600, .bg-red-700, header');
+    if (!redHeader) {
+      redHeader = roleEl.parentElement;
+      if (redHeader && redHeader.parentElement && redHeader.parentElement.id !== 'appContainer') {
+        redHeader = redHeader.parentElement;
+      }
+    }
+    if (!redHeader) return;
 
-    // Parse "Merchandiser: Sheikh Daiyanul Islam" or "Sales Team (TM / SR)"
-    const rawText = (roleBadge.textContent || '').trim();
-    let roleTitle = 'Merchandiser';
-    let personName = '';
-
-    if (rawText.includes(':')) {
-      const parts = rawText.split(':');
-      roleTitle = parts[0].trim();
-      personName = parts.slice(1).join(':').trim();
-    } else if (rawText) {
-      roleTitle = rawText;
+    // Also strip rounded corners from #appContainer directly via JS
+    const appCont = document.getElementById('appContainer') || redHeader.parentElement;
+    if (appCont) {
+      appCont.style.setProperty('border-radius', '0px', 'important');
+      appCont.style.setProperty('margin-top', '0px', 'important');
+      appCont.style.setProperty('margin-bottom', '0px', 'important');
     }
 
-    // Fallback to dropdown if selected
+    // Extract Merchandiser / SR name
+    const rawRoleText = (roleEl.textContent || '').trim();
+    let roleLabel = 'Merchandiser';
+    let userName = '';
+
+    if (rawRoleText.includes(':')) {
+      const pts = rawRoleText.split(':');
+      roleLabel = pts[0].trim();
+      userName = pts.slice(1).join(':').trim();
+    } else if (rawRoleText) {
+      roleLabel = rawRoleText;
+    }
+
     const merchSelect = document.getElementById('merchName');
-    if (!personName && merchSelect && merchSelect.value) {
-      personName = merchSelect.value.trim();
+    if (!userName && merchSelect && merchSelect.value) {
+      userName = merchSelect.value.trim();
     }
 
-    const mainHeading = personName || roleTitle || 'মার্চেন্ডাইজার প্যানেল';
-    const subHeading = personName ? (roleTitle + ' • Smile Corner') : 'কোলগেট স্মাইল কর্ণার';
+    const titleText = userName || roleLabel || 'Merchandiser';
+    const subText = userName ? roleLabel : 'Colgate Smile Corner';
 
-    // Compute 2-letter initials from Merchandiser name
-    const initials = personName
-      ? personName.split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
-      : '';
+    // Style the header bar with flat square corners (0px radius) and balanced dark slate + crimson accent
+    redHeader.style.setProperty('background', 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', 'important');
+    redHeader.style.setProperty('border-radius', '0px', 'important');
+    redHeader.style.setProperty('padding', '14px 18px', 'important');
+    redHeader.style.setProperty('border-bottom', '3px solid #e11d48', 'important');
 
-    // Style the banner container for a modern balanced look
-    bannerBox.style.cssText = 'background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important; padding:14px 16px !important; border-bottom:3px solid #e03e36 !important; border-radius:0 !important; position:relative !important;';
-
-    // Hide the original children (the old logout button, "কোলগেট স্মাইল কর্ণার" h1, and old pill) without deleting them so event listeners stay intact
-    Array.from(bannerBox.children).forEach(child => {
-      if (child.id !== 'customMerchProfileRow') {
-        child.style.display = 'none';
+    // Hide original children inside redHeader (keep them in DOM so original JS never errors)
+    Array.from(redHeader.children).forEach(ch => {
+      if (ch.id !== 'liveMerchHeaderBar') {
+        ch.style.setProperty('display', 'none', 'important');
       }
     });
 
-    let profileRow = document.getElementById('customMerchProfileRow');
-    if (!profileRow) {
-      profileRow = document.createElement('div');
-      profileRow.id = 'customMerchProfileRow';
-      bannerBox.appendChild(profileRow);
+    let bar = document.getElementById('liveMerchHeaderBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'liveMerchHeaderBar';
+      redHeader.appendChild(bar);
     }
 
-    profileRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;';
+    bar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;';
 
-    const avatarInner = initials
-      ? `<span style="font-size:14px;font-weight:800;color:#ffffff;letter-spacing:0.5px;">${initials}</span>`
-      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
-
-    profileRow.innerHTML = `
+    bar.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
-        <div style="position:relative;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e03e36 0%,#b91c1c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(224,62,54,0.35);border:2px solid rgba(255,255,255,0.22);">
-          ${avatarInner}
-          <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;background:#22c55e;border:2px solid #0f172a;border-radius:50%;" title="Online"></span>
+        <div style="position:relative;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e11d48 0%,#be123c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,0.25);box-shadow:0 2px 8px rgba(225,29,72,0.35);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;background:#22c55e;border:2px solid #0f172a;border-radius:50%;"></span>
         </div>
         <div style="min-width:0;flex:1;text-align:left;">
-          <div style="font-size:15.5px;font-weight:700;color:#ffffff;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${mainHeading}
+          <div style="font-size:16px;font-weight:700;color:#ffffff;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${titleText}
           </div>
           <div style="font-size:11.5px;font-weight:500;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${subHeading}
+            ${subText}
           </div>
         </div>
       </div>
-      <button id="customMerchLogoutBtn" type="button" title="Logout" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.09);color:#f8fafc;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      <button id="liveMerchLogoutBtn" type="button" title="Logout" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);color:#f8fafc;border:1px solid rgba(255,255,255,0.18);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
         <span>লগআউট</span>
       </button>
     `;
 
-    const logoutBtn = document.getElementById('customMerchLogoutBtn');
-    if (logoutBtn) {
-      logoutBtn.onclick = function() {
-        const origBtn = document.getElementById('btnLogout');
-        if (origBtn) origBtn.click();
+    const customLogout = document.getElementById('liveMerchLogoutBtn');
+    if (customLogout) {
+      customLogout.onclick = function() {
+        const origLogout = document.getElementById('btnLogout');
+        if (origLogout) origLogout.click();
       };
     }
   }
 
-  function initHeaderWatcher() {
-    renderProfileBanner();
-
-    // Watch #userRoleDisplay so whenever the user logs in or changes Merchandiser name, the header updates immediately
-    const roleBadge = document.getElementById('userRoleDisplay');
-    if (roleBadge) {
-      const obs = new MutationObserver(() => renderProfileBanner());
-      obs.observe(roleBadge, { childList: true, characterData: true, subtree: true });
-    }
-
-    document.addEventListener('change', function(e) {
-      if (e.target && e.target.id === 'merchName') {
-        setTimeout(renderProfileBanner, 50);
-      }
-    });
-  }
-
+  // Run immediately and every time #userRoleDisplay changes
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHeaderWatcher);
+    document.addEventListener('DOMContentLoaded', upgradeHeader);
   } else {
-    initHeaderWatcher();
+    upgradeHeader();
   }
-  setTimeout(renderProfileBanner, 400);
+  setInterval(upgradeHeader, 500);
 })();
 </script>
+
 </body>
 </html>
 
