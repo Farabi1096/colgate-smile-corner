@@ -83,6 +83,76 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
+
+<!-- UNIFIED LOGIN, MODAL BACKDROP & HEADER THEME -->
+<style id="unifiedColgateTheme">
+  /* 1. Base Canvas & Outer Container: Flush square top/bottom, soft cool-alabaster background */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+  #appContainer,
+  body > div.max-w-md,
+  .max-w-md.mx-auto {
+    border-radius: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    min-height: 100vh !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 32px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  /* 2. Login Screen (#roleSelectionScreen): Clean, bright clinical surface instead of dark teal */
+  #roleSelectionScreen {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%) !important;
+  }
+  #roleSelectionScreen > div {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  /* 3. Merchandiser Login Modal & All Popup Overlays: Modern Frosted Slate Glass (NO ocean teal!) */
+  #merchLoginModal,
+  #customAlertModal,
+  #adminPinModal,
+  div[id*="Modal"].fixed.inset-0 {
+    background: rgba(15, 23, 42, 0.52) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* 4. Merchandiser Selection Modal Card: Refined border, search input, and header alignment */
+  #merchLoginModal > div {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22) !important;
+    padding: 22px !important;
+  }
+  #merchLoginModal input[type="text"],
+  #merchLoginModal input[type="search"],
+  #merchSearchInput {
+    background: #f8fafc !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    color: #0f172a !important;
+    padding: 11px 14px !important;
+    font-size: 14px !important;
+    transition: all 0.18s ease !important;
+  }
+  #merchLoginModal input:focus,
+  #merchSearchInput:focus {
+    background: #ffffff !important;
+    border-color: #e11d48 !important;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12) !important;
+    outline: none !important;
+  }
+</style>
+
 </head>
 <body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
 
