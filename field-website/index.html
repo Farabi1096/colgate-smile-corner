@@ -1115,7 +1115,7 @@
   }
 
   function syncNoticeUI(text, active) {
-    const cleanText = String(text || '').trim();
+    const cleanText = String(text || '').replace(/^["']+|["']+$/g, '').trim();
     const isActive = (String(active) === 'true' || active === true) && cleanText.length > 0;
 
     // Also update localStorage so built-in notice banners work

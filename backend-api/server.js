@@ -225,23 +225,40 @@ app.post(['/api/upload-targets', '/api/targets/bulk'], async (req, res) => {
 });
 
 // 7. UNIFIED DYNAMIC SETTINGS ROUTE (Notice Board & Gallery Access)
+function cleanNoticeValue(val) {
+  if (val === undefined || val === null) return '';
+  let s = String(val).trim();
+  // Strip wrapping quotes like '""' or '"hello"'
+  while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
+  return s;
+}
+
 app.get('/api/settings', async (req, res) => {
   try {
     const { data, error } = await supabase.from('settings').select('*');
     if (error) throw error;
-    const settingsObj = {
-      notice_text: '',
-      notice_active: 'false',
-      gallery_access: 'locked',
-      global_notice: '',
-      gallery_unlocked: false
-    };
+    const raw = {};
     (data || []).forEach(row => {
-      if (row.key) settingsObj[row.key] = row.value;
+      if (row.key) raw[row.key] = row.value;
     });
-    // Keep both naming conventions synced
-    settingsObj.global_notice = settingsObj.notice_text || settingsObj.global_notice || '';
-    settingsObj.gallery_unlocked = (settingsObj.gallery_access === 'unlocked' || settingsObj.gallery_unlocked === 'true' || settingsObj.gallery_unlocked === true);
+
+    const noticeText = cleanNoticeValue(raw.notice_text) || cleanNoticeValue(raw.global_notice) || '';
+    const noticeActive = noticeText.length > 0 && String(raw.notice_active) !== 'false' ? 'true' : 'false';
+    const isUnlocked = raw.gallery_access === 'unlocked' || String(raw.gallery_unlocked).replace(/"/g, '') === 'true';
+    const galleryAccess = isUnlocked ? 'unlocked' : 'locked';
+
+    const settingsObj = {
+      notice_text: noticeActive === 'true' ? noticeText : '',
+      global_notice: noticeActive === 'true' ? noticeText : '',
+      notice_active: noticeActive,
+      gallery_access: galleryAccess,
+      gallery_unlocked: isUnlocked,
+      maintenance_mode: String(raw.maintenance_mode || 'false').replace(/"/g, '') === 'true'
+    };
+
     res.json({ success: true, settings: settingsObj, ...settingsObj });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -251,22 +268,40 @@ app.get('/api/settings', async (req, res) => {
 app.post('/api/settings', async (req, res) => {
   try {
     const b = req.body || {};
+    const now = new Date().toISOString();
     const updates = [];
 
-    // Support both { key, value } and { notice_text, notice_active, gallery_access }
-    if (b.key !== undefined && b.value !== undefined) {
-      updates.push({ key: String(b.key), value: String(b.value), updated_at: new Date().toISOString() });
+    // Handle single { key, value } format from built-in Admin functions
+    if (b.key !== undefined) {
+      const k = String(b.key);
+      const v = cleanNoticeValue(b.value);
+      updates.push({ key: k, value: v, updated_at: now });
+
+      if (k === 'global_notice' || k === 'notice_text') {
+        updates.push({ key: 'notice_text', value: v, updated_at: now });
+        updates.push({ key: 'global_notice', value: v, updated_at: now });
+        updates.push({ key: 'notice_active', value: v.length > 0 ? 'true' : 'false', updated_at: now });
+      }
+      if (k === 'gallery_unlocked' || k === 'gallery_access') {
+        const unlocked = v === 'true' || v === 'unlocked' || b.value === true;
+        updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
+        updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
+      }
     }
-    if (b.notice_text !== undefined) {
-      updates.push({ key: 'notice_text', value: String(b.notice_text), updated_at: new Date().toISOString() });
-      updates.push({ key: 'global_notice', value: String(b.notice_text), updated_at: new Date().toISOString() });
+
+    // Handle object { notice_text, notice_active, gallery_access } format
+    if (b.notice_text !== undefined || b.global_notice !== undefined) {
+      const cleanTxt = cleanNoticeValue(b.notice_text !== undefined ? b.notice_text : b.global_notice);
+      const isAct = b.notice_active !== undefined ? String(b.notice_active) : (cleanTxt.length > 0 ? 'true' : 'false');
+      updates.push({ key: 'notice_text', value: cleanTxt, updated_at: now });
+      updates.push({ key: 'global_notice', value: cleanTxt, updated_at: now });
+      updates.push({ key: 'notice_active', value: isAct, updated_at: now });
     }
-    if (b.notice_active !== undefined) {
-      updates.push({ key: 'notice_active', value: String(b.notice_active), updated_at: new Date().toISOString() });
-    }
-    if (b.gallery_access !== undefined) {
-      updates.push({ key: 'gallery_access', value: String(b.gallery_access), updated_at: new Date().toISOString() });
-      updates.push({ key: 'gallery_unlocked', value: b.gallery_access === 'unlocked' ? 'true' : 'false', updated_at: new Date().toISOString() });
+
+    if (b.gallery_access !== undefined || b.gallery_unlocked !== undefined) {
+      const unlocked = b.gallery_access === 'unlocked' || b.gallery_unlocked === true || b.gallery_unlocked === 'true';
+      updates.push({ key: 'gallery_access', value: unlocked ? 'unlocked' : 'locked', updated_at: now });
+      updates.push({ key: 'gallery_unlocked', value: unlocked ? 'true' : 'false', updated_at: now });
     }
 
     if (updates.length > 0) {
@@ -274,10 +309,7 @@ app.post('/api/settings', async (req, res) => {
       if (error) throw error;
     }
 
-    const { data } = await supabase.from('settings').select('*');
-    const settingsObj = {};
-    (data || []).forEach(r => { if (r.key) settingsObj[r.key] = r.value; });
-    res.json({ success: true, settings: settingsObj, ...settingsObj });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

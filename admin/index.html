@@ -1098,6 +1098,33 @@
   }
 })();
 </script>
+
+<!-- HOOK BUILT-IN NOTICE MODAL TO SUPABASE -->
+<script>
+(function() {
+  const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const txt = (btn.textContent || '').trim().toLowerCase();
+    // If admin clicks Save/Broadcast inside any Notice modal on the page
+    if (txt.includes('save') || txt.includes('broadcast') || txt.includes('update notice') || btn.id === 'saveNotice') {
+      const textareas = document.querySelectorAll('textarea, input[type="text"][id*="notice" i]');
+      for (const ta of textareas) {
+        if (ta.offsetParent !== null) { // visible input
+          const val = (ta.value || '').trim();
+          await fetch(SETTINGS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notice_text: val, global_notice: val, notice_active: val.length > 0 ? 'true' : 'false' })
+          });
+          break;
+        }
+      }
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
 
