@@ -224,5 +224,43 @@ app.post('/api/upload-targets', async (req, res) => {
   }
 });
 
+
+// 7. Dynamic App Settings (Notice Board & Gallery Access)
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('settings').select('*');
+    if (error) throw error;
+    const settingsObj = { notice_text: '', notice_active: 'false', gallery_access: 'locked' };
+    (data || []).forEach(row => {
+      if (row.key) settingsObj[row.key] = row.value;
+    });
+    res.json({ success: true, settings: settingsObj });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const updates = [];
+    if (b.notice_text !== undefined) updates.push({ key: 'notice_text', value: String(b.notice_text), updated_at: new Date().toISOString() });
+    if (b.notice_active !== undefined) updates.push({ key: 'notice_active', value: String(b.notice_active), updated_at: new Date().toISOString() });
+    if (b.gallery_access !== undefined) updates.push({ key: 'gallery_access', value: String(b.gallery_access), updated_at: new Date().toISOString() });
+
+    if (updates.length > 0) {
+      const { error } = await supabase.from('settings').upsert(updates, { onConflict: 'key' });
+      if (error) throw error;
+    }
+
+    const { data } = await supabase.from('settings').select('*');
+    const settingsObj = {};
+    (data || []).forEach(r => { if (r.key) settingsObj[r.key] = r.value; });
+    res.json({ success: true, settings: settingsObj });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

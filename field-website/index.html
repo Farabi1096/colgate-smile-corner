@@ -1045,6 +1045,113 @@
   };
 })();
 </script>
+
+<!-- LIVE SUPABASE SETTINGS LISTENER (NOTICE POPUP & GALLERY LOCK/UNLOCK) -->
+<script>
+(function() {
+  const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+  let lastShownNotice = '';
+
+  function applyGalleryAccess(mode) {
+    const isUnlocked = String(mode).toLowerCase() === 'unlocked';
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      if (isUnlocked) {
+        // Allow picking from phone gallery OR camera
+        input.removeAttribute('capture');
+        input.setAttribute('accept', 'image/*');
+      } else {
+        // Force live camera capture only
+        input.setAttribute('capture', 'environment');
+        input.setAttribute('accept', 'image/*');
+      }
+    });
+
+    // Also unlock any gallery button or badge if present in the UI
+    let badge = document.getElementById('liveGalleryStatusBadge');
+    if (!badge) {
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput && fileInput.parentElement) {
+        badge = document.createElement('div');
+        badge.id = 'liveGalleryStatusBadge';
+        badge.style.cssText = 'margin-top:8px;font-size:12px;font-weight:600;text-align:center;padding:4px 10px;border-radius:6px;';
+        fileInput.parentElement.appendChild(badge);
+      }
+    }
+    if (badge) {
+      if (isUnlocked) {
+        badge.textContent = '🖼️ গ্যালারি আপলোড চালু আছে (Gallery & Camera Enabled)';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+      } else {
+        badge.textContent = '📷 শুধুমাত্র সরাসরি ক্যামেরা ছবি (Live Camera Only)';
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#b91c1c';
+      }
+    }
+  }
+
+  function showNoticeBannerAndPopup(text, active) {
+    const isActive = String(active) === 'true' && text && text.trim().length > 0;
+    let banner = document.getElementById('liveAdminNoticeBanner');
+
+    if (!isActive) {
+      if (banner) banner.style.display = 'none';
+      return;
+    }
+
+    // 1. Top Scrolling/Pinned Banner inside Field App
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'liveAdminNoticeBanner';
+      banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:12px 16px;margin:10px auto;max-width:520px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 10px rgba(0,0,0,0.06);';
+      document.body.insertBefore(banner, document.body.firstChild);
+    }
+    banner.style.display = 'flex';
+    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Admin Notice)</div><div>${text}</div></div>`;
+
+    // 2. Popup Modal when a new notice arrives
+    if (lastShownNotice !== text) {
+      lastShownNotice = text;
+      let popup = document.getElementById('liveAdminNoticePopup');
+      if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'liveAdminNoticePopup';
+        popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;';
+        document.body.appendChild(popup);
+      }
+      popup.style.display = 'flex';
+      popup.innerHTML = `
+        <div style="background:#fff;max-width:380px;width:100%;border-radius:18px;padding:24px;text-align:center;box-shadow:0 20px 25px rgba(0,0,0,0.25);">
+          <div style="width:52px;height:52px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px;">🔔</div>
+          <h3 style="margin:0 0 8px;font-size:18px;color:#0f172a;">জরুরী নোটিশ (Notice)</h3>
+          <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.5;white-space:pre-wrap;">${text}</p>
+          <button onclick="document.getElementById('liveAdminNoticePopup').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে (OK)</button>
+        </div>
+      `;
+    }
+  }
+
+  async function syncFieldSettings() {
+    try {
+      const res = await fetch(SETTINGS_API);
+      const json = await res.json();
+      if (json && json.settings) {
+        applyGalleryAccess(json.settings.gallery_access || 'locked');
+        showNoticeBannerAndPopup(json.settings.notice_text || '', json.settings.notice_active || 'false');
+      }
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncFieldSettings);
+  } else {
+    syncFieldSettings();
+  }
+  // Poll every 15 seconds so changes in Admin reflect live on open phones without refreshing
+  setInterval(syncFieldSettings, 15000);
+})();
+</script>
 </body>
 </html>
 
