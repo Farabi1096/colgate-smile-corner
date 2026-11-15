@@ -2,13 +2,10 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const jwt = require("jsonwebtoken");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || "colgate_secret_key";
-const ADMIN_PIN = process.env.ADMIN_PIN || "1234";
 
 app.use(cors());
 app.use(express.json({ limit: "15mb" }));
@@ -31,32 +28,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// Get Global Settings
-app.get("/api/settings", async (req, res) => {
-  if (!supabase) {
-    return res.json({ maintenance_mode: false, global_notice: "", gallery_unlocked: false });
-  }
-  const { data, error } = await supabase.from("settings").select("*");
-  if (error) return res.status(500).json({ error: error.message });
-  const settings = {};
-  (data || []).forEach((row) => {
-    settings[row.key] = row.value === "true" ? true : row.value === "false" ? false : row.value;
-  });
-  res.json(settings);
-});
-
-// Update Global Settings (Maintenance, Notice, Gallery Lock)
-app.patch("/api/admin/settings", async (req, res) => {
-  const { key, value } = req.body;
-  if (!supabase) return res.json({ success: true, key, value });
-  const { error } = await supabase
-    .from("settings")
-    .upsert({ key, value: String(value) }, { onConflict: "key" });
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true, key, value });
-});
-
-// Save Submission & Upload Photo to Supabase Storage
+// Save Submission & Upload Photo to Supabase Storage + Submissions Table
 app.post("/api/submissions", upload.single("photo"), async (req, res) => {
   try {
     const {
@@ -74,13 +46,7 @@ app.post("/api/submissions", upload.single("photo"), async (req, res) => {
     } = req.body;
 
     if (!shop_code) return res.status(400).json({ error: "shop_code is required" });
-
-    if (!supabase) {
-      return res.json({
-        success: true,
-        message: "Received in Test Mode. Add SUPABASE_URL & SUPABASE_SERVICE_KEY on Render!",
-      });
-    }
+    if (!supabase) return res.status(500).json({ error: "Supabase keys missing on Render" });
 
     let imageUrl = null;
     let fileBuffer = null;
@@ -92,8 +58,9 @@ app.post("/api/submissions", upload.single("photo"), async (req, res) => {
       fileBuffer = Buffer.from(base64Data, "base64");
     }
 
+    const cleanCode = String(shop_code).toUpperCase().trim().replace(/[^A-Z0-9_-]/g, "");
+
     if (fileBuffer) {
-      const cleanCode = String(shop_code).toUpperCase().replace(/[^A-Z0-9_-]/g, "");
       const fileName = `${cleanCode}_${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage
         .from("outlet-photos")
@@ -107,27 +74,44 @@ app.post("/api/submissions", upload.single("photo"), async (req, res) => {
       imageUrl = publicUrlData.publicUrl;
     }
 
-    const { data: inserted, error: insertErr } = await supabase
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+
+    const fullRow = {
+      shop_code: cleanCode,
+      merch_name: merch_name || "Field Team",
+      role: role || "merchandiser",
+      unit: unit || "DCC",
+      area_name: area_name || "",
+      distribution_name: distribution_name || "",
+      slab: slab || "Regular",
+      month: month || "",
+      image_url: imageUrl,
+      lat: !isNaN(parsedLat) ? parsedLat : null,
+      lng: !isNaN(parsedLng) ? parsedLng : null,
+    };
+
+    // Try full insert first; if any extra column is missing, fall back to core columns
+    let { data: inserted, error: insertErr } = await supabase
       .from("submissions")
-      .insert([
-        {
-          shop_code: String(shop_code).toUpperCase().trim(),
-          merch_name: merch_name || "Field Team",
-          role: role || "merchandiser",
-          unit: unit || "DCC",
-          area_name: area_name || "",
-          distribution_name: distribution_name || "",
-          slab: slab || "Regular",
-          month: month || "",
-          image_url: imageUrl,
-          lat: parseFloat(lat) || null,
-          lng: parseFloat(lng) || null,
-        },
-      ])
+      .insert([fullRow])
       .select()
       .single();
 
-    if (insertErr) throw insertErr;
+    if (insertErr) {
+      console.warn("Full insert warning, retrying with core columns:", insertErr.message);
+      const minimalRow = {
+        shop_code: cleanCode,
+        merch_name: merch_name || "Field Team",
+        month: month || "",
+        image_url: imageUrl,
+        lat: !isNaN(parsedLat) ? parsedLat : null,
+        lng: !isNaN(parsedLng) ? parsedLng : null,
+      };
+      const retry = await supabase.from("submissions").insert([minimalRow]).select().single();
+      if (retry.error) throw retry.error;
+      inserted = retry.data;
+    }
 
     res.json({ success: true, imageUrl, submission: inserted });
   } catch (err) {
@@ -136,16 +120,54 @@ app.post("/api/submissions", upload.single("photo"), async (req, res) => {
   }
 });
 
-// Get All Uploaded Submissions & Photos from Supabase
+// Get All Submissions (Also auto-imports any orphaned photos from outlet-photos bucket!)
 app.get("/api/submissions", async (req, res) => {
-  if (!supabase) return res.json([]);
-  const { data, error } = await supabase
-    .from("submissions")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  try {
+    if (!supabase) return res.json([]);
+
+    // 1. Check bucket for any photos that are not yet in the submissions table
+    const { data: files } = await supabase.storage
+      .from("outlet-photos")
+      .list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+
+    const { data: existingRows } = await supabase
+      .from("submissions")
+      .select("image_url")
+      .limit(500);
+
+    const existingUrls = new Set((existingRows || []).map((r) => r.image_url));
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        if (!file.name || file.name === ".emptyFolderPlaceholder") continue;
+        const { data: urlData } = supabase.storage.from("outlet-photos").getPublicUrl(file.name);
+        const pubUrl = urlData.publicUrl;
+        if (!existingUrls.has(pubUrl)) {
+          const guessedCode = file.name.split("_")[0] || "OUTLET";
+          await supabase.from("submissions").insert([
+            {
+              shop_code: guessedCode,
+              merch_name: "Synced from Bucket",
+              image_url: pubUrl,
+              created_at: file.created_at || new Date().toISOString(),
+            },
+          ]);
+        }
+      }
+    }
+
+    // 2. Return all rows from submissions table
+    const { data, error } = await supabase
+      .from("submissions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
