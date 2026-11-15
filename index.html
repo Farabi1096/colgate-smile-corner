@@ -4,48 +4,36 @@
 
 
 
-<!-- COLGATE CLINICAL BALANCED UI SYSTEM & MOBILE FLUSH FIX -->
+
+<!-- COLGATE CLINICAL BALANCED UI SYSTEM -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style id="deepCraftedUiSystem">
   :root {
-    /* Tuned Colgate Brand Crimson (Refined, deep, easy on the eyes) */
     --colgate-crimson: #c82333;
     --colgate-crimson-dark: #a61b29;
-    --colgate-crimson-soft: #fff1f2;
-
-    /* Balancing Clinical Sky-Blue & Slate (Cools down the red) */
     --clinical-blue: #0284c7;
     --clinical-ice: #f0f7ff;
     --clinical-border: #bae6fd;
-
-    /* Neutral Architectural Surfaces */
     --app-canvas: #f1f5f9;
     --card-surface: #ffffff;
     --input-surface: #f8fafc;
     --slate-900: #0f172a;
-    --slate-700: #334155;
-    --slate-500: #64748b;
     --hairline: #e2e8f0;
   }
 
-  /* 1. Base Reset & Full-Bleed Mobile Viewport */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
   html, body {
-    font-family: 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-family: 'Inter', 'Hind Siliguri', sans-serif !important;
     background-color: var(--app-canvas) !important;
     color: var(--slate-900) !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow-x: hidden !important;
-    -webkit-font-smoothing: antialiased;
   }
 
-  /* 2. Eliminate Bulky Rounded Bars & Pill Containers Everywhere */
+  /* Flatten bulky curved mobile header/footer bars */
   header,
   header > div,
   .sticky.top-0,
@@ -57,14 +45,12 @@
     border-radius: 0px !important;
   }
 
-  /* Standardize cards & modals to a crisp 10px radius */
-  .rounded-3xl, .rounded-2xl, .rounded-xl,
-  [class*="rounded-["], [class*="rounded-3xl"], [class*="rounded-2xl"] {
+  /* Crisp 10px card corners instead of huge bubble corners */
+  .rounded-3xl, .rounded-2xl, .rounded-xl {
     border-radius: 10px !important;
   }
 
-  /* Force all pill bars (.rounded-full) on buttons, tabs, role selectors & wrappers into 8px rectangles */
-  .rounded-full:not(img):not(svg):not(.w-2):not(.w-2.5):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7):not(.w-8) {
+  .rounded-full:not(img):not(svg):not(.w-2):not(.w-2\.5):not(.w-3):not(.w-4):not(.w-5):not(.w-6):not(.w-7):not(.w-8) {
     border-radius: 8px !important;
   }
 
@@ -72,103 +58,55 @@
     border-radius: 8px !important;
   }
 
-  /* Mobile-Specific Bug Fixes: Remove outer container margins/curves so bars never float awkwardly */
   @media (max-width: 640px) {
-    body > div,
-    .max-w-md,
-    .max-w-lg,
-    #appContainer,
-    main {
+    .max-w-md, .max-w-lg, #appContainer, main {
       max-width: 100% !important;
       width: 100% !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
       border-radius: 0px !important;
-      box-shadow: none !important;
     }
   }
 
-  /* 3. Login Screen — Clean Clinical Slate + Tuned Colgate Crimson Accent */
-  #loginScreen, #roleSelectionScreen, [id*="login" i][class*="fixed"] {
-    background: linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #271722 100%) !important;
-    border-radius: 0px !important;
-    padding: 20px !important;
-  }
-  #loginScreen > div, #roleSelectionScreen > div {
-    background: #ffffff !important;
-    border: 1px solid var(--hairline) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35) !important;
-  }
-
-  /* 4. Top App Header — Tuned Colgate Crimson Balanced with Dark Slate Depth */
+  /* Header & Primary Buttons — Tuned Colgate Crimson */
   header {
     background: linear-gradient(135deg, var(--colgate-crimson) 0%, var(--colgate-crimson-dark) 100%) !important;
     color: #ffffff !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
     box-shadow: 0 2px 10px rgba(166, 27, 41, 0.15) !important;
-    border-radius: 0px !important;
   }
 
-  /* Primary Red Buttons & Active Tab States — Tuned Crimson (No Neon Glare) */
-  .bg-red-600, .bg-red-700, .bg-red-500, .bg-rose-600,
-  button[type="submit"], #submitBtn,
-  [style*="background: #dc2626"], [style*="background:#dc2626"] {
+  .bg-red-600, .bg-red-700, .bg-red-500,
+  button[type="submit"], #submitBtn {
     background: var(--colgate-crimson) !important;
     border-color: var(--colgate-crimson) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(200, 35, 51, 0.22) !important;
-  }
-  button[type="submit"]:hover, #submitBtn:hover, .bg-red-600:hover {
-    background: var(--colgate-crimson-dark) !important;
   }
 
-  /* 5. Balance Red Overload: Turn Secondary Red Tint Boxes into Calm Clinical Sky-Ice */
-  .bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100,
-  [class*="bg-red-50"], [class*="bg-red-100"] {
+  /* Balance Red Tint Boxes with Calm Clinical Sky-Ice */
+  .bg-red-50, .bg-red-100 {
     background-color: var(--clinical-ice) !important;
     border-color: var(--clinical-border) !important;
-    color: var(--slate-900) !important;
   }
 
-  /* Step number circles & small icons: balanced clinical blue instead of red-on-red */
   span.bg-red-50, span.bg-red-100, div.bg-red-50.w-8, div.bg-red-100.w-8 {
     background-color: var(--clinical-ice) !important;
     color: var(--clinical-blue) !important;
     font-weight: 700 !important;
   }
 
-  /* Keep main titles crisp dark slate while allowing subtle crimson highlights */
-  .text-red-600, .text-red-700, .text-red-500, .text-rose-600 {
+  .text-red-600, .text-red-700, .text-red-500 {
     color: var(--colgate-crimson) !important;
   }
 
-  /* Remove harsh red borders and glowing red shadows */
   .border-red-500, .border-red-600, .border-red-400, .border-red-300, .border-red-200, .border-red-100 {
     border-color: var(--hairline) !important;
   }
-  [class*="shadow-red-"], [class*="shadow-rose-"] {
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
-  }
-
-  /* 6. Clean Form Cards & Inputs */
-  .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white.shadow-lg, .bg-white.shadow-md, .bg-white.shadow-sm {
-    background-color: var(--card-surface) !important;
-    border: 1px solid var(--hairline) !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
-    border-radius: 10px !important;
-  }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-  select,
-  textarea {
+  select, textarea {
     background-color: var(--input-surface) !important;
     border: 1px solid #cbd5e1 !important;
-    color: var(--slate-900) !important;
     border-radius: 8px !important;
-    padding: 10px 12px !important;
-    font-size: 14px !important;
-    transition: all 0.15s ease !important;
   }
   input:focus, select:focus, textarea:focus {
     background-color: #ffffff !important;
@@ -177,14 +115,13 @@
     outline: none !important;
   }
 
-  /* 7. Camera Upload Box — Balanced Clinical Ice & Slate */
   [class*="border-dashed"] {
     border: 1.5px dashed #94a3b8 !important;
     background: linear-gradient(180deg, #f8fafc 0%, var(--clinical-ice) 100%) !important;
     border-radius: 8px !important;
   }
 
-  /* 8. Top Notification Banner — Sleek Dark Slate with Tuned Colgate Crimson Pill */
+  /* Top-Center Smooth Notification Card */
   @keyframes noticeDropIn {
     0%   { opacity: 0; transform: translate(-50%, -16px) scale(0.98); }
     100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
@@ -208,116 +145,91 @@
   }
 </style>
 
-<!-- LIVE SUPABASE SETTINGS LISTENER (HABITAT NOTICE + GALLERY TOGGLE) -->
+<!-- SAFE SUPABASE SETTINGS LISTENER (NO REGEX DELETION) -->
 <script>
 (function() {
-  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  let dismissedSessionNotice = '';
+  const SUPABASE_URL = "https://vzwplpljvgqalgfuxmsf.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6d3BscGxqdmdxYWxnZnV4bXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzI0MjAsImV4cCI6MjA5MTY0ODQyMH0.c24-s1502h523-7zB63u2N63W_s5I7tH3_R-bI7c3u4";
+  const REST_URL = SUPABASE_URL + "/rest/v1/settings";
+  let dismissedForCurrentLoad = false;
 
-  // Prevent old white/red center modal from ever popping up for Notices
-  const origShowCustomAlert = window.showCustomAlert;
-  window.showCustomAlert = function(title, message) {
-    const t = String(title || '');
-    const m = String(message || '');
-    if (t === 'Notice' && !m.toLowerCase().includes('error') && !m.includes('সফল') && !m.includes('ব্যর্থ')) {
-      return;
-    }
-    if (typeof origShowCustomAlert === 'function') {
-      return origShowCustomAlert.apply(this, arguments);
-    }
-  };
+  function applyFieldSettings(s) {
+    // 1. Gallery Unlock Control (Original 'গ্যালারি থেকে আপলোড' button only)
+    const isUnlocked = String(s.gallery_access).toLowerCase() === 'unlocked' || String(s.gallery_unlocked) === 'true';
+    localStorage.setItem('app_gallery', isUnlocked ? 'true' : 'false');
 
-  function applyGalleryState(mode) {
-    const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
-    const extraBadge = document.getElementById('liveGalleryStatusBadge');
-    if (extraBadge) extraBadge.remove();
+    const extraBar = document.getElementById('liveGalleryUploadTriggers');
+    if (extraBar) extraBar.remove();
 
-    document.querySelectorAll('button, label, div, span').forEach(el => {
+    document.querySelectorAll('button, label, a, div, span').forEach(el => {
       const txt = (el.textContent || '').trim();
-      if (txt === 'গ্যালারি থেকে আপলোড' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
-        const container = el.closest('button, label') || el;
-        container.style.display = isUnlocked ? 'inline-flex' : 'none';
-        container.classList.remove('hidden');
-        if (!isUnlocked) container.classList.add('hidden');
+      if (txt === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2) {
+        const targetBtn = el.closest('button, label, a') || el;
+        targetBtn.style.display = isUnlocked ? '' : 'none';
       }
     });
 
-    document.querySelectorAll('input[type="file"]').forEach(inp => {
-      if (isUnlocked) {
-        inp.removeAttribute('capture');
-      } else {
-        inp.setAttribute('capture', 'environment');
-      }
-    });
-  }
+    // 2. Top Minimal Notice Card
+    const rawText = String(s.notice_text || s.global_notice || '').replace(/^"+|"+$/g, '').trim();
+    const isActive = (String(s.notice_active) === 'true' || rawText.length > 0) && rawText.length > 0;
 
-  function renderTopNoticePill(text, isActive) {
-    const cleanText = String(text || '').replace(/^"+|"+$/g, '').trim();
-    const shouldShow = (String(isActive) === 'true' || isActive === true) && cleanText.length > 0;
-
-    let card = document.getElementById('minimalTopNoticePill');
-    if (!shouldShow || dismissedSessionNotice === cleanText) {
-      if (card) card.style.display = 'none';
+    let pill = document.getElementById('minimalTopNoticePill');
+    if (!isActive || dismissedForCurrentLoad) {
+      if (pill) pill.style.display = 'none';
       return;
     }
 
-    if (!card) {
-      card = document.createElement('div');
-      card.id = 'minimalTopNoticePill';
-      document.body.appendChild(card);
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'minimalTopNoticePill';
+      document.body.appendChild(pill);
     }
 
-    card.style.display = 'block';
-    card.innerHTML = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;">
-        <div style="font-size:16px;font-weight:600;color:#ffffff;line-height:1.4;letter-spacing:-0.01em;text-align:left;word-break:break-word;">
-          ${cleanText}
+    pill.style.display = 'block';
+    pill.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">জরুরী নোটিশ • Notice</div>
+          <div style="font-size:14.5px;font-weight:600;color:#ffffff;line-height:1.45;word-break:break-word;">${rawText}</div>
         </div>
-        <button id="closeMinimalNoticeBtn" title="Close" style="background:transparent;border:none;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px;cursor:pointer;margin-top:1px;">
-          &#10005;
-        </button>
+        <button id="closeMinimalNoticeX" title="Close" style="background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer;">&times;</button>
       </div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;text-align:left;">
-        অ্যাডমিন নোটিশ • আজকের আপডেট
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button id="okMinimalNoticeBtn" style="background:#c82333;border:none;color:#ffffff;font-size:12px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;">ঠিক আছে (Okay)</button>
       </div>
-      <button id="ackMinimalNoticeBtn" style="width:100%;background:#c82333;color:#ffffff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">
-        ঠিক আছে (Got it)
-      </button>
     `;
 
-    const dismissFn = function() {
-      dismissedSessionNotice = cleanText;
-      card.style.display = 'none';
+    const dismissHandler = function() {
+      dismissedForCurrentLoad = true;
+      pill.style.display = 'none';
     };
-
-    const closeBtn = document.getElementById('closeMinimalNoticeBtn');
-    const ackBtn = document.getElementById('ackMinimalNoticeBtn');
-    if (closeBtn) closeBtn.onclick = dismissFn;
-    if (ackBtn) ackBtn.onclick = dismissFn;
+    document.getElementById('closeMinimalNoticeX').onclick = dismissHandler;
+    document.getElementById('okMinimalNoticeBtn').onclick = dismissHandler;
   }
 
-  async function fetchAndApplySettings() {
+  async function syncFromSupabase() {
     try {
-      const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now());
-      const json = await res.json();
-      const s = json.settings || json || {};
-      const noticeText = s.notice_text || s.global_notice || '';
-      const noticeActive = s.notice_active !== undefined ? s.notice_active : Boolean(noticeText && noticeText !== '""');
-      const galleryMode = s.gallery_access || (s.gallery_unlocked ? 'unlocked' : 'locked');
-
-      applyGalleryState(galleryMode);
-      renderTopNoticePill(noticeText, noticeActive);
+      const res = await fetch(REST_URL + "?select=key,value", {
+        headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
+      });
+      const rows = await res.json();
+      if (Array.isArray(rows)) {
+        const s = {};
+        rows.forEach(r => { if (r.key) s[r.key] = r.value; });
+        applyFieldSettings(s);
+      }
     } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fetchAndApplySettings);
+    document.addEventListener('DOMContentLoaded', syncFromSupabase);
   } else {
-    fetchAndApplySettings();
+    syncFromSupabase();
   }
-  setInterval(fetchAndApplySettings, 10000);
+  setInterval(syncFromSupabase, 8000);
 })();
 </script>
+
 </body>
 </html>
 
