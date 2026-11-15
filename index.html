@@ -1052,6 +1052,7 @@
 
 
 
+
 <!-- BULLETPROOF DIRECT SUPABASE FIELD APP ENGINE -->
 <script>
 (function() {
@@ -1062,119 +1063,121 @@
   let dismissedForThisPageLoad = '';
   let currentlyRenderedNotice = '';
 
-  // Inject smooth keyframe animations & styles for the Top-Center Notice Card
-  function ensureNoticeStyles() {
-    if (document.getElementById('colgateSmoothNoticeStyles')) return;
-    const style = document.createElement('style');
-    style.id = 'colgateSmoothNoticeStyles';
-    style.textContent = `
-      @keyframes colgateOverlayFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+  // 1. Block the legacy built-in duplicate "নোটিশ:" popup from ever appearing
+  localStorage.removeItem('app_notice');
+
+  function suppressDuplicateLegacyNoticePopup() {
+    document.querySelectorAll('div, p, span').forEach(el => {
+      const txt = (el.textContent || '').trim();
+      if (txt.startsWith('নোটিশ:') || txt === '""') {
+        const legacyModal = el.closest('.fixed, [style*="fixed"]');
+        if (legacyModal && legacyModal.id !== 'cloudFieldNoticeModal') {
+          legacyModal.style.display = 'none';
+          legacyModal.classList.add('hidden');
+        }
       }
-      @keyframes colgateCardSlideDown {
+    });
+  }
+
+  // 2. Minimal Top-Center Floating Notification Styles
+  function ensureNoticeStyles() {
+    const oldStyle = document.getElementById('colgateSmoothNoticeStyles');
+    if (oldStyle) oldStyle.remove();
+    if (document.getElementById('colgateMinimalNoticeStyles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'colgateMinimalNoticeStyles';
+    style.textContent = `
+      @keyframes minimalSlideDown {
         0% {
           opacity: 0;
-          transform: translateY(-48px) scale(0.92);
+          transform: translate(-50%, -28px) scale(0.96);
         }
         100% {
           opacity: 1;
-          transform: translateY(0) scale(1);
+          transform: translate(-50%, 0) scale(1);
         }
-      }
-      @keyframes colgateBellRing {
-        0%, 100% { transform: rotate(0deg); }
-        20% { transform: rotate(14deg); }
-        40% { transform: rotate(-12deg); }
-        60% { transform: rotate(8deg); }
-        80% { transform: rotate(-6deg); }
       }
       #cloudFieldNoticeModal {
         position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.42);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
         z-index: 999999;
+        width: calc(100% - 28px);
+        max-width: 380px;
         display: none;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 56px 18px 20px;
-        animation: colgateOverlayFadeIn 0.28s ease-out forwards;
+        animation: minimalSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        transition: opacity 0.22s ease, transform 0.22s ease;
       }
-      #cloudFieldNoticeModal .colgate-notice-card {
-        background: #ffffff;
-        max-width: 350px;
-        width: 100%;
-        border-radius: 26px;
-        padding: 28px 24px 22px;
-        text-align: center;
-        box-shadow: 0 24px 48px -12px rgba(220, 38, 38, 0.22), 0 12px 24px -8px rgba(15, 23, 42, 0.12);
-        border: 1px solid rgba(254, 202, 202, 0.8);
-        position: relative;
-        animation: colgateCardSlideDown 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        transition: transform 0.25s ease, opacity 0.25s ease;
-      }
-      #cloudFieldNoticeModal.closing .colgate-notice-card {
-        transform: translateY(-32px) scale(0.94);
+      #cloudFieldNoticeModal.closing {
         opacity: 0;
+        transform: translate(-50%, -20px) scale(0.96);
       }
-      #cloudFieldNoticeModal .colgate-bell-circle {
-        width: 68px;
-        height: 68px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        border: 2px solid #fecaca;
+      .minimal-notice-box {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #fee2e2;
+        border-left: 4px solid #dc2626;
+        border-radius: 16px;
+        padding: 13px 14px;
+        box-shadow: 0 14px 30px -6px rgba(15, 23, 42, 0.14), 0 4px 10px -2px rgba(220, 38, 38, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: inherit;
+      }
+      .minimal-notice-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #dc2626;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 16px;
-        box-shadow: 0 8px 20px -4px rgba(220, 38, 38, 0.18);
       }
-      #cloudFieldNoticeModal .colgate-bell-svg {
-        width: 32px;
-        height: 32px;
+      .minimal-notice-content {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+      }
+      .minimal-notice-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
         color: #dc2626;
-        animation: colgateBellRing 1.2s ease-in-out 0.3s 1;
+        margin-bottom: 2px;
       }
-      #cloudFieldNoticeModal .colgate-btn-row {
-        display: flex;
-        gap: 12px;
-        margin-top: 22px;
+      .minimal-notice-text {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.4;
+        word-break: break-word;
       }
-      #cloudFieldNoticeModal .colgate-btn-dismiss {
-        flex: 1;
-        padding: 11px 14px;
-        border-radius: 12px;
-        border: 1.5px solid #cbd5e1;
-        background: #ffffff;
-        color: #64748b;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.18s ease;
-      }
-      #cloudFieldNoticeModal .colgate-btn-dismiss:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
-        color: #334155;
-      }
-      #cloudFieldNoticeModal .colgate-btn-okay {
-        flex: 1;
-        padding: 11px 14px;
-        border-radius: 12px;
+      .minimal-notice-close {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 8px;
         border: none;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: #ffffff;
-        font-size: 14px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 16px;
         font-weight: 700;
         cursor: pointer;
-        box-shadow: 0 6px 16px -3px rgba(220, 38, 38, 0.4);
-        transition: all 0.18s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease, color 0.15s ease;
       }
-      #cloudFieldNoticeModal .colgate-btn-okay:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px -3px rgba(220, 38, 38, 0.5);
+      .minimal-notice-close:hover {
+        background: #fee2e2;
+        color: #dc2626;
       }
     `;
     document.head.appendChild(style);
@@ -1243,35 +1246,25 @@
 
   window.__dismissCurrentNotice = function(noticeText) {
     dismissedForThisPageLoad = noticeText;
-    const banner = document.getElementById('cloudFieldNoticeBanner');
-    if (banner) banner.remove();
-
     const modal = document.getElementById('cloudFieldNoticeModal');
     if (modal) {
       modal.classList.add('closing');
       setTimeout(() => {
         modal.style.display = 'none';
         modal.classList.remove('closing');
-      }, 240);
+      }, 220);
     }
   };
 
   function applyFieldNotice(noticeText, isActive) {
     ensureNoticeStyles();
+    suppressDuplicateLegacyNoticePopup();
+
     const clean = cleanStr(noticeText);
     const show = isActive && clean.length > 0;
 
-    // Remove any old static top banner so only the smooth floating card is used
     const oldBanner = document.getElementById('cloudFieldNoticeBanner');
     if (oldBanner) oldBanner.remove();
-
-    // Hide any legacy empty "" popups
-    document.querySelectorAll('div, p, span').forEach(el => {
-      if ((el.textContent || '').trim() === '""') {
-        const m = el.closest('.fixed, [style*="fixed"]');
-        if (m && m.id !== 'cloudFieldNoticeModal') m.style.display = 'none';
-      }
-    });
 
     let modal = document.getElementById('cloudFieldNoticeModal');
 
@@ -1287,7 +1280,7 @@
       return;
     }
 
-    if (currentlyRenderedNotice === clean && modal && modal.style.display === 'flex') {
+    if (currentlyRenderedNotice === clean && modal && modal.style.display === 'block') {
       return;
     }
 
@@ -1301,36 +1294,25 @@
     }
 
     modal.classList.remove('closing');
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
     modal.innerHTML = `
-      <div class="colgate-notice-card">
-        <button type="button" title="Close" onclick="window.__dismissCurrentNotice('${escapedForJs}')" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;font-size:18px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
-
-        <div class="colgate-bell-circle">
-          <svg class="colgate-bell-svg" viewBox="0 0 24 24" fill="currentColor">
+      <div class="minimal-notice-box">
+        <div class="minimal-notice-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
           </svg>
         </div>
-
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#dc2626;margin-bottom:6px;">
-          জরুরী নোটিশ • Notice
+        <div class="minimal-notice-content">
+          <div class="minimal-notice-label">নোটিশ • Notice</div>
+          <div class="minimal-notice-text">${clean}</div>
         </div>
-
-        <div style="font-size:17px;font-weight:700;color:#1e293b;line-height:1.55;white-space:pre-wrap;padding:0 6px;">${clean}</div>
-
-        <div class="colgate-btn-row">
-          <button type="button" class="colgate-btn-dismiss" onclick="window.__dismissCurrentNotice('${escapedForJs}')">
-            বাতিল (Close)
-          </button>
-          <button type="button" class="colgate-btn-okay" onclick="window.__dismissCurrentNotice('${escapedForJs}')">
-            ঠিক আছে (Okay)
-          </button>
-        </div>
+        <button type="button" class="minimal-notice-close" title="Close" onclick="window.__dismissCurrentNotice('${escapedForJs}')">&times;</button>
       </div>
     `;
   }
 
   async function syncFieldFromCloud() {
+    suppressDuplicateLegacyNoticePopup();
     try {
       let map = {};
       if (SUPA_KEY) {
@@ -1368,12 +1350,14 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      suppressDuplicateLegacyNoticePopup();
       syncFieldFromCloud();
-      setTimeout(syncFieldFromCloud, 800);
+      setTimeout(syncFieldFromCloud, 600);
     });
   } else {
+    suppressDuplicateLegacyNoticePopup();
     syncFieldFromCloud();
-    setTimeout(syncFieldFromCloud, 800);
+    setTimeout(syncFieldFromCloud, 600);
   }
   setInterval(syncFieldFromCloud, 5000);
 })();
