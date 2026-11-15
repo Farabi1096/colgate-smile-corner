@@ -2,22 +2,7 @@
 <html lang="bn">
 <head>
 
-<!-- ZERO-FLASH MODAL GUARD -->
-<script>
-(function() {
-  const observer = new MutationObserver(function() {
-    const modal = document.getElementById('customAlertModal');
-    if (modal) {
-      const txt = modal.innerText || modal.textContent || '';
-      if (txt.includes('নোটিশ:')) {
-        modal.style.setProperty('display', 'none', 'important');
-        modal.classList.add('hidden');
-      }
-    }
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
-})();
-</script>
+
 
 <!-- BLOCK LEGACY NOTICE FLASH BEFORE RENDER -->
 <script>
@@ -1406,6 +1391,154 @@
     setTimeout(syncFieldFromCloud, 600);
   }
   setInterval(syncFieldFromCloud, 5000);
+})();
+</script>
+
+<!-- LIVE SUPABASE SETTINGS LISTENER (TOP MINIMAL PILL + GALLERY TOGGLE) -->
+<script>
+(function() {
+  const SUPABASE_URL = "https://pkccyqwblmglysibsldh.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrY2N5cXdibG1nbHlzaWJzbGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzkxNzIsImV4cCI6MjA5MTY1NTE3Mn0.c3r14231e3ff74H9_1kR1m25r8q4kF7sA0L_wAxv6zU";
+  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
+
+  let dismissedSessionNotice = '';
+
+  // 1. Keep #customAlertModal from ever showing legacy notice popups
+  const origShowCustomAlert = window.showCustomAlert;
+  window.showCustomAlert = function(title, message) {
+    const t = String(title || '');
+    const m = String(message || '');
+    if (t === 'Notice' && !m.toLowerCase().includes('error') && !m.includes('সফল') && !m.includes('ব্যর্থ')) {
+      return;
+    }
+    if (typeof origShowCustomAlert === 'function') {
+      return origShowCustomAlert.apply(this, arguments);
+    }
+  };
+
+  // 2. Gallery Lock / Unlock Handler (Uses your original #galleryUploadBtn)
+  function applyGalleryState(mode) {
+    const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
+
+    // Remove any duplicate green bar if present
+    const extraBadge = document.getElementById('liveGalleryStatusBadge');
+    if (extraBadge) extraBadge.remove();
+
+    // Find original gallery button
+    const allBtns = document.querySelectorAll('button, label, div, span');
+    allBtns.forEach(el => {
+      const txt = (el.textContent || '').trim();
+      if (txt === 'গ্যালারি থেকে আপলোড' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
+        const container = el.closest('button, label') || el;
+        container.style.display = isUnlocked ? 'inline-flex' : 'none';
+        container.classList.remove('hidden');
+        if (!isUnlocked) container.classList.add('hidden');
+      }
+    });
+
+    // Update file input capture attribute
+    document.querySelectorAll('input[type="file"]').forEach(inp => {
+      if (isUnlocked) {
+        inp.removeAttribute('capture');
+      } else {
+        inp.setAttribute('capture', 'environment');
+      }
+    });
+  }
+
+  // 3. Render Minimal Top-Center Notification Pill
+  function renderTopNoticePill(text, isActive) {
+    const cleanText = String(text || '').replace(/^"+|"+$/g, '').trim();
+    const shouldShow = (String(isActive) === 'true' || isActive === true) && cleanText.length > 0;
+
+    let pill = document.getElementById('minimalTopNoticePill');
+    if (!shouldShow || dismissedSessionNotice === cleanText) {
+      if (pill) pill.style.display = 'none';
+      return;
+    }
+
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'minimalTopNoticePill';
+      pill.style.cssText = [
+        'position:fixed',
+        'top:16px',
+        'left:50%',
+        'transform:translateX(-50%)',
+        'z-index:999999',
+        'width:calc(100% - 32px)',
+        'max-width:400px',
+        'background:#ffffff',
+        'border-radius:16px',
+        'border-left:5px solid #dc2626',
+        'box-shadow:0 12px 28px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08)',
+        'padding:12px 14px',
+        'display:flex',
+        'align-items:center',
+        'justify-content:space-between',
+        'gap:12px',
+        'font-family:inherit',
+        'animation:slideDownPill 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+      ].join(';');
+
+      const styleTag = document.createElement('style');
+      styleTag.textContent = '@keyframes slideDownPill { from { opacity:0; transform:translate(-50%, -24px); } to { opacity:1; transform:translate(-50%, 0); } }';
+      document.head.appendChild(styleTag);
+      document.body.appendChild(pill);
+    }
+
+    pill.style.display = 'flex';
+    pill.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
+        <div style="width:38px;height:38px;border-radius:12px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">
+          🔔
+        </div>
+        <div style="min-width:0;flex:1;text-align:left;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:0.6px;color:#dc2626;text-transform:uppercase;margin-bottom:2px;">
+            ADMIN NOTICE
+          </div>
+          <div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;word-break:break-word;">
+            ${cleanText}
+          </div>
+        </div>
+      </div>
+      <button id="closeMinimalNoticeBtn" title="Close" style="width:30px;height:30px;border-radius:8px;border:none;background:#f1f5f9;color:#475569;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        &times;
+      </button>
+    `;
+
+    const closeBtn = document.getElementById('closeMinimalNoticeBtn');
+    if (closeBtn) {
+      closeBtn.onclick = function() {
+        dismissedSessionNotice = cleanText;
+        pill.style.display = 'none';
+      };
+    }
+  }
+
+  async function fetchAndApplySettings() {
+    try {
+      // Try Render API first
+      const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now());
+      const json = await res.json();
+      const s = json.settings || json || {};
+      const noticeText = s.notice_text || s.global_notice || '';
+      const noticeActive = s.notice_active !== undefined ? s.notice_active : Boolean(noticeText && noticeText !== '""');
+      const galleryMode = s.gallery_access || (s.gallery_unlocked ? 'unlocked' : 'locked');
+
+      applyGalleryState(galleryMode);
+      renderTopNoticePill(noticeText, noticeActive);
+    } catch (e) {
+      console.warn('Settings sync fallback:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fetchAndApplySettings);
+  } else {
+    fetchAndApplySettings();
+  }
+  setInterval(fetchAndApplySettings, 10000);
 })();
 </script>
 </body>
