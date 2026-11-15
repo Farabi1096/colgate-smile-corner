@@ -1705,36 +1705,120 @@
 
 <style id="colgateCleanUi">
   :root {
-    --colgate-crimson: #c82333;
-    --colgate-crimson-dark: #a61b29;
-    --clinical-blue: #0284c7;
-    --clinical-ice: #f0f7ff;
-    --app-canvas: #f1f5f9;
-    --slate-900: #0f172a;
+    /* 60% Canvas & Surface (Clean Alabaster & Soft Gray) */
+    --bg-canvas: #f4f6f9;
+    --bg-surface: #ffffff;
+    --bg-subtle: #f8fafc;
+    --border-soft: #e2e8f0;
+
+    /* 30% Structure & Typography (Deep Oxford Slate from your Habitat reference) */
+    --slate-950: #0f172a;
+    --slate-800: #1e293b;
+    --slate-600: #475569;
+    --slate-400: #94a3b8;
+
+    /* 10% Brand Accent (Warm Coral-Crimson from Habitat CTA button) */
+    --brand-coral: #e03e36;
+    --brand-coral-hover: #c9322b;
+    --brand-coral-soft: #fff5f5;
   }
 
   html, body {
     font-family: 'Inter', 'Hind Siliguri', sans-serif !important;
-    background-color: var(--app-canvas) !important;
+    background-color: var(--bg-canvas) !important;
+    color: var(--slate-800) !important;
+    -webkit-font-smoothing: antialiased !important;
   }
 
+  /* 1. App Wrapper: Clean edge-to-edge on mobile, subtle card on desktop */
+  #appContainer {
+    background-color: var(--bg-canvas) !important;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  /* 2. Top Header: Switch from heavy Red wall to Deep Oxford Slate with a subtle bottom accent */
   header {
-    background: linear-gradient(135deg, var(--colgate-crimson) 0%, var(--colgate-crimson-dark) 100%) !important;
+    background: var(--slate-950) !important;
+    border-bottom: 3px solid var(--brand-coral) !important;
     border-radius: 0px !important;
   }
 
+  /* 3. Navigation Tabs (ফর্ম / আমার দিন / রিপোর্ট): Calm Slate pills instead of loud red */
+  #tabForm.bg-red-600,
+  #tabMyDay.bg-red-600,
+  #tabReport.bg-red-600,
+  nav button.bg-red-600,
+  .tab-active {
+    background: var(--slate-950) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15) !important;
+  }
+
+  /* 4. Form Cards & Containers: Crisp white with refined 10px corners */
+  .bg-white {
+    background-color: var(--bg-surface) !important;
+  }
   .rounded-3xl, .rounded-2xl, .rounded-xl {
     border-radius: 10px !important;
   }
-
   button, input, select, textarea, .rounded-lg {
     border-radius: 8px !important;
   }
 
-  .bg-red-50, .bg-red-100 {
-    background-color: var(--clinical-ice) !important;
+  /* 5. Inputs & Dropdowns: Clean neutral slate borders, calm focus ring */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background-color: var(--bg-subtle) !important;
+    border: 1px solid var(--border-soft) !important;
+    color: var(--slate-950) !important;
+    transition: all 0.18s ease !important;
+  }
+  input:focus, select:focus, textarea:focus {
+    background-color: #ffffff !important;
+    border-color: var(--slate-800) !important;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) !important;
+    outline: none !important;
   }
 
+  /* 6. Camera Scanner Box: Neutral Slate dashed border instead of loud pink/red box */
+  .border-dashed.border-red-300,
+  .border-dashed.border-red-200,
+  [class*="border-dashed"] {
+    background-color: var(--bg-subtle) !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    border-radius: 10px !important;
+  }
+  .border-dashed:hover {
+    border-color: var(--brand-coral) !important;
+    background-color: var(--brand-coral-soft) !important;
+  }
+
+  /* 7. Step Number Badges (১, ২) & Soft Tints: Harmonious soft slate/coral instead of clashing blue */
+  .bg-red-50, .bg-red-100 {
+    background-color: #f1f5f9 !important;
+    color: var(--slate-950) !important;
+    border-color: #e2e8f0 !important;
+  }
+  .text-red-600, .text-red-500, .text-red-700 {
+    color: var(--brand-coral) !important;
+  }
+
+  /* 8. Primary Submit Button (10% Accent): Warm Coral-Crimson from Habitat reference */
+  button[type="submit"],
+  #submitBtn,
+  .bg-red-600:not(header):not(nav *) {
+    background: var(--brand-coral) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(224, 62, 54, 0.25) !important;
+  }
+  button[type="submit"]:hover,
+  #submitBtn:hover {
+    background: var(--brand-coral-hover) !important;
+  }
+
+  /* 9. Top Minimal Notification Card: Matches the Deep Slate Header & Coral Accent */
   @keyframes noticeDropIn {
     0%   { opacity: 0; transform: translate(-50%, -16px) scale(0.98); }
     100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
@@ -1747,13 +1831,13 @@
     z-index: 999999 !important;
     width: calc(100% - 24px) !important;
     max-width: 375px !important;
-    background: #141923 !important;
+    background: var(--slate-950) !important;
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-left: 4px solid var(--colgate-crimson) !important;
+    border-left: 4px solid var(--brand-coral) !important;
     border-radius: 10px !important;
     padding: 15px 16px 14px 16px !important;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.38) !important;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.35) !important;
     animation: noticeDropIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 </style>
