@@ -21,135 +21,6 @@
         #adminMap { z-index: 1; width: 100%; height: 100%; }
     </style>
 
-<!-- SUPABASE ADMIN SUBMISSIONS & IMAGE PREVIEW BRIDGE -->
-<script>
-(function() {
-  const SUBMISSIONS_API = "https://colgate-smile-api.onrender.com/api/submissions";
-  const OUTLETS_API = "https://colgate-smile-api.onrender.com/api/outlets";
-
-  // 1. Convert any legacy CSV row or Supabase JSON row so all possible image/field keys work seamlessly
-  function normalizeSubmissionRow(r) {
-    const img = r.image_url || r.imageUrl || r.Photo_Link || r.Image_URL || r.photo_url || r.Photo || r.image || '';
-    return {
-      ...r,
-      id: r.id || '',
-      Timestamp: r.created_at || r.Timestamp || r.timestamp || new Date().toISOString(),
-      created_at: r.created_at || r.Timestamp || new Date().toISOString(),
-      Shop_Code: r.shop_code || r.Shop_Code || r['Shop Code'] || '',
-      shop_code: r.shop_code || r.Shop_Code || r['Shop Code'] || '',
-      Merch_Name: r.merch_name || r.Merch_Name || r['Merch Name'] || r.merchandiser || '',
-      merch_name: r.merch_name || r.Merch_Name || r['Merch Name'] || r.merchandiser || '',
-      Unit: r.unit || r.Unit || '',
-      unit: r.unit || r.Unit || '',
-      Area_Name: r.area_name || r.Area_Name || r.zone || r.Zone || '',
-      area_name: r.area_name || r.Area_Name || r.zone || r.Zone || '',
-      Territory: r.territory || r.Territory || '',
-      territory: r.territory || r.Territory || '',
-      DB_Code: r.db_code || r.DB_Code || '',
-      db_code: r.db_code || r.DB_Code || '',
-      Distribution_Name: r.distribution_name || r.Distribution_Name || r.db_name || '',
-      distribution_name: r.distribution_name || r.Distribution_Name || r.db_name || '',
-      Route_Name: r.route_name || r.Route_Name || '',
-      route_name: r.route_name || r.Route_Name || '',
-      Slab: r.slab || r.Slab || '',
-      slab: r.slab || r.Slab || '',
-      Month: r.month || r.Month || '',
-      month: r.month || r.Month || '',
-      Latitude: r.lat ?? r.Latitude ?? r.latitude ?? '',
-      Longitude: r.lng ?? r.Longitude ?? r.longitude ?? '',
-      lat: r.lat ?? r.Latitude ?? null,
-      lng: r.lng ?? r.Longitude ?? null,
-      image_url: img,
-      imageUrl: img,
-      Image_URL: img,
-      Photo_Link: img,
-      Photo: img,
-      photo_url: img
-    };
-  }
-
-  // 2. Convert Normalized JSON rows into CSV text in case the Admin Panel uses PapaParse / CSV parser
-  function jsonToCsv(rows) {
-    if (!rows || !rows.length) {
-      return "Timestamp,Shop_Code,Merch_Name,Unit,Area_Name,Territory,DB_Code,Distribution_Name,Route_Name,Slab,Month,Latitude,Longitude,Image_URL,Photo_Link,image_url\n";
-    }
-    const headers = [
-      "Timestamp","Shop_Code","Merch_Name","Unit","Area_Name","Territory",
-      "DB_Code","Distribution_Name","Route_Name","Slab","Month",
-      "Latitude","Longitude","Image_URL","Photo_Link","image_url",
-      "shop_code","merch_name","unit","area_name","territory",
-      "db_code","distribution_name","route_name","slab","month","lat","lng"
-    ];
-    const escapeCell = (val) => {
-      const s = String(val ?? '').replace(/"/g, '""');
-      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
-    };
-    const lines = [headers.join(',')];
-    rows.forEach(raw => {
-      const r = normalizeSubmissionRow(raw);
-      lines.push(headers.map(h => escapeCell(r[h])).join(','));
-    });
-    return lines.join('\n');
-  }
-
-  // 3. Intercept any fetch() to Google Sheets / Google Script / /api/submissions
-  const origFetch = window.fetch;
-  window.fetch = async function(input, init) {
-    let url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
-
-    // Redirect any remaining Google Sheets or Google Apps Script URLs to Supabase Render API
-    if (url.includes('docs.google.com/spreadsheets') || url.includes('script.google.com')) {
-      const isOutletSheet = url.toLowerCase().includes('outlet') || url.includes('gid=0');
-      const targetApi = isOutletSheet ? OUTLETS_API : SUBMISSIONS_API;
-      const res = await origFetch(targetApi);
-      const json = await res.json();
-      const rows = (json.submissions || json.outlets || json.data || []).map(normalizeSubmissionRow);
-      const csvText = jsonToCsv(rows);
-
-      // Return a Response that works whether the caller calls .json() OR .text() (for CSV parsers)
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: true,
-          status: 'success',
-          submissions: rows,
-          outlets: rows,
-          data: rows
-        }),
-        text: async () => csvText
-      };
-    }
-
-    // Also normalize direct /api/submissions calls so every image key & CSV fallback is present
-    if (url.includes('/api/submissions')) {
-      const res = await origFetch(input, init);
-      const json = await res.json();
-      const rows = (json.submissions || json.data || []).map(normalizeSubmissionRow);
-      const csvText = jsonToCsv(rows);
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          ...json,
-          submissions: rows,
-          data: rows
-        }),
-        text: async () => csvText
-      };
-    }
-
-    return origFetch.apply(this, arguments);
-  };
-
-  // 4. Fix any broken Google Drive thumbnail conversion on Supabase Storage URLs
-  document.addEventListener('error', function(e) {
-    if (e.target && e.target.tagName === 'IMG' && e.target.dataset && e.target.dataset.rawUrl) {
-      e.target.src = e.target.dataset.rawUrl;
-    }
-  }, true);
-})();
-</script>
 </head>
 <body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
 
@@ -872,6 +743,210 @@
       };
     </script>
     
+
+<!-- SUPABASE LIVE ADMIN DASHBOARD ENGINE -->
+<script>
+(function() {
+  const OUTLETS_API = "https://colgate-smile-api.onrender.com/api/outlets";
+  const SUBMISSIONS_API = "https://colgate-smile-api.onrender.com/api/submissions";
+
+  window.__allOutlets = [];
+  window.__allSubmissions = [];
+
+  async function loadSupabaseAdminData() {
+    try {
+      const [outRes, subRes] = await Promise.all([
+        fetch(OUTLETS_API).then(r => r.json()).catch(() => ({ outlets: [] })),
+        fetch(SUBMISSIONS_API).then(r => r.json()).catch(() => ({ submissions: [] }))
+      ]);
+
+      const outlets = outRes.outlets || outRes.data || [];
+      const submissions = subRes.submissions || subRes.data || [];
+
+      window.__allOutlets = outlets;
+      window.__allSubmissions = submissions;
+
+      // Map outlets by shop_code for fast lookup of Outlet Name / Slab / Route
+      const outletMap = {};
+      outlets.forEach(o => {
+        const code = String(o.shop_code || o.Shop_Code || '').trim();
+        if (code) outletMap[code] = o;
+      });
+
+      // 1. Update Top 4 KPI Cards (Total Outlets, Uploaded Outlets, Display Outlets, Regular Outlets)
+      const totalOutlets = outlets.length;
+      const uploadedShopCodes = new Set(
+        submissions.map(s => String(s.shop_code || '').trim()).filter(Boolean)
+      );
+      const uploadedCount = submissions.length;
+
+      let displayCount = 0;
+      let regularCount = 0;
+      outlets.forEach(o => {
+        const slab = String(o.slab || o.Slab || '').toUpperCase();
+        if (slab.includes('DCC') || slab.includes('DISPLAY') || slab.includes('SMT') || slab.includes('HIGH')) {
+          displayCount++;
+        } else {
+          regularCount++;
+        }
+      });
+
+      // Find the 4 counter numbers by their card titles or IDs
+      const allElements = document.querySelectorAll('div, span, p, h1, h2, h3, h4');
+      allElements.forEach(el => {
+        const txt = (el.textContent || '').trim().toUpperCase();
+        if (txt === 'TOTAL OUTLETS' && el.nextElementSibling) {
+          el.nextElementSibling.textContent = totalOutlets;
+        } else if (txt === 'UPLOADED OUTLETS' && el.nextElementSibling) {
+          el.nextElementSibling.textContent = uploadedCount;
+        } else if (txt === 'DISPLAY OUTLETS' && el.nextElementSibling) {
+          el.nextElementSibling.textContent = displayCount;
+        } else if (txt === 'REGULAR OUTLETS' && el.nextElementSibling) {
+          el.nextElementSibling.textContent = regularCount;
+        }
+      });
+
+      // Also update common IDs if present
+      const idMap = {
+        totalOutlets: totalOutlets,
+         'total-outlets': totalOutlets,
+        uploadedOutlets: uploadedCount,
+        'uploaded-outlets': uploadedCount,
+        displayOutlets: displayCount,
+        'display-outlets': displayCount,
+        regularOutlets: regularCount,
+        'regular-outlets': regularCount
+      };
+      Object.keys(idMap).forEach(id => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = idMap[id];
+      });
+
+      // 2. Render Recent Uploaded Photos & Submissions Table
+      renderSubmissionsTable(submissions, outletMap, '');
+
+      // 3. Hook Search Input
+      const searchInput = document.querySelector('input[placeholder*="Search" i]');
+      if (searchInput && !searchInput.dataset.hooked) {
+        searchInput.dataset.hooked = 'true';
+        searchInput.addEventListener('input', (e) => {
+          renderSubmissionsTable(window.__allSubmissions, outletMap, e.target.value || '');
+        });
+      }
+
+      // 4. Hook Data Refresh Card
+      document.querySelectorAll('div, button').forEach(btn => {
+        if ((btn.textContent || '').includes('Data Refresh') && !btn.dataset.hooked) {
+          btn.dataset.hooked = 'true';
+          btn.addEventListener('click', () => loadSupabaseAdminData());
+        }
+      });
+
+      // 5. Populate Leaflet Map if present on page
+      updateLeafletMap(submissions, outletMap);
+
+    } catch (err) {
+      console.error('Supabase Admin Loader Error:', err);
+    }
+  }
+
+  function renderSubmissionsTable(submissions, outletMap, query) {
+    const tables = document.querySelectorAll('table');
+    if (!tables.length) return;
+    const targetTable = tables[0];
+    let tbody = targetTable.querySelector('tbody');
+    if (!tbody) {
+      tbody = document.createElement('tbody');
+      targetTable.appendChild(tbody);
+    }
+
+    const q = String(query || '').toLowerCase().trim();
+    const filtered = submissions.filter(s => {
+      if (!q) return true;
+      const code = String(s.shop_code || '').toLowerCase();
+      const o = outletMap[String(s.shop_code || '').trim()] || {};
+      const name = String(s.shop_name || o.shop_name || '').toLowerCase();
+      const merch = String(s.merch_name || o.merchandiser || '').toLowerCase();
+      const town = String(s.area_name || s.territory || o.zone || o.route_name || '').toLowerCase();
+      return code.includes(q) || name.includes(q) || merch.includes(q) || town.includes(q);
+    });
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">No submissions found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((s, idx) => {
+      const code = String(s.shop_code || '').trim();
+      const o = outletMap[code] || {};
+      const dateStr = s.created_at ? new Date(s.created_at).toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : 'Recent';
+      const outletName = s.shop_name || o.shop_name || ('Outlet #' + code);
+      const slab = s.slab || o.slab || '';
+      const townRoute = [
+        s.area_name || o.zone || s.territory || o.territory || '',
+        s.route_name || o.route_name || ''
+      ].filter(Boolean).join(' • ') || 'N/A';
+      const merch = s.merch_name || o.merchandiser || 'N/A';
+      const hasGps = s.lat && s.lng;
+      const gpsHtml = hasGps
+        ? `<a href="https://www.google.com/maps?q=${s.lat},${s.lng}" target="_blank" style="color:#0284c7;font-weight:600;text-decoration:none;">📍 ${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)}</a>`
+        : '<span style="color:#94a3b8;">No GPS</span>';
+
+      const imgUrl = s.image_url || s.imageUrl || '';
+      const photoHtml = imgUrl
+        ? `<a href="${imgUrl}" target="_blank" title="Click to open full photo" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+             <img src="${imgUrl}" alt="Shop Photo" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.1);" />
+             <span style="font-size:12px;color:#dc2626;font-weight:600;">View HD</span>
+           </a>`
+        : '<span style="color:#94a3b8;font-size:12px;">No Image</span>';
+
+      return `<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:12px 14px;font-weight:600;color:#64748b;">${idx + 1}</td>
+        <td style="padding:12px 14px;font-size:13px;color:#334155;">${dateStr}</td>
+        <td style="padding:12px 14px;"><span style="background:#fee2e2;color:#dc2626;padding:4px 8px;border-radius:6px;font-weight:700;font-size:12px;">${code}</span></td>
+        <td style="padding:12px 14px;font-weight:600;color:#0f172a;">${outletName} ${slab ? `<span style="font-size:11px;color:#64748b;font-weight:500;">(${slab})</span>` : ''}</td>
+        <td style="padding:12px 14px;font-size:13px;color:#475569;">${townRoute}</td>
+        <td style="padding:12px 14px;font-size:13px;font-weight:500;color:#1e293b;">${merch}</td>
+        <td style="padding:12px 14px;font-size:13px;">${gpsHtml}</td>
+        <td style="padding:12px 14px;">${photoHtml}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateLeafletMap(submissions, outletMap) {
+    if (!window.L) return;
+    // If the page already initialized a Leaflet map instance, attach pins to it when Locations Map is clicked
+    setTimeout(() => {
+      try {
+        for (const key of Object.keys(window)) {
+          const val = window[key];
+          if (val && typeof val.addLayer === 'function' && typeof val.setView === 'function') {
+            submissions.forEach(s => {
+              if (s.lat && s.lng) {
+                const o = outletMap[String(s.shop_code || '').trim()] || {};
+                const imgHtml = s.image_url ? `<br><img src="${s.image_url}" style="width:140px;height:100px;object-fit:cover;border-radius:6px;margin-top:6px;">` : '';
+                window.L.marker([s.lat, s.lng])
+                  .addTo(val)
+                  .bindPopup(`<b>${o.shop_name || s.shop_code}</b><br>Code: ${s.shop_code}<br>Merch: ${s.merch_name || ''}${imgHtml}`);
+              }
+            });
+            break;
+          }
+        }
+      } catch (e) {}
+    }, 1000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadSupabaseAdminData);
+  } else {
+    loadSupabaseAdminData();
+  }
+  setTimeout(loadSupabaseAdminData, 1500);
+})();
+</script>
 </body>
 </html>
 
