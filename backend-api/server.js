@@ -6,12 +6,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k';
 const REPORT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhYcd2eba30rLXPA3OHxVcHYKVpUK9RweS5WD7g-IFM46AUsI6zSu6YESkPxmbg9xyj4gs7UUgL13a/pub?gid=857310602&single=true&output=csv';
 
 app.use(cors());
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '20mb' }));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -23,137 +22,146 @@ const supabase = hasSupabase
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
   : null;
 
-function parseCSV(str) {
-  const arr = [];
-  let quote = false, col = 0, row = 0;
-  for (let c = 0; c < str.length; c++) {
-    let cc = str[c], nc = str[c + 1];
-    arr[row] = arr[row] || [];
-    arr[row][col] = arr[row][col] || '';
-    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
-    if (cc == '"') { quote = !quote; continue; }
-    if (cc == ',' && !quote) { ++col; continue; }
-    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
-    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
-    arr[row][col] += cc;
+// Helper to fetch all rows from a Supabase table (bypasses 1000-row limit)
+async function fetchAllTableRows(tableName) {
+  let allRows = [];
+  let from = 0;
+  const step = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .range(from, from + step - 1)
+      .order('id', { ascending: true });
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    allRows = allRows.concat(data);
+    if (data.length < step) break;
+    from += step;
   }
-  return arr;
+  return allRows;
 }
 
 app.get('/', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Colgate Smile Corner API (100% Supabase Powered)',
+    message: 'Colgate Smile Corner API (With Separate outlet_targets Table)',
     databaseConnected: Boolean(supabase),
   });
 });
 
-// ONE-TIME / ON-DEMAND SYNC FROM GOOGLE SHEET (PJP + Purchase Report Targets)
-app.get('/api/sync-outlets', async (req, res) => {
-  if (!supabase) return res.status(400).json({ error: 'Supabase not connected' });
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=PJP&t=${Date.now()}`;
-    const response = await fetch(url);
-    const text = await response.text();
-    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-    const data = JSON.parse(jsonString);
-    const rows = data.table.rows || [];
-
-    // Also fetch Purchase Update CSV to merge Target/Achieve/Payout into outlets
-    const reportMap = new Map();
-    try {
-      const csvRes = await fetch(REPORT_CSV_URL);
-      const csvText = await csvRes.text();
-      const csvRows = parseCSV(csvText);
-      for (let i = 1; i < csvRows.length; i++) {
-        const r = csvRows[i];
-        if (r && r.length > 4 && r[4]) {
-          reportMap.set(r[4].trim().toUpperCase(), {
-            enrolled: r[8] || 'Y',
-            target: r[9] || '0',
-            tot_stt: r[10] || '0',
-            ach: r[11] || '0%',
-            balance: r[12] || '0',
-            eligible: r[13] || 'N',
-            payout: r[16] || '0',
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('CSV sync skipped:', e.message);
-    }
-
-    const outletsMap = new Map();
-    rows.forEach((row) => {
-      const getVal = (idx) => (row.c && row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : '');
-      const townName = getVal(4);
-      const shopCode = getVal(5).toUpperCase().replace(/\s+/g, '');
-      if (shopCode && townName && !['TOWN NAME', 'DB NAME', 'TOWN'].includes(townName.toUpperCase())) {
-        const rep = reportMap.get(shopCode) || {};
-        outletsMap.set(shopCode, {
-          shop_code: shopCode,
-          region: getVal(0),
-          zone: getVal(1),
-          territory: getVal(2),
-          db_code: getVal(3),
-          db_name: townName,
-          shop_name: getVal(6),
-          slab: getVal(7),
-          route_code: getVal(8),
-          route_name: getVal(9),
-          visit_day: getVal(10),
-          merchandiser: getVal(11),
-          status: getVal(12) || 'Display',
-          unit: getVal(13) || 'DCC',
-          enrolled: rep.enrolled || 'Y',
-          target: rep.target || '0',
-          tot_stt: rep.tot_stt || '0',
-          ach: rep.ach || '0%',
-          balance: rep.balance || '0',
-          eligible: rep.eligible || 'N',
-          payout: rep.payout || '0',
-        });
-      }
-    });
-
-    const allOutlets = Array.from(outletsMap.values());
-    let inserted = 0;
-    for (let i = 0; i < allOutlets.length; i += 500) {
-      const chunk = allOutlets.slice(i, i + 500);
-      const { error } = await supabase.from('outlets').upsert(chunk, { onConflict: 'shop_code' });
-      if (error) throw error;
-      inserted += chunk.length;
-    }
-
-    res.json({ success: true, totalSyncedOutlets: inserted, reportsMerged: reportMap.size });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// GET ALL OUTLETS FROM SUPABASE (Supports up to 10,000 outlets)
+// GET ALL OUTLETS + AUTOMATICALLY MERGE TARGET VS ACHIEVEMENT FROM outlet_targets TABLE
 app.get('/api/outlets', async (req, res) => {
   if (!supabase) return res.json([]);
   try {
-    let allRows = [];
-    let from = 0;
-    const step = 1000;
-    while (true) {
-      const { data, error } = await supabase
-        .from('outlets')
-        .select('*')
-        .range(from, from + step - 1)
-        .order('id', { ascending: true });
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-      allRows = allRows.concat(data);
-      if (data.length < step) break;
-      from += step;
-    }
-    res.json(allRows);
+    const [outlets, targets] = await Promise.all([
+      fetchAllTableRows('outlets'),
+      fetchAllTableRows('outlet_targets').catch(() => [])
+    ]);
+
+    const targetMap = new Map();
+    (targets || []).forEach(t => {
+      if (t.shop_code) {
+        targetMap.set(String(t.shop_code).toUpperCase().trim(), t);
+      }
+    });
+
+    const merged = outlets.map(o => {
+      const code = String(o.shop_code || '').toUpperCase().trim();
+      const t = targetMap.get(code);
+      return {
+        ...o,
+        target_month: t ? t.month : 'Current',
+        enrolled: t && t.enrolled != null ? t.enrolled : (o.enrolled || 'Y'),
+        target: t && t.target != null ? t.target : (o.target || '0'),
+        tot_stt: t && t.tot_stt != null ? t.tot_stt : (o.tot_stt || '0'),
+        ach: t && t.ach != null ? t.ach : (o.ach || '0%'),
+        balance: t && t.balance != null ? t.balance : (o.balance || '0'),
+        eligible: t && t.eligible != null ? t.eligible : (o.eligible || 'N'),
+        payout: t && t.payout != null ? t.payout : (o.payout || '0'),
+      };
+    });
+
+    res.json(merged);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET ALL ROWS FROM outlet_targets TABLE DIRECTLY
+app.get('/api/targets', async (req, res) => {
+  if (!supabase) return res.json([]);
+  try {
+    const rows = await fetchAllTableRows('outlet_targets');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// MANUAL BULK UPLOAD TO outlet_targets TABLE (From Admin Panel CSV Upload)
+app.post('/api/targets/bulk', async (req, res) => {
+  if (!supabase) return res.status(400).json({ error: 'Supabase not connected' });
+  try {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    if (items.length === 0) {
+      return res.status(400).json({ error: 'No target rows found in upload' });
+    }
+
+    const targetMap = new Map();
+    items.forEach(item => {
+      const rawCode = String(item.shop_code || item.code || item['Outlet Code'] || '').toUpperCase().replace(/\s+/g, '');
+      if (!rawCode || rawCode === 'SHOP_CODE' || rawCode === 'OUTLETCODE') return;
+
+      const targetNum = parseFloat(String(item.target ?? item.Target ?? '0').replace(/,/g, '')) || 0;
+      const achNum = parseFloat(String(item.tot_stt ?? item.achieve ?? item.Achieve ?? item['TOT STT'] ?? '0').replace(/,/g, '')) || 0;
+
+      // Auto-calculate ACH % and Balance if not provided in CSV
+      let achPct = item.ach ?? item['ACH %'] ?? item['Ach%'] ?? '';
+      if (!achPct && targetNum > 0) {
+        achPct = Math.round((achNum / targetNum) * 100) + '%';
+      } else if (!achPct) {
+        achPct = '0%';
+      }
+
+      let balanceVal = item.balance ?? item.Balance ?? '';
+      if (balanceVal === '' || balanceVal == null) {
+        balanceVal = String(Math.max(0, Math.round(targetNum - achNum)));
+      }
+
+      let eligibleVal = item.eligible ?? item.Eligible ?? '';
+      if (!eligibleVal) {
+        eligibleVal = (targetNum > 0 && achNum >= targetNum) ? 'Y' : 'N';
+      }
+
+      targetMap.set(rawCode, {
+        shop_code: rawCode,
+        month: String(item.month ?? item.Month ?? 'Current').trim(),
+        enrolled: String(item.enrolled ?? item.Enrolled ?? 'Y').trim(),
+        target: String(item.target ?? item.Target ?? targetNum).trim(),
+        tot_stt: String(item.tot_stt ?? item.achieve ?? item.Achieve ?? item['TOT STT'] ?? achNum).trim(),
+        ach: String(achPct).trim(),
+        balance: String(balanceVal).trim(),
+        eligible: String(eligibleVal).trim(),
+        payout: String(item.payout ?? item.Payout ?? '0').trim(),
+        updated_at: new Date().toISOString()
+      });
+    });
+
+    const cleanRows = Array.from(targetMap.values());
+    let uploaded = 0;
+    for (let i = 0; i < cleanRows.length; i += 500) {
+      const chunk = cleanRows.slice(i, i + 500);
+      const { error } = await supabase
+        .from('outlet_targets')
+        .upsert(chunk, { onConflict: 'shop_code' });
+      if (error) throw error;
+      uploaded += chunk.length;
+    }
+
+    res.json({ success: true, uploadedCount: uploaded });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -239,19 +247,16 @@ app.post('/api/submissions', upload.single('photo'), async (req, res) => {
 
     if (insertErr) throw insertErr;
 
-    // Also update outlet's latest GPS coordinates in outlets table
     if (lat && lng) {
       await supabase.from('outlets').update({ lat, lng }).eq('shop_code', shopCode);
     }
 
     res.json({ success: true, imageUrl, submission: insertedRow ? insertedRow[0] : null });
   } catch (err) {
-    console.error('Submission error:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// GET ALL SUBMISSIONS FROM SUPABASE
 app.get('/api/submissions', async (req, res) => {
   if (!supabase) return res.json([]);
   const { data, error } = await supabase
@@ -263,7 +268,6 @@ app.get('/api/submissions', async (req, res) => {
   res.json(data || []);
 });
 
-// APP SETTINGS (Maintenance, Notice, Gallery Lock)
 app.get('/api/settings', async (req, res) => {
   if (!supabase) return res.json({ maintenance_mode: false, global_notice: '', gallery_unlocked: false });
   const { data } = await supabase.from('settings').select('*');

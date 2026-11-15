@@ -604,6 +604,143 @@
 
         if (adminToken) openDashboard();
     </script>
+
+    <!-- TARGET VS ACHIEVEMENT MANUAL UPLOAD CARD -->
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const dashScroll = document.querySelector('#adminDashboardContainer .overflow-y-auto');
+        if (!dashScroll || document.getElementById('targetUploadCard')) return;
+
+        const card = document.createElement('div');
+        card.id = 'targetUploadCard';
+        card.className = 'bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mt-4';
+        card.innerHTML = `
+          <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+            <div>
+              <h3 class="text-[13px] font-bold text-gray-800 flex items-center">
+                🎯 Target vs. Achievement Table (<code class="text-colgate ml-1">outlet_targets</code>)
+              </h3>
+              <p class="text-[10px] text-gray-400 mt-0.5">Manually upload CSV to update Outlet Target, Achieve, Balance & Payout</p>
+            </div>
+            <button onclick="downloadTargetSampleCSV()" class="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition-all">
+              ⬇ Sample CSV Template
+            </button>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2 items-center">
+            <input type="file" id="targetCsvFileInput" accept=".csv" class="block w-full text-[11px] text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-red-50 file:text-colgate hover:file:bg-red-100 border border-gray-200 rounded-xl p-1 bg-gray-50" />
+            <button onclick="uploadTargetCSV()" id="btnUploadTargetCsv" class="w-full sm:w-auto whitespace-nowrap bg-colgate hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2.5 rounded-xl shadow-sm transition-all">
+              Upload to Supabase
+            </button>
+          </div>
+          <div id="targetUploadStatus" class="text-[11px] font-bold mt-2 hidden"></div>
+        `;
+        dashScroll.appendChild(card);
+      });
+
+      window.downloadTargetSampleCSV = () => {
+        const sample = [
+          'shop_code,month,enrolled,target,tot_stt,ach,balance,eligible,payout',
+          'BDC1001,November,Y,5000,3500,70%,1500,N,0',
+          'BDC1002,November,Y,8000,8500,106%,0,Y,500'
+        ].join('\n');
+        const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'outlet_targets_template.csv';
+        a.click();
+      };
+
+      window.parseTargetCSVText = (str) => {
+        const arr = [];
+        let quote = false, col = 0, row = 0;
+        for (let c = 0; c < str.length; c++) {
+          let cc = str[c], nc = str[c + 1];
+          arr[row] = arr[row] || [];
+          arr[row][col] = arr[row][col] || '';
+          if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+          if (cc == '"') { quote = !quote; continue; }
+          if (cc == ',' && !quote) { ++col; continue; }
+          if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+          if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+          if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+          arr[row][col] += cc;
+        }
+        return arr;
+      };
+
+      window.uploadTargetCSV = async () => {
+        const fileInput = document.getElementById('targetCsvFileInput');
+        const statusEl = document.getElementById('targetUploadStatus');
+        const btn = document.getElementById('btnUploadTargetCsv');
+        if (!fileInput || !fileInput.files.length) {
+          window.showAlert('Please choose a .csv file first!');
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const text = await file.text();
+        const rows = window.parseTargetCSVText(text);
+        if (rows.length < 2) {
+          window.showAlert('CSV file is empty or missing data rows.');
+          return;
+        }
+
+        const headers = rows[0].map(h => String(h || '').trim());
+        const items = [];
+
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r || r.length === 0) continue;
+          const obj = {};
+          headers.forEach((h, idx) => {
+            obj[h] = r[idx] != null ? String(r[idx]).trim() : '';
+          });
+          // Also support your original 17-column Google Sheet Report CSV format automatically!
+          if (!obj.shop_code && !obj['Outlet Code'] && r.length >= 16) {
+            obj.month = r[0];
+            obj.shop_code = r[4];
+            obj.enrolled = r[8];
+            obj.target = r[9];
+            obj.tot_stt = r[10];
+            obj.ach = r[11];
+            obj.balance = r[12];
+            obj.eligible = r[13];
+            obj.payout = r[16];
+          }
+          if (obj.shop_code || obj.code || obj['Outlet Code']) {
+            items.push(obj);
+          }
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Uploading...';
+        statusEl.classList.remove('hidden');
+        statusEl.className = 'text-[11px] font-bold mt-2 text-blue-600';
+        statusEl.textContent = 'Uploading ' + items.length + ' target rows to Supabase...';
+
+        try {
+          const apiBase = window.RENDER_API_URL || 'https://colgate-smile-api.onrender.com';
+          const res = await fetch(apiBase + '/api/targets/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          const result = await res.json();
+          if (!res.ok || !result.success) throw new Error(result.error || 'Upload failed');
+
+          statusEl.className = 'text-[11px] font-bold mt-2 text-green-600';
+          statusEl.textContent = '✅ Successfully updated ' + result.uploadedCount + ' outlets in outlet_targets table!';
+          fileInput.value = '';
+        } catch (err) {
+          statusEl.className = 'text-[11px] font-bold mt-2 text-red-600';
+          statusEl.textContent = '❌ Error: ' + err.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Upload to Supabase';
+        }
+      };
+    </script>
+    
 </body>
 </html>
 
