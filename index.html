@@ -1395,120 +1395,188 @@
 </script>
 
 
-<!-- CALM OCEAN-SLATE & MODERN ARCHITECTURAL UI THEME -->
-<style id="calmModernThemeStyles">
+
+
+
+<!-- DEEP HUMAN-CRAFTED UI SYSTEM: OCEAN-SLATE & HABITAT EDITION -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style id="deepCraftedUiSystem">
   :root {
-    --bg-canvas: #f1f5f9;
-    --bg-card: #ffffff;
-    --bg-subtle: #f8fafc;
-    --primary-ocean: #154c61;
-    --primary-ocean-dark: #0d3545;
-    --primary-accent: #0284c7;
-    --coral-cta: #e05a47;
-    --text-main: #0f172a;
+    --ocean-950: #0a222c;
+    --ocean-900: #0f3140;
+    --ocean-800: #164457;
+    --ocean-700: #1d5870;
+    --ocean-600: #0284c7;
+    --ocean-100: #e0f2fe;
+    --ocean-50:  #f0f7fa;
+    --slate-canvas: #eef3f7;
+    --card-bg: #ffffff;
+    --input-bg: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
     --text-muted: #64748b;
-    --border-soft: #e2e8f0;
+    --border-hairline: #dbe3ec;
+    --coral-accent: #e05a47;
+    --coral-hover: #cc4b38;
   }
 
-  /* 1. Calm Off-White / Ice-Blue App Background */
+  /* 1. Typography & Smooth Canvas */
   body, html {
-    background-color: var(--bg-canvas) !important;
-    color: var(--text-main) !important;
+    font-family: 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    background-color: var(--slate-canvas) !important;
+    color: var(--text-primary) !important;
     -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
   }
 
-  /* 2. Tame Huge Rounded Corners into Clean 10px-12px Architectural Corners */
+  /* 2. Eliminate ALL Huge Bubble Corners (Including Tailwind [2rem] / [28px] / 3xl) */
   .rounded-3xl, .rounded-2xl, .rounded-xl,
-  div[class*="rounded-3xl"], div[class*="rounded-2xl"] {
+  [class*="rounded-["], [class*="rounded-3xl"], [class*="rounded-2xl"] {
     border-radius: 12px !important;
   }
-  button, input, select, textarea, .rounded-lg {
-    border-radius: 9px !important;
+  button, input, select, textarea, .rounded-lg, .rounded-md {
+    border-radius: 8px !important;
+  }
+  /* Keep small step number circles & avatars round */
+  .w-6.h-6.rounded-full, .w-7.h-7.rounded-full, .w-8.h-8.rounded-full, .w-10.h-10.rounded-full, .w-12.h-12.rounded-full {
+    border-radius: 9999px !important;
   }
 
-  /* 3. Replace Loud Red Headers & Backgrounds with Deep Ocean Teal-Slate */
-  header,
-  .bg-red-600, .bg-red-700, .bg-red-500,
-  [class*="from-red-"], [class*="to-red-"], [class*="via-red-"] {
-    background: linear-gradient(135deg, #0d3545 0%, #17546b 100%) !important;
-    border-color: #154c61 !important;
+  /* 3. Login Screen Redesign — Inspired by IdeaBoard Ocean Teal-Slate Reference */
+  #loginScreen, #roleSelectionScreen, [id*="login" i][class*="fixed"] {
+    background: radial-gradient(circle at 50% 18%, #1e5a70 0%, #0f3140 58%, #091f29 100%) !important;
     color: #ffffff !important;
   }
-
-  /* Soften light red tints into calm ice-blue tints */
-  .bg-red-50, .bg-red-100/50, .bg-rose-50 {
-    background-color: #f0f7fa !important;
-    border-color: #cfe3ec !important;
-    color: #154c61 !important;
+  #loginScreen > div, #roleSelectionScreen > div {
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 24px 48px rgba(5, 18, 24, 0.45) !important;
   }
 
-  /* Replace harsh red text/icons with calm Ocean Slate or Sky Blue */
-  .text-red-600, .text-red-700, .text-red-500, .text-rose-600 {
-    color: #154c61 !important;
+  /* 4. App Top Header & Navigation Bar — Calm Deep Ocean Slate (Zero Harsh Red) */
+  header,
+  .bg-red-600, .bg-red-700, .bg-red-500, .bg-rose-600,
+  [class*="from-red-"], [class*="to-red-"], [class*="via-red-"],
+  [style*="background: #dc2626"], [style*="background:#dc2626"], [style*="background-color: rgb(220, 38, 38)"] {
+    background: linear-gradient(135deg, var(--ocean-900) 0%, var(--ocean-800) 100%) !important;
+    border-color: var(--ocean-800) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(15, 49, 64, 0.14) !important;
   }
 
-  /* Borders & Focus Rings */
-  .border-red-500, .border-red-600, .border-red-200, .border-red-100 {
-    border-color: #cbd5e1 !important;
+  /* Remove all red drop-shadows and glows */
+  [class*="shadow-red-"], [class*="shadow-rose-"] {
+    box-shadow: 0 4px 14px rgba(15, 49, 64, 0.12) !important;
+  }
+  [class*="ring-red-"], [class*="ring-rose-"] {
+    --tw-ring-color: rgba(2, 132, 199, 0.25) !important;
+  }
+
+  /* 5. Convert Light Red Badges / Step Numbers / Highlights into Calm Ice-Teal */
+  .bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100,
+  [class*="bg-red-50"], [class*="bg-red-100"] {
+    background-color: var(--ocean-50) !important;
+    border-color: #cde2ec !important;
+    color: var(--ocean-800) !important;
+  }
+  .text-red-600, .text-red-700, .text-red-500, .text-rose-600, .text-rose-500 {
+    color: var(--ocean-800) !important;
+  }
+  .border-red-500, .border-red-600, .border-red-400, .border-red-300, .border-red-200, .border-red-100 {
+    border-color: var(--border-hairline) !important;
+  }
+
+  /* 6. Clean Architectural Cards & Form Controls */
+  .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white.shadow-lg, .bg-white.shadow-md {
+    background-color: var(--card-bg) !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 12px !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-hairline) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 14px !important;
+    transition: all 0.18s ease !important;
   }
   input:focus, select:focus, textarea:focus {
-    border-color: #0284c7 !important;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.14) !important;
+    background-color: #ffffff !important;
+    border-color: var(--ocean-600) !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
     outline: none !important;
   }
 
-  /* 4. Primary Action / Submit Buttons (Warm Coral-Terracotta like Habitat Screenshot, or Deep Ocean) */
-  button[type="submit"], #submitBtn, .submit-btn {
-    background: linear-gradient(135deg, #154c61 0%, #0284c7 100%) !important;
-    color: #ffffff !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(21, 76, 97, 0.22) !important;
-    letter-spacing: 0.2px;
-  }
-
-  /* Camera Scanner Box - Clean Dashed Slate-Blue Instead of Loud Red */
+  /* 7. Step 2 Camera Scanner Box — Clean Slate-Blue Surface Instead of Red Dashed Box */
   [class*="border-dashed"] {
-    border-color: #94a3b8 !important;
-    background-color: #f8fafc !important;
-    border-radius: 12px !important;
+    border: 1.5px dashed #94a3b8 !important;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+  }
+  [class*="border-dashed"]:hover {
+    border-color: var(--ocean-600) !important;
+    background: var(--ocean-50) !important;
   }
 
-  /* Clean Subtle Card Shadows */
-  .shadow-xl, .shadow-2xl, .shadow-lg {
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  /* 8. Primary Submit CTA — Warm Habitat Coral-Terracotta or Deep Ocean Slate */
+  button[type="submit"], #submitBtn {
+    background: var(--coral-accent) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(224, 90, 71, 0.28) !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+  }
+  button[type="submit"]:hover, #submitBtn:hover {
+    background: var(--coral-hover) !important;
+  }
+  button[type="submit"]:active, #submitBtn:active {
+    transform: scale(0.99) !important;
   }
 
-  /* 5. Habitat-Style Dark Slate Notification Card */
-  @keyframes calmNoticeIn {
-    from { opacity: 0; transform: translate(-50%, -14px) scale(0.98); }
-    to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  /* 9. Habitat-Inspired Matte Dark Notification Sheet (From Reference Image #2) */
+  @keyframes habitatSlideDown {
+    0%   { opacity: 0; transform: translate(-50%, -18px) scale(0.97); }
+    100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   }
   #minimalTopNoticePill {
     position: fixed !important;
-    top: 18px !important;
+    top: 16px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 999999 !important;
-    width: calc(100% - 32px) !important;
-    max-width: 390px !important;
-    background: #131b2e !important;
+    width: calc(100% - 28px) !important;
+    max-width: 375px !important;
+    background: #141923 !important;
     color: #f8fafc !important;
-    border: 1px solid rgba(255, 255, 255, 0.09) !important;
-    border-radius: 14px !important;
-    padding: 18px 20px !important;
-    box-shadow: 0 18px 38px rgba(9, 13, 22, 0.38) !important;
-    animation: calmNoticeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 18px 20px 16px 20px !important;
+    box-shadow: 0 20px 40px rgba(7, 10, 17, 0.45) !important;
+    animation: habitatSlideDown 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 </style>
 
-<!-- LIVE SUPABASE SETTINGS LISTENER (HABITAT-STYLE DARK NOTICE CARD + GALLERY TOGGLE) -->
+<!-- LIVE SUPABASE SETTINGS LISTENER (HABITAT NOTICE + GALLERY TOGGLE) -->
 <script>
 (function() {
   const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
   let dismissedSessionNotice = '';
 
-  // Block old loud white/red center modal from flashing on Notice
+  // Prevent old white/red center modal from ever popping up for Notices
   const origShowCustomAlert = window.showCustomAlert;
   window.showCustomAlert = function(title, message) {
     const t = String(title || '');
@@ -1521,7 +1589,6 @@
     }
   };
 
-  // Gallery Lock / Unlock Handler
   function applyGalleryState(mode) {
     const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
     const extraBadge = document.getElementById('liveGalleryStatusBadge');
@@ -1546,7 +1613,6 @@
     });
   }
 
-  // Render Sleek Dark-Slate Notification Card (Inspired by Screenshot #2)
   function renderTopNoticePill(text, isActive) {
     const cleanText = String(text || '').replace(/^"+|"+$/g, '').trim();
     const shouldShow = (String(isActive) === 'true' || isActive === true) && cleanText.length > 0;
@@ -1565,25 +1631,20 @@
 
     card.style.display = 'block';
     card.innerHTML = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="width:8px;height:8px;border-radius:50%;background:#38bdf8;display:inline-block;"></span>
-          <span style="font-size:11px;font-weight:600;letter-spacing:0.5px;color:#94a3b8;text-transform:uppercase;">
-            Program Update
-          </span>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;">
+        <div style="font-size:16px;font-weight:600;color:#ffffff;line-height:1.4;letter-spacing:-0.01em;text-align:left;word-break:break-word;">
+          ${cleanText}
         </div>
-        <button id="closeMinimalNoticeBtn" title="Dismiss" style="background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer;">
+        <button id="closeMinimalNoticeBtn" title="Close" style="background:transparent;border:none;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px;cursor:pointer;margin-top:1px;">
           &#10005;
         </button>
       </div>
-      <div style="font-size:15px;font-weight:600;color:#f8fafc;line-height:1.45;margin-bottom:14px;text-align:left;word-break:break-word;">
-        ${cleanText}
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;text-align:left;">
+        অ্যাডমিন নোটিশ • আজকের আপডেট
       </div>
-      <div style="display:flex;justify-content:flex-end;">
-        <button id="ackMinimalNoticeBtn" style="background:#e05a47;color:#ffffff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;">
-          ঠিক আছে (Got it)
-        </button>
-      </div>
+      <button id="ackMinimalNoticeBtn" style="width:100%;background:#e05a47;color:#ffffff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">
+        ঠিক আছে (Got it)
+      </button>
     `;
 
     const dismissFn = function() {
