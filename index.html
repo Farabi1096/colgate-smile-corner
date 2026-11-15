@@ -908,7 +908,7 @@
                     data.merch_name = localStorage.getItem('colgate_app_merch_name') || data.role || 'Merchandiser';
                     data.latitude = globalLatitude;
                     data.longitude = globalLongitude;
-                    const apiRes = await fetch(RENDER_API_BASE + '/api/submissions', {
+                    const apiRes = await fetch('https://colgate-smile-api.onrender.com/api/submit', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
