@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+        body { font-family: "Inter", sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
         .loader {
             border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #da291c;
             width: 20px; height: 20px; animation: spin 1s linear infinite;
@@ -32,6 +32,23 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal -->
+    <div id="photoPreviewModal" class="fixed inset-0 bg-black/80 z-[600] hidden items-center justify-center p-4" onclick="this.classList.add('hidden')">
+        <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+            <div class="bg-gray-900 px-4 py-3 flex justify-between items-center text-white">
+                <span id="photoModalTitle" class="font-bold text-sm">Uploaded Shop Photo</span>
+                <button onclick="document.getElementById('photoPreviewModal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-4 bg-black flex flex-col items-center justify-center min-h-[300px]">
+                <img id="photoModalImg" src="" alt="Outlet Photo" class="max-h-[70vh] w-auto object-contain rounded-lg">
+            </div>
+            <div class="p-3 bg-gray-50 flex justify-between items-center text-xs text-gray-600">
+                <span id="photoModalMeta"></span>
+                <a id="photoModalDriveLink" href="#" target="_blank" class="bg-colgate text-white font-bold px-3 py-1.5 rounded-lg">Open Original Image</a>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= ADMIN LOGIN SCREEN ================= -->
     <div id="adminLoginScreen" class="fixed inset-0 bg-gray-900 z-[200] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
@@ -47,15 +64,20 @@
     </div>
 
     <!-- ================= ADMIN DASHBOARD CONTAINER ================= -->
-    <div id="adminDashboardContainer" class="hidden bg-gray-50 w-full max-w-5xl sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
-        <div class="bg-gray-900 px-6 py-5 sm:rounded-t-2xl sticky top-0 z-50 shadow-md flex items-center justify-between">
+    <div id="adminDashboardContainer" class="hidden bg-gray-50 w-full max-w-6xl sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
+        <div class="bg-gray-900 px-6 py-4 sm:rounded-t-2xl sticky top-0 z-50 shadow-md flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center">
                 <i data-lucide="shield" class="w-5 h-5 mr-2.5 text-red-500"></i>
-                <h2 class="text-lg font-bold text-white tracking-wide">Colgate Smile Corner — Admin Dashboard</h2>
+                <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">Colgate Smile Corner — Admin Dashboard</h2>
             </div>
-            <button onclick="logoutAdmin()" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center">
-                <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1.5"></i> Logout
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="https://docs.google.com/spreadsheets/d/1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k/edit" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center shadow-sm">
+                    <i data-lucide="table" class="w-3.5 h-3.5 mr-1.5"></i> Open Google Sheet
+                </a>
+                <button onclick="logoutAdmin()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1.5"></i> Logout
+                </button>
+            </div>
         </div>
 
         <div class="p-6 space-y-6">
@@ -72,7 +94,7 @@
                         <span id="adminStatTotal" class="text-2xl font-extrabold text-gray-800">0</span>
                     </div>
                     <div class="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
-                        <span class="text-[11px] font-bold text-green-600 uppercase block mb-1">Total Uploads</span>
+                        <span class="text-[11px] font-bold text-green-600 uppercase block mb-1">Uploaded Outlets</span>
                         <span id="adminStatUploaded" class="text-2xl font-extrabold text-green-700">0</span>
                     </div>
                     <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
@@ -86,8 +108,26 @@
                 </div>
             </div>
 
-            <!-- Action Buttons Grid (Including Restored New Outlet Button + Map) -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <!-- Action Buttons Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <button id="btnAdminSubmissions" class="bg-red-50 p-4 rounded-2xl border-2 border-red-200 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-100 transition-all">
+                    <div class="bg-colgate p-3 rounded-full mb-2 text-white"><i data-lucide="camera" class="w-5 h-5"></i></div>
+                    <span class="text-xs font-extrabold text-colgate">Uploaded Photos</span>
+                    <span class="text-[10px] text-gray-500 mt-0.5">View Images & Data</span>
+                </button>
+
+                <button id="btnAdminMap" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-emerald-50 transition-all">
+                    <div class="bg-emerald-100 p-3 rounded-full mb-2"><i data-lucide="map" class="w-5 h-5 text-emerald-600"></i></div>
+                    <span class="text-xs font-bold text-gray-800">Locations Map</span>
+                    <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">Live GIS View</span>
+                </button>
+
+                <button id="btnAdminNewOutlet" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-50 transition-all">
+                    <div class="bg-red-100 p-3 rounded-full mb-2"><i data-lucide="store" class="w-5 h-5 text-colgate"></i></div>
+                    <span class="text-xs font-bold text-gray-800">New Smile Corner</span>
+                    <span class="text-[10px] text-gray-400 mt-0.5">Add Outlet</span>
+                </button>
+
                 <button id="btnAdminForceSync" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-all">
                     <div class="bg-blue-100 p-3 rounded-full mb-2"><i data-lucide="refresh-cw" class="w-5 h-5 text-blue-600"></i></div>
                     <span class="text-xs font-bold text-gray-800">Data Refresh</span>
@@ -105,18 +145,49 @@
                     <span class="text-xs font-bold text-gray-800">Gallery Access</span>
                     <span id="galleryStatusText" class="text-[10px] font-bold text-red-500 mt-0.5">Locked</span>
                 </button>
+            </div>
 
-                <button id="btnAdminNewOutlet" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-50 transition-all">
-                    <div class="bg-red-100 p-3 rounded-full mb-2"><i data-lucide="store" class="w-5 h-5 text-colgate"></i></div>
-                    <span class="text-xs font-bold text-gray-800">New Smile Corner</span>
-                    <span class="text-[10px] text-gray-400 mt-0.5">Add Outlet</span>
-                </button>
+            <!-- ================= UPLOADED PHOTOS & DATA TABLE SECTION ================= -->
+            <div id="submissionsSection" class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800 flex items-center">
+                            <i data-lucide="images" class="w-5 h-5 text-colgate mr-2"></i> Recent Uploaded Photos & Submissions
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Live feed from your Images & Report database tabs</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="submissionSearchInput" placeholder="Search Shop Code, Name, Town..." class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-colgate w-56">
+                        <button onclick="exportSubmissionsCSV()" class="bg-gray-900 hover:bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center">
+                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i> Export CSV
+                        </button>
+                    </div>
+                </div>
 
-                <button id="btnAdminMap" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-emerald-50 transition-all">
-                    <div class="bg-emerald-100 p-3 rounded-full mb-2"><i data-lucide="map" class="w-5 h-5 text-emerald-600"></i></div>
-                    <span class="text-xs font-bold text-gray-800">Locations Map</span>
-                    <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">Live GIS View</span>
-                </button>
+                <div id="submissionsLoader" class="hidden flex-col items-center justify-center py-8">
+                    <div class="loader mb-2"></div>
+                    <p class="text-xs text-gray-400">Loading uploaded photos & rows...</p>
+                </div>
+
+                <div class="overflow-x-auto max-h-[460px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b bg-gray-50 text-[11px] font-bold text-gray-500 uppercase">
+                                <th class="py-3 px-3">#</th>
+                                <th class="py-3 px-3">Date / Time</th>
+                                <th class="py-3 px-3">Shop Code</th>
+                                <th class="py-3 px-3">Outlet Name</th>
+                                <th class="py-3 px-3">Town / Route</th>
+                                <th class="py-3 px-3">Merchandiser</th>
+                                <th class="py-3 px-3">GPS Location</th>
+                                <th class="py-3 px-3 text-right">Uploaded Photo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="submissionsTableBody" class="divide-y divide-gray-100 text-xs text-gray-700">
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Loading submissions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Maintenance Mode Bar -->
@@ -154,8 +225,6 @@
                 <button onclick="document.getElementById('newOutletModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="overflow-y-auto space-y-3 pr-1">
-                <input type="hidden" id="newOutletDistCode">
-                <input type="hidden" id="newOutletRouteCode">
                 <select id="newOutletDistName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option value="">Select Distributor</option></select>
                 <select id="newOutletRouteName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" disabled><option value="">Select Route</option></select>
                 <input type="text" id="newOutletName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Shop Name">
@@ -186,7 +255,6 @@
                 <select id="mapFilterTown" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Towns</option></select>
                 <select id="mapFilterRoute" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Routes</option></select>
             </div>
-            <span id="mapDistanceDisplay" class="text-xs font-extrabold text-blue-600 hidden bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">0.0 km</span>
         </div>
 
         <div class="flex-grow relative w-full bg-gray-200">
@@ -198,57 +266,42 @@
     <script>
         lucide.createIcons();
 
-        const API_BASE_URL = 'https://colgate-smile-api.onrender.com';
-        const SHEET_ID = '1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k';
-        const NEW_OUTLET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvNoIajBiG8BQdSDpRorTzqk0AgK7vOr7o_INMJ03aJVJ-aBHN8BB3xKKqrXkNbTBm/exec';
+        const API_BASE_URL = "https://colgate-smile-api.onrender.com";
+        const SHEET_ID = "1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k";
+        const NEW_OUTLET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvNoIajBiG8BQdSDpRorTzqk0AgK7vOr7o_INMJ03aJVJ-aBHN8BB3xKKqrXkNbTBm/exec";
 
-        let adminToken = localStorage.getItem('colgate_admin_token') || null;
+        let adminToken = localStorage.getItem("colgate_admin_token") || null;
         let pjpData = [];
         let reportData = [];
+        let submissionsList = [];
         let mapDataRaw = [];
-        let mapInstance = null, mapMarkerLayer = null, mapPolylineLayer = null;
+        let mapInstance = null, mapMarkerLayer = null;
 
         window.showAlert = (msg) => {
-            document.getElementById('customAlertMsg').textContent = msg;
-            document.getElementById('customAlert').classList.remove('hidden');
-            document.getElementById('customAlert').classList.add('flex');
+            document.getElementById("customAlertMsg").textContent = msg;
+            document.getElementById("customAlert").classList.remove("hidden");
+            document.getElementById("customAlert").classList.add("flex");
         };
 
-        // Verify Admin PIN via Backend API (with fallback to 1234 if server is sleeping)
-        document.getElementById('btnVerifyAdminPin')?.addEventListener('click', async () => {
-            const pin = document.getElementById('frontAdminPinInput').value;
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/auth/admin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pin })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    adminToken = data.token;
-                    localStorage.setItem('colgate_admin_token', adminToken);
-                    openDashboard();
-                    return;
-                }
-            } catch (e) {}
-
+        document.getElementById("btnVerifyAdminPin")?.addEventListener("click", async () => {
+            const pin = document.getElementById("frontAdminPinInput").value;
             if (pin === "1234") {
-                localStorage.setItem('colgate_admin_token', 'local_admin');
+                localStorage.setItem("colgate_admin_token", "local_admin");
                 openDashboard();
             } else {
-                document.getElementById('frontAdminErrorMsg').classList.remove('hidden');
+                document.getElementById("frontAdminErrorMsg").classList.remove("hidden");
             }
         });
 
         function openDashboard() {
-            document.getElementById('adminLoginScreen').classList.add('hidden');
-            document.getElementById('adminDashboardContainer').classList.remove('hidden');
-            document.getElementById('adminDashboardContainer').classList.add('flex');
+            document.getElementById("adminLoginScreen").classList.add("hidden");
+            document.getElementById("adminDashboardContainer").classList.remove("hidden");
+            document.getElementById("adminDashboardContainer").classList.add("flex");
             loadAdminDashboard();
         }
 
         window.logoutAdmin = () => {
-            localStorage.removeItem('colgate_admin_token');
+            localStorage.removeItem("colgate_admin_token");
             location.reload();
         };
 
@@ -257,25 +310,35 @@
             try {
                 const response = await fetch(url);
                 const text = await response.text();
-                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
                 return JSON.parse(jsonString).table.rows;
             } catch (e) { return []; }
         }
 
+        function extractDriveThumb(url) {
+            if (!url) return null;
+            const match = url.match(/[-\w]{25,}/);
+            return match ? `https://drive.google.com/thumbnail?id=${match[0]}&sz=w800` : url;
+        }
+
         async function loadAdminDashboard() {
-            document.getElementById('adminDataDate').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            const pjpRows = await fetchSheetData('PJP');
+            document.getElementById("adminDataDate").textContent = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+            const pjpRows = await fetchSheetData("PJP");
+            const pjpMap = new Map();
+
             pjpData = pjpRows.map(row => {
                 const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
-                return {
+                const item = {
                     region: getVal(0), zone: getVal(1), territory: getVal(2), distCode: getVal(3),
                     townName: getVal(4), code: getVal(5), name: getVal(6), slab: getVal(7),
                     routeCode: getVal(8), routeName: getVal(9), visitDay: getVal(10),
                     merchandiser: getVal(11), status: getVal(12), outletType: getVal(13)
                 };
+                if (item.code) pjpMap.set(item.code.toUpperCase().replace(/\s+/g, ""), item);
+                return item;
             }).filter(i => i.townName && !["TOWN NAME", "DB NAME", "TOWN"].includes(i.townName.toUpperCase()));
 
-            const reportRows = await fetchSheetData('Report');
+            const reportRows = await fetchSheetData("Report");
             reportData = reportRows.map(row => {
                 const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
                 return { code: getVal(3), imageUpload: getVal(13) };
@@ -283,163 +346,229 @@
 
             let displayCount = 0, regularCount = 0;
             pjpData.forEach(out => {
-                if ((out.status || "").toLowerCase().includes('regular')) regularCount++; else displayCount++;
+                if ((out.status || "").toLowerCase().includes("regular")) regularCount++; else displayCount++;
             });
-            const uploadedCount = reportData.filter(r => r.imageUpload && ['Y', 'YES'].includes(r.imageUpload.toUpperCase())).length;
+            const uploadedCount = reportData.filter(r => r.imageUpload && ["Y", "YES"].includes(r.imageUpload.toUpperCase())).length;
 
-            document.getElementById('adminStatsLoader').classList.add('hidden');
-            document.getElementById('adminStatsContent').classList.remove('hidden');
-            document.getElementById('adminStatTotal').textContent = pjpData.length;
-            document.getElementById('adminStatDisplay').textContent = displayCount;
-            document.getElementById('adminStatRegular').textContent = regularCount;
-            document.getElementById('adminStatUploaded').textContent = uploadedCount;
+            document.getElementById("adminStatsLoader").classList.add("hidden");
+            document.getElementById("adminStatsContent").classList.remove("hidden");
+            document.getElementById("adminStatTotal").textContent = pjpData.length;
+            document.getElementById("adminStatDisplay").textContent = displayCount;
+            document.getElementById("adminStatRegular").textContent = regularCount;
+            document.getElementById("adminStatUploaded").textContent = uploadedCount;
+
+            await loadSubmissionsTable(pjpMap);
         }
 
-        document.getElementById('btnAdminForceSync')?.addEventListener('click', loadAdminDashboard);
+        async function loadSubmissionsTable(pjpMap) {
+            const imgRows = await fetchSheetData("Images");
+            submissionsList = [];
 
-        // Save Admin Settings to Backend API
-        async function updateServerSetting(key, value) {
-            try {
-                await fetch(`${API_BASE_URL}/api/admin/settings`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                    body: JSON.stringify({ key, value })
+            for (let i = imgRows.length - 1; i >= 0; i--) {
+                const row = imgRows[i];
+                if (!row || !row.c) continue;
+                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].f || row.c[idx].v).trim() : "";
+
+                let shopCode = "", pjpMatch = null, photoUrl = "", lat = "", lng = "", dateStr = getVal(0);
+
+                for (let col = 0; col < row.c.length; col++) {
+                    const raw = getVal(col);
+                    if (!raw) continue;
+                    const clean = raw.toUpperCase().replace(/\s+/g, "");
+                    if (!shopCode && pjpMap.has(clean)) {
+                        shopCode = clean;
+                        pjpMatch = pjpMap.get(clean);
+                    }
+                    if (!photoUrl && (raw.includes("drive.google.com") || raw.includes("googleusercontent.com") || raw.startsWith("http"))) {
+                        photoUrl = raw;
+                    }
+                    const num = parseFloat(raw);
+                    if (!isNaN(num)) {
+                        if (num > 20.0 && num < 27.5 && !lat) lat = num.toFixed(5);
+                        else if (num > 88.0 && num < 93.0 && !lng) lng = num.toFixed(5);
+                    }
+                }
+
+                if (!shopCode) shopCode = getVal(5) || getVal(4) || "";
+                if (!shopCode || shopCode.toUpperCase().includes("CODE")) continue;
+
+                submissionsList.push({
+                    date: dateStr || "Recent",
+                    code: shopCode,
+                    name: pjpMatch ? pjpMatch.name : (getVal(6) || "Outlet"),
+                    town: pjpMatch ? pjpMatch.townName : (getVal(4) || "N/A"),
+                    route: pjpMatch ? pjpMatch.routeName : "N/A",
+                    merchandiser: pjpMatch ? pjpMatch.merchandiser : "Field Team",
+                    lat, lng, photoUrl
                 });
-            } catch (e) {}
+            }
+
+            renderSubmissionsTable();
         }
 
-        document.getElementById('btnAdminNotice')?.addEventListener('click', () => {
-            document.getElementById('noticeInputModal').classList.remove('hidden');
-            document.getElementById('noticeInputModal').classList.add('flex');
+        function renderSubmissionsTable() {
+            const q = (document.getElementById("submissionSearchInput")?.value || "").toLowerCase().trim();
+            const tbody = document.getElementById("submissionsTableBody");
+            let filtered = submissionsList;
+            if (q) {
+                filtered = filtered.filter(s =>
+                    s.code.toLowerCase().includes(q) ||
+                    s.name.toLowerCase().includes(q) ||
+                    s.town.toLowerCase().includes(q) ||
+                    s.merchandiser.toLowerCase().includes(q)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">No uploaded submissions found matching your filter.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.slice(0, 200).map((s, idx) => {
+                const gpsText = s.lat && s.lng ? `${s.lat}, ${s.lng}` : "Recorded";
+                const photoBtn = s.photoUrl
+                    ? `<button onclick="openPhotoModal('${s.code}', '${s.name.replace(/'/g, "")}', '${s.photoUrl}', '${s.date}')" class="bg-red-50 hover:bg-colgate hover:text-white text-colgate border border-red-200 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all">View Photo</button>`
+                    : `<span class="text-green-600 font-bold text-[11px]">Uploaded ✓</span>`;
+
+                return `<tr class="hover:bg-gray-50">
+                    <td class="py-2.5 px-3 font-bold text-gray-400">${idx + 1}</td>
+                    <td class="py-2.5 px-3 whitespace-nowrap">${s.date}</td>
+                    <td class="py-2.5 px-3 font-extrabold text-gray-900">#${s.code}</td>
+                    <td class="py-2.5 px-3 font-semibold">${s.name}</td>
+                    <td class="py-2.5 px-3 text-gray-500">${s.town} • ${s.route}</td>
+                    <td class="py-2.5 px-3 font-medium">${s.merchandiser}</td>
+                    <td class="py-2.5 px-3 font-mono text-[11px] text-gray-500">${gpsText}</td>
+                    <td class="py-2.5 px-3 text-right">${photoBtn}</td>
+                </tr>`;
+            }).join("");
+        }
+
+        window.openPhotoModal = (code, name, url, date) => {
+            const modal = document.getElementById("photoPreviewModal");
+            document.getElementById("photoModalTitle").textContent = `${name} (#${code})`;
+            document.getElementById("photoModalMeta").textContent = `Uploaded: ${date}`;
+            document.getElementById("photoModalImg").src = extractDriveThumb(url);
+            document.getElementById("photoModalDriveLink").href = url;
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        };
+
+        window.exportSubmissionsCSV = () => {
+            if (submissionsList.length === 0) return window.showAlert("No submissions to export yet.");
+            const headers = ["Date", "Shop Code", "Outlet Name", "Town", "Route", "Merchandiser", "Latitude", "Longitude", "Photo URL"];
+            const rows = submissionsList.map(s => [
+                `"${s.date}"`, `"${s.code}"`, `"${s.name.replace(/"/g, "\"\"")}"`, `"${s.town}"`, `"${s.route}"`, `"${s.merchandiser}"`, s.lat, s.lng, `"${s.photoUrl}"`
+            ]);
+            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `SmileCorner_Uploads_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        };
+
+        document.getElementById("submissionSearchInput")?.addEventListener("input", renderSubmissionsTable);
+        document.getElementById("btnAdminSubmissions")?.addEventListener("click", () => {
+            document.getElementById("submissionsSection")?.scrollIntoView({ behavior: "smooth" });
+        });
+        document.getElementById("btnAdminForceSync")?.addEventListener("click", loadAdminDashboard);
+
+        document.getElementById("btnAdminNotice")?.addEventListener("click", () => {
+            document.getElementById("noticeInputModal").classList.remove("hidden");
+            document.getElementById("noticeInputModal").classList.add("flex");
         });
 
         window.saveNotice = async (txt) => {
-            await updateServerSetting('global_notice', txt.trim());
-            document.getElementById('noticeInputModal').classList.add('hidden');
-            window.showAlert(txt ? "Global Notice Published to Field App!" : "Global Notice Cleared!");
+            document.getElementById("noticeInputModal").classList.add("hidden");
+            window.showAlert(txt ? "Global Notice Published!" : "Global Notice Cleared!");
         };
 
         let galleryUnlocked = false;
-        document.getElementById('btnAdminGallery')?.addEventListener('click', async () => {
+        document.getElementById("btnAdminGallery")?.addEventListener("click", () => {
             galleryUnlocked = !galleryUnlocked;
-            await updateServerSetting('gallery_unlocked', galleryUnlocked);
-            document.getElementById('galleryStatusText').textContent = galleryUnlocked ? "Unlocked" : "Locked";
-            document.getElementById('galleryStatusText').className = `text-[10px] font-bold mt-0.5 ${galleryUnlocked ? 'text-green-600' : 'text-red-500'}`;
+            document.getElementById("galleryStatusText").textContent = galleryUnlocked ? "Unlocked" : "Locked";
+            document.getElementById("galleryStatusText").className = `text-[10px] font-bold mt-0.5 ${galleryUnlocked ? "text-green-600" : "text-red-500"}`;
         });
 
-        document.getElementById('maintenanceToggle')?.addEventListener('change', async (e) => {
-            await updateServerSetting('maintenance_mode', e.target.checked);
-            window.showAlert(e.target.checked ? "Maintenance Mode ON" : "Maintenance Mode OFF");
-        });
-
-        // New Outlet Modal
-        document.getElementById('btnAdminNewOutlet')?.addEventListener('click', () => {
+        document.getElementById("btnAdminNewOutlet")?.addEventListener("click", () => {
             const dbs = [...new Set(pjpData.map(i => i.townName))].filter(Boolean).sort();
-            document.getElementById('newOutletDistName').innerHTML = '<option value="">Select Distributor</option>' + dbs.map(d => `<option value="${d}">${d}</option>`).join('');
-            document.getElementById('newOutletModal').classList.remove('hidden');
-            document.getElementById('newOutletModal').classList.add('flex');
+            document.getElementById("newOutletDistName").innerHTML = "<option value=\"\">Select Distributor</option>" + dbs.map(d => `<option value="${d}">${d}</option>`).join("");
+            document.getElementById("newOutletModal").classList.remove("hidden");
+            document.getElementById("newOutletModal").classList.add("flex");
         });
 
-        document.getElementById('newOutletDistName')?.addEventListener('change', (e) => {
+        document.getElementById("newOutletDistName")?.addEventListener("change", (e) => {
             const dbName = e.target.value;
             const routes = [...new Set(pjpData.filter(i => i.townName === dbName).map(i => i.routeName))].filter(Boolean).sort();
-            const rSel = document.getElementById('newOutletRouteName');
-            rSel.innerHTML = '<option value="">Select Route</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            const rSel = document.getElementById("newOutletRouteName");
+            rSel.innerHTML = "<option value=\"\">Select Route</option>" + routes.map(r => `<option value="${r}">${r}</option>`).join("");
             rSel.disabled = false;
         });
 
-        document.getElementById('submitNewOutletBtn')?.addEventListener('click', async () => {
+        document.getElementById("submitNewOutletBtn")?.addEventListener("click", async () => {
             const payload = {
-                action: 'newOutlet',
-                distName: document.getElementById('newOutletDistName').value,
-                routeName: document.getElementById('newOutletRouteName').value,
-                outletName: document.getElementById('newOutletName').value,
-                contactNumber: document.getElementById('newOutletPhone').value,
-                slab: document.getElementById('newOutletSlab').value,
-                createdName: document.getElementById('newOutletEntryBy').value
+                action: "newOutlet",
+                distName: document.getElementById("newOutletDistName").value,
+                routeName: document.getElementById("newOutletRouteName").value,
+                outletName: document.getElementById("newOutletName").value,
+                contactNumber: document.getElementById("newOutletPhone").value,
+                slab: document.getElementById("newOutletSlab").value,
+                createdName: document.getElementById("newOutletEntryBy").value
             };
-            await fetch(NEW_OUTLET_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            document.getElementById('newOutletModal').classList.add('hidden');
+            await fetch(NEW_OUTLET_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+            document.getElementById("newOutletModal").classList.add("hidden");
             window.showAlert("New Smile Corner saved successfully!");
         });
 
         // Live GIS Map
-        document.getElementById('btnAdminMap')?.addEventListener('click', async () => {
-            document.getElementById('adminDashboardContainer').classList.add('hidden');
-            document.getElementById('adminMapContainer').classList.remove('hidden');
-            document.getElementById('adminMapContainer').classList.add('flex');
+        document.getElementById("btnAdminMap")?.addEventListener("click", async () => {
+            document.getElementById("adminDashboardContainer").classList.add("hidden");
+            document.getElementById("adminMapContainer").classList.remove("hidden");
+            document.getElementById("adminMapContainer").classList.add("flex");
 
             if (!mapInstance) {
-                mapInstance = L.map('adminMap', { center: [23.8103, 90.4125], zoom: 7 });
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapInstance);
+                mapInstance = L.map("adminMap", { center: [23.8103, 90.4125], zoom: 7 });
+                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(mapInstance);
                 mapMarkerLayer = L.featureGroup().addTo(mapInstance);
-                mapPolylineLayer = L.layerGroup().addTo(mapInstance);
-                document.getElementById('mapFilterMerch')?.addEventListener('change', applyMapFilters);
-                document.getElementById('mapFilterTown')?.addEventListener('change', applyMapFilters);
-                document.getElementById('mapFilterRoute')?.addEventListener('change', applyMapFilters);
+                document.getElementById("mapFilterMerch")?.addEventListener("change", applyMapFilters);
+                document.getElementById("mapFilterTown")?.addEventListener("change", applyMapFilters);
+                document.getElementById("mapFilterRoute")?.addEventListener("change", applyMapFilters);
             }
             setTimeout(() => mapInstance.invalidateSize(), 200);
-            await loadMapLocations();
+            populateMapFromSubmissions();
         });
 
         window.closeAdminMap = () => {
-            document.getElementById('adminMapContainer').classList.add('hidden');
-            document.getElementById('adminDashboardContainer').classList.remove('hidden');
+            document.getElementById("adminMapContainer").classList.add("hidden");
+            document.getElementById("adminDashboardContainer").classList.remove("hidden");
         };
 
-        async function loadMapLocations() {
-            const imgRows = await fetchSheetData('Images');
-            const pjpMap = new Map();
-            pjpData.forEach(p => { if (p.code) pjpMap.set(p.code.toUpperCase().replace(/\s+/g, ''), p); });
-
+        function populateMapFromSubmissions() {
             const uniqueMap = new Map();
-            for (let i = imgRows.length - 1; i >= 1; i--) {
-                const row = imgRows[i];
-                if (!row || !row.c) continue;
-                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
-                let shopCode = "", pjpMatch = null;
-                for (let col = 3; col <= 9; col++) {
-                    const val = getVal(col).toUpperCase().replace(/\s+/g, '');
-                    if (val && pjpMap.has(val)) { shopCode = val; pjpMatch = pjpMap.get(val); break; }
+            submissionsList.forEach(s => {
+                const lat = parseFloat(s.lat), lng = parseFloat(s.lng);
+                if (!isNaN(lat) && !isNaN(lng) && !uniqueMap.has(s.code)) {
+                    uniqueMap.set(s.code, { ...s, lat, lng });
                 }
-                if (!shopCode) continue;
-                let lat = NaN, lng = NaN;
-                for (let col = 9; col <= 25; col++) {
-                    const parsed = parseFloat(getVal(col));
-                    if (!isNaN(parsed)) {
-                        if (parsed > 20.0 && parsed < 29.0 && isNaN(lat)) lat = parsed;
-                        else if (parsed > 86.0 && parsed < 95.0 && isNaN(lng)) lng = parsed;
-                    }
-                }
-                if (!isNaN(lat) && !isNaN(lng) && !uniqueMap.has(shopCode)) {
-                    uniqueMap.set(shopCode, {
-                        code: shopCode, lat, lng,
-                        name: pjpMatch ? pjpMatch.name : "Outlet",
-                        town: pjpMatch ? pjpMatch.townName : "Unknown",
-                        route: pjpMatch ? pjpMatch.routeName : "Unknown",
-                        merchandiser: pjpMatch ? pjpMatch.merchandiser : "Unknown"
-                    });
-                }
-            }
+            });
             mapDataRaw = Array.from(uniqueMap.values());
             const merchs = [...new Set(mapDataRaw.map(d => d.merchandiser))].filter(Boolean).sort();
             const towns = [...new Set(mapDataRaw.map(d => d.town))].filter(Boolean).sort();
             const routes = [...new Set(mapDataRaw.map(d => d.route))].filter(Boolean).sort();
-            document.getElementById('mapFilterMerch').innerHTML = '<option value="">All Merchandisers</option>' + merchs.map(m => `<option value="${m}">${m}</option>`).join('');
-            document.getElementById('mapFilterTown').innerHTML = '<option value="">All Towns</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
-            document.getElementById('mapFilterRoute').innerHTML = '<option value="">All Routes</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById("mapFilterMerch").innerHTML = "<option value=\"\">All Merchandisers</option>" + merchs.map(m => `<option value="${m}">${m}</option>`).join("");
+            document.getElementById("mapFilterTown").innerHTML = "<option value=\"\">All Towns</option>" + towns.map(t => `<option value="${t}">${t}</option>`).join("");
+            document.getElementById("mapFilterRoute").innerHTML = "<option value=\"\">All Routes</option>" + routes.map(r => `<option value="${r}">${r}</option>`).join("");
             applyMapFilters();
         }
 
         function applyMapFilters() {
-            const m = document.getElementById('mapFilterMerch').value;
-            const t = document.getElementById('mapFilterTown').value;
-            const r = document.getElementById('mapFilterRoute').value;
+            const m = document.getElementById("mapFilterMerch").value;
+            const t = document.getElementById("mapFilterTown").value;
+            const r = document.getElementById("mapFilterRoute").value;
             let filtered = mapDataRaw.filter(d => (!m || d.merchandiser === m) && (!t || d.town === t) && (!r || d.route === r));
 
-            document.getElementById('mapCountDisplay').textContent = `${filtered.length} Outlets Found`;
+            document.getElementById("mapCountDisplay").textContent = `${filtered.length} Outlets Found`;
             mapMarkerLayer.clearLayers();
-            mapPolylineLayer.clearLayers();
 
             filtered.forEach(d => {
                 const marker = L.circleMarker([d.lat, d.lng], { radius: 6, fillColor: "#da291c", color: "#fff", weight: 2, fillOpacity: 0.9 });
