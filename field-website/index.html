@@ -1046,110 +1046,140 @@
 })();
 </script>
 
+
 <!-- LIVE SUPABASE SETTINGS LISTENER (NOTICE POPUP & GALLERY LOCK/UNLOCK) -->
 <script>
 (function() {
   const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  let lastShownNotice = '';
+  let shownNoticeText = '';
 
-  function applyGalleryAccess(mode) {
-    const isUnlocked = String(mode).toLowerCase() === 'unlocked';
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
+  function syncGalleryUI(mode) {
+    const isUnlocked = String(mode).toLowerCase() === 'unlocked' || mode === true || mode === 'true';
+
+    // 1. Update localStorage so any existing code inside index.html sees the live state
+    localStorage.setItem('app_gallery', isUnlocked ? 'unlocked' : 'locked');
+    localStorage.setItem('gallery_unlocked', isUnlocked ? 'true' : 'false');
+    window.galleryUnlocked = isUnlocked;
+
+    // 2. Enable/disable all file inputs and gallery buttons on the Field App
+    document.querySelectorAll('input[type="file"]').forEach(inp => {
       if (isUnlocked) {
-        // Allow picking from phone gallery OR camera
-        input.removeAttribute('capture');
-        input.setAttribute('accept', 'image/*');
+        inp.removeAttribute('capture');
+        inp.setAttribute('accept', 'image/*');
       } else {
-        // Force live camera capture only
-        input.setAttribute('capture', 'environment');
-        input.setAttribute('accept', 'image/*');
+        inp.setAttribute('capture', 'environment');
+        inp.setAttribute('accept', 'image/*');
       }
     });
 
-    // Also unlock any gallery button or badge if present in the UI
-    let badge = document.getElementById('liveGalleryStatusBadge');
-    if (!badge) {
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput && fileInput.parentElement) {
-        badge = document.createElement('div');
-        badge.id = 'liveGalleryStatusBadge';
-        badge.style.cssText = 'margin-top:8px;font-size:12px;font-weight:600;text-align:center;padding:4px 10px;border-radius:6px;';
-        fileInput.parentElement.appendChild(badge);
+    // 3. If the Field App has a dedicated Gallery button (or hidden gallery input), unlock or lock it
+    document.querySelectorAll('button, label, div').forEach(el => {
+      const txt = (el.textContent || '').trim();
+      if ((txt.includes('গ্যালারি') || txt.toLowerCase().includes('gallery')) && el.id !== 'liveGalleryStatusBadge') {
+        if (isUnlocked) {
+          el.classList.remove('hidden', 'opacity-50', 'pointer-events-none', 'cursor-not-allowed');
+          el.style.display = '';
+          el.style.opacity = '1';
+          el.style.pointerEvents = 'auto';
+          el.disabled = false;
+        }
       }
+    });
+
+    // 4. Add a clear Gallery Upload button right next to the Camera button when Unlocked!
+    let extraGalleryBtn = document.getElementById('cloudGalleryPickerBtn');
+    const cameraSection = document.querySelector('input[type="file"]')?.parentElement;
+    if (isUnlocked && cameraSection && !extraGalleryBtn) {
+      extraGalleryBtn = document.createElement('label');
+      extraGalleryBtn.id = 'cloudGalleryPickerBtn';
+      extraGalleryBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;width:100%;padding:10px 14px;background:#eff6ff;border:1.5px dashed #3b82f6;color:#1d4ed8;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;';
+      extraGalleryBtn.innerHTML = '🖼️ গ্যালারি থেকে ছবি নির্বাচন করুন (Choose from Gallery) <input type="file" accept="image/*" style="display:none;" />';
+      cameraSection.appendChild(extraGalleryBtn);
+
+      const hiddenGalInput = extraGalleryBtn.querySelector('input');
+      hiddenGalInput.addEventListener('change', function(e) {
+        const mainInput = document.querySelector('input[type="file"]');
+        if (mainInput && mainInput !== hiddenGalInput && e.target.files.length > 0) {
+          try {
+            const dt = new DataTransfer();
+            dt.items.add(e.target.files[0]);
+            mainInput.files = dt.files;
+            mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+          } catch (err) {}
+        }
+      });
     }
-    if (badge) {
-      if (isUnlocked) {
-        badge.textContent = '🖼️ গ্যালারি আপলোড চালু আছে (Gallery & Camera Enabled)';
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#15803d';
-      } else {
-        badge.textContent = '📷 শুধুমাত্র সরাসরি ক্যামেরা ছবি (Live Camera Only)';
-        badge.style.background = '#fee2e2';
-        badge.style.color = '#b91c1c';
-      }
+    if (extraGalleryBtn) {
+      extraGalleryBtn.style.display = isUnlocked ? 'inline-flex' : 'none';
     }
   }
 
-  function showNoticeBannerAndPopup(text, active) {
-    const isActive = String(active) === 'true' && text && text.trim().length > 0;
-    let banner = document.getElementById('liveAdminNoticeBanner');
+  function syncNoticeUI(text, active) {
+    const cleanText = String(text || '').trim();
+    const isActive = (String(active) === 'true' || active === true) && cleanText.length > 0;
 
+    // Also update localStorage so built-in notice banners work
+    localStorage.setItem('app_notice', isActive ? cleanText : '');
+
+    let topBanner = document.getElementById('cloudNoticeTopBanner');
     if (!isActive) {
-      if (banner) banner.style.display = 'none';
+      if (topBanner) topBanner.style.display = 'none';
+      const pop = document.getElementById('cloudNoticePopupModal');
+      if (pop) pop.style.display = 'none';
       return;
     }
 
-    // 1. Top Scrolling/Pinned Banner inside Field App
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'liveAdminNoticeBanner';
-      banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:12px 16px;margin:10px auto;max-width:520px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 10px rgba(0,0,0,0.06);';
-      document.body.insertBefore(banner, document.body.firstChild);
+    if (!topBanner) {
+      topBanner = document.createElement('div');
+      topBanner.id = 'cloudNoticeTopBanner';
+      topBanner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;color:#92400e;padding:12px 16px;margin:10px auto;max-width:480px;border-radius:12px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:9999;position:relative;';
+      document.body.insertBefore(topBanner, document.body.firstChild);
     }
-    banner.style.display = 'flex';
-    banner.innerHTML = `<span style="font-size:20px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;">জরুরী নোটিশ (Admin Notice)</div><div>${text}</div></div>`;
+    topBanner.style.display = 'flex';
+    topBanner.innerHTML = `<span style="font-size:22px;">📢</span><div><div style="font-size:11px;text-transform:uppercase;color:#b45309;font-weight:800;">জরুরী নোটিশ (Admin Notice)</div><div style="margin-top:2px;">${cleanText}</div></div>`;
 
-    // 2. Popup Modal when a new notice arrives
-    if (lastShownNotice !== text) {
-      lastShownNotice = text;
-      let popup = document.getElementById('liveAdminNoticePopup');
+    if (shownNoticeText !== cleanText) {
+      shownNoticeText = cleanText;
+      let popup = document.getElementById('cloudNoticePopupModal');
       if (!popup) {
         popup = document.createElement('div');
-        popup.id = 'liveAdminNoticePopup';
-        popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;';
+        popup.id = 'cloudNoticePopupModal';
+        popup.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;';
         document.body.appendChild(popup);
       }
       popup.style.display = 'flex';
       popup.innerHTML = `
-        <div style="background:#fff;max-width:380px;width:100%;border-radius:18px;padding:24px;text-align:center;box-shadow:0 20px 25px rgba(0,0,0,0.25);">
-          <div style="width:52px;height:52px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px;">🔔</div>
-          <h3 style="margin:0 0 8px;font-size:18px;color:#0f172a;">জরুরী নোটিশ (Notice)</h3>
-          <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.5;white-space:pre-wrap;">${text}</p>
-          <button onclick="document.getElementById('liveAdminNoticePopup').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে (OK)</button>
+        <div style="background:#fff;max-width:380px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);">
+          <div style="width:54px;height:54px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;">🔔</div>
+          <h3 style="margin:0 0 8px;font-size:18px;font-weight:800;color:#0f172a;">জরুরী নোটিশ (Notice)</h3>
+          <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.5;white-space:pre-wrap;">${cleanText}</p>
+          <button type="button" onclick="document.getElementById('cloudNoticePopupModal').style.display='none'" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">ঠিক আছে (OK)</button>
         </div>
       `;
     }
   }
 
-  async function syncFieldSettings() {
+  async function pollCloudSettings() {
     try {
-      const res = await fetch(SETTINGS_API);
+      const res = await fetch(SETTINGS_API + '?t=' + Date.now());
       const json = await res.json();
-      if (json && json.settings) {
-        applyGalleryAccess(json.settings.gallery_access || 'locked');
-        showNoticeBannerAndPopup(json.settings.notice_text || '', json.settings.notice_active || 'false');
+      const s = json.settings || json;
+      if (s) {
+        const galMode = s.gallery_access || (s.gallery_unlocked === true || s.gallery_unlocked === 'true' ? 'unlocked' : 'locked');
+        const noticeText = s.notice_text || s.global_notice || '';
+        const noticeActive = s.notice_active !== undefined ? s.notice_active : (noticeText ? 'true' : 'false');
+        syncGalleryUI(galMode);
+        syncNoticeUI(noticeText, noticeActive);
       }
     } catch (e) {}
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncFieldSettings);
+    document.addEventListener('DOMContentLoaded', pollCloudSettings);
   } else {
-    syncFieldSettings();
+    pollCloudSettings();
   }
-  // Poll every 15 seconds so changes in Admin reflect live on open phones without refreshing
-  setInterval(syncFieldSettings, 15000);
+  setInterval(pollCloudSettings, 10000);
 })();
 </script>
 </body>

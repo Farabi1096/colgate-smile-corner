@@ -948,98 +948,99 @@
 })();
 </script>
 
+
 <!-- DYNAMIC NOTICE BOARD & GALLERY ACCESS ADMIN CONTROLLER -->
 <script>
 (function() {
   const SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
   let currentSettings = { notice_text: '', notice_active: 'false', gallery_access: 'locked' };
 
-  // Create clean Modal UI for Notice Board
   function ensureNoticeModal() {
-    if (document.getElementById('dynamicNoticeModal')) return;
+    if (document.getElementById('cloudNoticeModal')) return;
     const modal = document.createElement('div');
-    modal.id = 'dynamicNoticeModal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);z-index:99999;align-items:center;justify-content:center;padding:16px;';
+    modal.id = 'cloudNoticeModal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:999999;align-items:center;justify-content:center;padding:16px;';
     modal.innerHTML = `
-      <div style="background:#fff;width:100%;max-width:460px;border-radius:16px;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);font-family:sans-serif;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <h3 style="margin:0;font-size:18px;color:#0f172a;">🔔 Broadcast Notice Board</h3>
-          <button id="closeNoticeModalBtn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">&times;</button>
+      <div style="background:#fff;width:100%;max-width:440px;border-radius:18px;padding:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);font-family:sans-serif;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;">🔔 Broadcast Notice Board</h3>
+          <button type="button" id="closeCloudNoticeBtn" style="background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#64748b;">&times;</button>
         </div>
-        <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Write a message below. When active, it will pop up and show on the Field App immediately.</p>
-        <textarea id="adminNoticeInput" rows="4" placeholder="Type announcement for field team..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px;margin-bottom:12px;resize:vertical;"></textarea>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#1e293b;margin-bottom:18px;cursor:pointer;">
-          <input type="checkbox" id="adminNoticeActive" style="width:16px;height:16px;" />
-          Show this notice popup on Field App
+        <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Write an announcement below. It will pop up and pin to the top of https://colgate-smile-corner.vercel.app/ for all field users.</p>
+        <textarea id="cloudNoticeInput" rows="4" placeholder="Type notice for merchandisers & SRs..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;margin-bottom:14px;outline:none;"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#1e293b;margin-bottom:18px;cursor:pointer;">
+          <input type="checkbox" id="cloudNoticeActive" checked style="width:17px;height:17px;accent-color:#dc2626;" />
+          Active (Show Notice Popup on Field Website)
         </label>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button id="clearNoticeBtn" style="padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:600;cursor:pointer;">Turn Off / Clear</button>
-          <button id="saveNoticeBtn" style="padding:10px 18px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;">Save & Broadcast</button>
+          <button type="button" id="clearCloudNoticeBtn" style="padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer;">Turn Off / Clear</button>
+          <button type="button" id="saveCloudNoticeBtn" style="padding:10px 18px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">Save & Broadcast</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
 
-    document.getElementById('closeNoticeModalBtn').onclick = () => { modal.style.display = 'none'; };
-    document.getElementById('saveNoticeBtn').onclick = async () => {
-      const btn = document.getElementById('saveNoticeBtn');
-      btn.textContent = 'Saving...';
-      const text = document.getElementById('adminNoticeInput').value.trim();
-      const active = document.getElementById('adminNoticeActive').checked && text.length > 0 ? 'true' : 'false';
-      await updateSettings({ notice_text: text, notice_active: active });
+    document.getElementById('closeCloudNoticeBtn').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('saveCloudNoticeBtn').onclick = async () => {
+      const btn = document.getElementById('saveCloudNoticeBtn');
+      btn.textContent = 'Broadcasting...';
+      const text = document.getElementById('cloudNoticeInput').value.trim();
+      const active = document.getElementById('cloudNoticeActive').checked && text.length > 0 ? 'true' : 'false';
+      await pushSettings({ notice_text: text, notice_active: active });
       btn.textContent = 'Save & Broadcast';
       modal.style.display = 'none';
     };
-    document.getElementById('clearNoticeBtn').onclick = async () => {
-      document.getElementById('adminNoticeInput').value = '';
-      document.getElementById('adminNoticeActive').checked = false;
-      await updateSettings({ notice_text: '', notice_active: 'false' });
+    document.getElementById('clearCloudNoticeBtn').onclick = async () => {
+      document.getElementById('cloudNoticeInput').value = '';
+      document.getElementById('cloudNoticeActive').checked = false;
+      await pushSettings({ notice_text: '', notice_active: 'false' });
       modal.style.display = 'none';
     };
   }
 
-  function findCardByTitle(titleText) {
-    const els = document.querySelectorAll('div, span, p, h3, h4');
-    for (const el of els) {
-      if ((el.textContent || '').trim() === titleText) {
-        return el.closest('button, a, [ onclick ], div[style*="cursor"], div[class*="card"]') || el.parentElement;
-      }
-    }
-    return null;
-  }
+  function updateAdminCardLabels() {
+    const isUnlocked = currentSettings.gallery_access === 'unlocked';
+    const isNoticeOn = currentSettings.notice_active === 'true' && currentSettings.notice_text;
 
-  function renderSettingsStatusUI() {
-    // Update Gallery Access Card label (Locked vs Unlocked)
-    const allNodes = document.querySelectorAll('div, span, p');
-    allNodes.forEach(node => {
-      if ((node.textContent || '').trim() === 'Gallery Access' && node.nextElementSibling) {
-        const isUnlocked = currentSettings.gallery_access === 'unlocked';
+    // Update by ID if original IDs exist
+    const galStatusEl = document.getElementById('adminGalleryStatus');
+    if (galStatusEl) {
+      galStatusEl.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
+      galStatusEl.className = isUnlocked ? 'text-[10px] font-bold text-green-600 mt-0.5' : 'text-[10px] font-bold text-red-500 mt-0.5';
+    }
+
+    // Also scan text nodes so any card layout updates cleanly
+    document.querySelectorAll('div, span, p').forEach(node => {
+      const t = (node.textContent || '').trim();
+      if (t === 'Gallery Access' && node.nextElementSibling) {
         node.nextElementSibling.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
         node.nextElementSibling.style.color = isUnlocked ? '#16a34a' : '#dc2626';
         node.nextElementSibling.style.fontWeight = '700';
       }
-      if ((node.textContent || '').trim() === 'Notice Board' && node.nextElementSibling) {
-        const isActive = currentSettings.notice_active === 'true' && currentSettings.notice_text;
-        node.nextElementSibling.textContent = isActive ? 'Active: ' + currentSettings.notice_text.slice(0, 18) + '...' : 'Broadcast Message';
-        node.nextElementSibling.style.color = isActive ? '#7c3aed' : '';
+      if (t === 'Notice Board' && node.nextElementSibling) {
+        node.nextElementSibling.textContent = isNoticeOn ? 'Active: ' + currentSettings.notice_text.slice(0, 18) + '...' : 'Broadcast Message';
+        node.nextElementSibling.style.color = isNoticeOn ? '#7c3aed' : '';
       }
     });
   }
 
-  async function loadSettings() {
+  async function fetchSettings() {
     try {
-      const res = await fetch(SETTINGS_API);
+      const res = await fetch(SETTINGS_API + '?t=' + Date.now());
       const json = await res.json();
-      if (json.settings) {
-        currentSettings = { ...currentSettings, ...json.settings };
-        renderSettingsStatusUI();
-      }
+      const s = json.settings || json;
+      currentSettings = {
+        notice_text: s.notice_text || s.global_notice || '',
+        notice_active: String(s.notice_active || (s.notice_text ? 'true' : 'false')),
+        gallery_access: s.gallery_access || (s.gallery_unlocked === true || s.gallery_unlocked === 'true' ? 'unlocked' : 'locked')
+      };
+      updateAdminCardLabels();
     } catch (e) {
-      console.warn('Settings load error:', e);
+      console.warn('Settings fetch error:', e);
     }
   }
 
-  async function updateSettings(payload) {
+  async function pushSettings(payload) {
     try {
       const res = await fetch(SETTINGS_API, {
         method: 'POST',
@@ -1047,41 +1048,53 @@
         body: JSON.stringify(payload)
       });
       const json = await res.json();
-      if (json.settings) {
-        currentSettings = { ...currentSettings, ...json.settings };
-        renderSettingsStatusUI();
-      }
+      const s = json.settings || json;
+      currentSettings = {
+        ...currentSettings,
+        ...payload,
+        ...(s || {})
+      };
+      updateAdminCardLabels();
     } catch (e) {
-      alert('Failed to update setting: ' + e.message);
+      alert('Error saving setting to server: ' + e.message);
     }
   }
 
-  function bindAdminCards() {
+  function attachCardHandlers() {
     ensureNoticeModal();
 
-    // Use event delegation so clicking anywhere on Notice Board or Gallery Access card works reliably
-    document.addEventListener('click', async function(e) {
-      const cardText = (e.target.closest('div, button')?.textContent || '');
-      if (cardText.includes('Notice Board') && cardText.length < 80) {
+    // Capture clicks in the capture phase and stop old localStorage modals from firing
+    window.addEventListener('click', async function(e) {
+      const clickable = e.target.closest('#btnAdminNotice, #btnAdminGallery, button, div[ class*="rounded-2xl" ], div[ class*="cursor-pointer" ]');
+      if (!clickable) return;
+
+      const text = (clickable.textContent || '').trim();
+      if (clickable.id === 'btnAdminNotice' || (text.includes('Notice Board') && text.length < 90)) {
         e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('adminNoticeInput').value = currentSettings.notice_text || '';
-        document.getElementById('adminNoticeActive').checked = currentSettings.notice_active === 'true';
-        document.getElementById('dynamicNoticeModal').style.display = 'flex';
-      } else if (cardText.includes('Gallery Access') && cardText.length < 80) {
+        e.stopImmediatePropagation();
+        // Hide any old local notice modal if it tried to open
+        const oldModal = document.getElementById('noticeModal');
+        if (oldModal) oldModal.classList.add('hidden');
+
+        document.getElementById('cloudNoticeInput').value = currentSettings.notice_text || '';
+        document.getElementById('cloudNoticeActive').checked = currentSettings.notice_active === 'true' || !currentSettings.notice_text;
+        document.getElementById('cloudNoticeModal').style.display = 'flex';
+      } else if (clickable.id === 'btnAdminGallery' || (text.includes('Gallery Access') && text.length < 90)) {
         e.preventDefault();
-        e.stopPropagation();
-        const nextState = currentSettings.gallery_access === 'unlocked' ? 'locked' : 'unlocked';
-        await updateSettings({ gallery_access: nextState });
+        e.stopImmediatePropagation();
+        const nextMode = currentSettings.gallery_access === 'unlocked' ? 'locked' : 'unlocked';
+        currentSettings.gallery_access = nextMode;
+        updateAdminCardLabels();
+        await pushSettings({ gallery_access: nextMode });
       }
     }, true);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { bindAdminCards(); loadSettings(); });
+    document.addEventListener('DOMContentLoaded', () => { attachCardHandlers(); fetchSettings(); });
   } else {
-    bindAdminCards();
-    loadSettings();
+    attachCardHandlers();
+    fetchSettings();
   }
 })();
 </script>

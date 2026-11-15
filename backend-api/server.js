@@ -70,7 +70,7 @@ app.get(['/api/outlets', '/api/init-data'], async (req, res) => {
   }
 });
 
-// 3. Universal Submit Endpoint (Auto-Detects Multipart Files, Data URLs, AND Raw Base64)
+// 3. Submit Field Form + Upload Photo to outlet-photos Bucket
 app.post('/api/submit', upload.any(), async (req, res) => {
   try {
     const body = req.body || {};
@@ -80,7 +80,6 @@ app.post('/api/submit', upload.any(), async (req, res) => {
 
     let imageUrl = body.image_url || body.imageUrl || '';
 
-    // Case A: Multipart file uploaded via FormData
     const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
     if (uploadedFile && uploadedFile.buffer) {
       const fileName = `${shopCode}_${Date.now()}.jpg`;
@@ -94,9 +93,10 @@ app.post('/api/submit', upload.any(), async (req, res) => {
       const { data: pub } = supabase.storage.from('outlet-photos').getPublicUrl(fileName);
       imageUrl = pub.publicUrl;
     } else {
-      // Case B: Auto-detect Base64 string in ANY body property (with or without data:image prefix)
       let rawBase64 = body.image || body.imageBase64 || body.imageData || body.photo || body.fileData || body.file || body.base64 || '';
-
+      if (!rawBase64 && body.shop_image && body.shop_image.data) {
+        rawBase64 = body.shop_image.data;
+      }
       if (!rawBase64 || typeof rawBase64 !== 'string') {
         for (const key of Object.keys(body)) {
           const val = body[key];
@@ -173,17 +173,17 @@ app.post('/api/outlets', async (req, res) => {
   try {
     const b = req.body || {};
     const row = {
-      unit: b.unit || '',
+      unit: b.unit || 'DCC',
       zone: b.zone || b.area_name || '',
       territory: b.territory || '',
-      db_code: b.db_code || '',
-      db_name: b.db_name || b.distribution_name || '',
-      route_code: b.route_code || '',
-      route_name: b.route_name || '',
-      shop_code: String(b.shop_code || '').trim(),
-      shop_name: b.shop_name || '',
-      slab: b.slab || '',
-      merchandiser: b.merchandiser || b.merch_name || ''
+      db_code: b.db_code || b.distCode || '',
+      db_name: b.db_name || b.distribution_name || b.distName || '',
+      route_code: b.route_code || b.routeCode || '',
+      route_name: b.route_name || b.routeName || '',
+      shop_code: String(b.shop_code || ('NEW-' + Date.now().toString().slice(-6))).trim(),
+      shop_name: b.shop_name || b.outletName || '',
+      slab: b.slab || 'Slab-1',
+      merchandiser: b.merchandiser || b.merch_name || b.createdName || ''
     };
     const { data, error } = await supabase.from('outlets').upsert([row], { onConflict: 'shop_code' }).select();
     if (error) throw error;
@@ -194,47 +194,55 @@ app.post('/api/outlets', async (req, res) => {
 });
 
 // 6. Upload Target vs Achievement CSV
-app.post('/api/upload-targets', async (req, res) => {
+app.post(['/api/upload-targets', '/api/targets/bulk'], async (req, res) => {
   try {
-    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : (Array.isArray(req.body.items) ? req.body.items : []);
     if (!rows.length) return res.status(400).json({ success: false, error: 'No rows provided' });
 
     const formatted = rows
-      .filter(r => r.shop_code || r.Shop_Code || r['Shop Code'])
+      .filter(r => r.shop_code || r.Shop_Code || r['Shop Code'] || r.code || r['Outlet Code'])
       .map(r => ({
-        shop_code: String(r.shop_code || r.Shop_Code || r['Shop Code']).trim(),
+        shop_code: String(r.shop_code || r.Shop_Code || r['Shop Code'] || r.code || r['Outlet Code']).trim(),
         month: String(r.month || r.Month || 'Current').trim(),
-        enrolled: String(r.enrolled || r.Enrolled || 'Yes'),
-        target: parseFloat(r.target || r.Target || 0) || 0,
-        tot_stt: parseFloat(r.tot_stt || r['Tot STT'] || r.Tot_STT || 0) || 0,
-        ach: parseFloat(r.ach || r['Ach %'] || r.Ach || 0) || 0,
-        balance: parseFloat(r.balance || r.Balance || 0) || 0,
-        eligible: String(r.eligible || r.Eligible || 'No'),
-        payout: parseFloat(r.payout || r.Payout || 0) || 0
+        enrolled: String(r.enrolled || r.Enrolled || 'Y'),
+        target: String(r.target || r.Target || '0'),
+        tot_stt: String(r.tot_stt || r['Tot STT'] || r.Tot_STT || r.achieve || '0'),
+        ach: String(r.ach || r['Ach %'] || r.Ach || '0%'),
+        balance: String(r.balance || r.Balance || '0'),
+        eligible: String(r.eligible || r.Eligible || 'N'),
+        payout: String(r.payout || r.Payout || '0')
       }));
 
     const { error } = await supabase
       .from('outlet_targets')
-      .upsert(formatted, { onConflict: 'shop_code,month' });
+      .upsert(formatted, { onConflict: 'shop_code' });
 
     if (error) throw error;
-    res.json({ success: true, count: formatted.length });
+    res.json({ success: true, count: formatted.length, uploadedCount: formatted.length });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-
-// 7. Dynamic App Settings (Notice Board & Gallery Access)
+// 7. UNIFIED DYNAMIC SETTINGS ROUTE (Notice Board & Gallery Access)
 app.get('/api/settings', async (req, res) => {
   try {
     const { data, error } = await supabase.from('settings').select('*');
     if (error) throw error;
-    const settingsObj = { notice_text: '', notice_active: 'false', gallery_access: 'locked' };
+    const settingsObj = {
+      notice_text: '',
+      notice_active: 'false',
+      gallery_access: 'locked',
+      global_notice: '',
+      gallery_unlocked: false
+    };
     (data || []).forEach(row => {
       if (row.key) settingsObj[row.key] = row.value;
     });
-    res.json({ success: true, settings: settingsObj });
+    // Keep both naming conventions synced
+    settingsObj.global_notice = settingsObj.notice_text || settingsObj.global_notice || '';
+    settingsObj.gallery_unlocked = (settingsObj.gallery_access === 'unlocked' || settingsObj.gallery_unlocked === 'true' || settingsObj.gallery_unlocked === true);
+    res.json({ success: true, settings: settingsObj, ...settingsObj });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -244,9 +252,22 @@ app.post('/api/settings', async (req, res) => {
   try {
     const b = req.body || {};
     const updates = [];
-    if (b.notice_text !== undefined) updates.push({ key: 'notice_text', value: String(b.notice_text), updated_at: new Date().toISOString() });
-    if (b.notice_active !== undefined) updates.push({ key: 'notice_active', value: String(b.notice_active), updated_at: new Date().toISOString() });
-    if (b.gallery_access !== undefined) updates.push({ key: 'gallery_access', value: String(b.gallery_access), updated_at: new Date().toISOString() });
+
+    // Support both { key, value } and { notice_text, notice_active, gallery_access }
+    if (b.key !== undefined && b.value !== undefined) {
+      updates.push({ key: String(b.key), value: String(b.value), updated_at: new Date().toISOString() });
+    }
+    if (b.notice_text !== undefined) {
+      updates.push({ key: 'notice_text', value: String(b.notice_text), updated_at: new Date().toISOString() });
+      updates.push({ key: 'global_notice', value: String(b.notice_text), updated_at: new Date().toISOString() });
+    }
+    if (b.notice_active !== undefined) {
+      updates.push({ key: 'notice_active', value: String(b.notice_active), updated_at: new Date().toISOString() });
+    }
+    if (b.gallery_access !== undefined) {
+      updates.push({ key: 'gallery_access', value: String(b.gallery_access), updated_at: new Date().toISOString() });
+      updates.push({ key: 'gallery_unlocked', value: b.gallery_access === 'unlocked' ? 'true' : 'false', updated_at: new Date().toISOString() });
+    }
 
     if (updates.length > 0) {
       const { error } = await supabase.from('settings').upsert(updates, { onConflict: 'key' });
@@ -256,7 +277,7 @@ app.post('/api/settings', async (req, res) => {
     const { data } = await supabase.from('settings').select('*');
     const settingsObj = {};
     (data || []).forEach(r => { if (r.key) settingsObj[r.key] = r.value; });
-    res.json({ success: true, settings: settingsObj });
+    res.json({ success: true, settings: settingsObj, ...settingsObj });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
