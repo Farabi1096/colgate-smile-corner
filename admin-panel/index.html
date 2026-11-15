@@ -361,9 +361,30 @@
         }
 
         async function loadSubmissionsTable(pjpMap) {
-            const imgRows = await fetchSheetData("Images");
             submissionsList = [];
-
+            try {
+                const apiRes = await fetch(API_BASE_URL + '/api/submissions');
+                if (apiRes.ok) {
+                    const supaRows = await apiRes.json();
+                    supaRows.forEach(r => {
+                        const clean = (r.shop_code || '').toUpperCase().replace(/\s+/g, '');
+                        const pjpMatch = pjpMap.get(clean);
+                        submissionsList.push({
+                            date: r.created_at ? new Date(r.created_at).toLocaleString('en-GB') : 'Recent',
+                            code: clean,
+                            name: pjpMatch ? pjpMatch.name : (r.distribution_name || 'Outlet'),
+                            town: pjpMatch ? pjpMatch.townName : (r.distribution_name || 'N/A'),
+                            route: pjpMatch ? pjpMatch.routeName : (r.area_name || 'N/A'),
+                            merchandiser: r.merch_name || (pjpMatch ? pjpMatch.merchandiser : 'Field Team'),
+                            lat: r.lat ? Number(r.lat).toFixed(5) : '',
+                            lng: r.lng ? Number(r.lng).toFixed(5) : '',
+                            photoUrl: r.image_url || ''
+                        });
+                    });
+                }
+            } catch (e) { console.warn('Supabase API fetch skipped:', e); }
+            const existingSupaCount = submissionsList.length;
+            const imgRows = await fetchSheetData("Images");
             for (let i = imgRows.length - 1; i >= 0; i--) {
                 const row = imgRows[i];
                 if (!row || !row.c) continue;
@@ -585,3 +606,4 @@
     </script>
 </body>
 </html>
+
