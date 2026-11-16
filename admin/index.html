@@ -1,1292 +1,211 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>window.RENDER_API_BASE = "https://colgate-smile-api.onrender.com"; const RENDER_API_BASE = "https://colgate-smile-api.onrender.com";</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colgate Smile Corner - Admin & GIS Portal</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Field Console | Enterprise Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: "Inter", sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
-        .loader {
-            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #da291c;
-            width: 20px; height: 20px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .bg-colgate { background-color: #da291c; }
-        .text-colgate { color: #da291c; }
-        #adminMap { z-index: 1; width: 100%; height: 100%; }
+        body { font-family: 'Inter', sans-serif; background-color: #0B0F19; overflow: hidden; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; background: #333D47; border-radius: 3px; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #007AC2; border: 2px solid #FFFFFF; border-radius: 3px; cursor: pointer; }
+        
+        /* Custom Scrollbar for Dark Slate */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #121820; }
+        ::-webkit-scrollbar-thumb { background: #333D47; border-radius: 3px; }
     </style>
-
 </head>
-<body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
+<body class="text-[#E2E8F0] bg-[#121820]">
+    <div id="root"></div>
 
-    <!-- Custom Alert -->
-    <div id="customAlert" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
-            <i data-lucide="info" class="w-12 h-12 text-colgate mx-auto mb-3"></i>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">System Notice</h3>
-            <p id="customAlertMsg" class="text-[14px] text-gray-600 mb-5"></p>
-            <button onclick="document.getElementById('customAlert').classList.add('hidden')" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl w-full">OK</button>
-        </div>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    <!-- Image Lightbox Modal -->
-    <div id="photoPreviewModal" class="fixed inset-0 bg-black/80 z-[600] hidden items-center justify-center p-4" onclick="this.classList.add('hidden')">
-        <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-            <div class="bg-gray-900 px-4 py-3 flex justify-between items-center text-white">
-                <span id="photoModalTitle" class="font-bold text-sm">Uploaded Shop Photo</span>
-                <button onclick="document.getElementById('photoPreviewModal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-4 bg-black flex flex-col items-center justify-center min-h-[300px]">
-                <img id="photoModalImg" src="" alt="Outlet Photo" class="max-h-[70vh] w-auto object-contain rounded-lg">
-            </div>
-            <div class="p-3 bg-gray-50 flex justify-between items-center text-xs text-gray-600">
-                <span id="photoModalMeta"></span>
-                <a id="photoModalDriveLink" href="#" target="_blank" class="bg-colgate text-white font-bold px-3 py-1.5 rounded-lg">Open Original Image</a>
-            </div>
-        </div>
-    </div>
+        function App() {
+            const [pin, setPin] = useState("");
+            const [loggedIn, setLoggedIn] = useState(false);
+            const [targetVal, setTargetVal] = useState(80);
+            const [stats, setStats] = useState({ total: 1000, uploads: 12, display: 0, regular: 1000 });
 
-    <!-- ================= ADMIN LOGIN SCREEN ================= -->
-    <div id="adminLoginScreen" class="fixed inset-0 bg-gray-900 z-[200] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
-            <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <i data-lucide="shield" class="w-7 h-7 text-colgate"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-1">Admin Portal</h3>
-            <p class="text-[12px] text-gray-500 mb-5">Colgate Smile Corner Management & GIS</p>
-            <input type="password" id="frontAdminPinInput" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-center tracking-[0.5em] text-lg font-bold outline-none focus:border-gray-800 mb-2" placeholder="••••" maxlength="4">
-            <p id="frontAdminErrorMsg" class="text-red-500 text-[11px] font-bold mb-4 hidden">Incorrect PIN. Try again.</p>
-            <button id="btnVerifyAdminPin" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all shadow-md text-[14px] mt-2">Verify & Login</button>
-        </div>
-    </div>
-
-    <!-- ================= ADMIN DASHBOARD CONTAINER ================= -->
-    <div id="adminDashboardContainer" class="hidden bg-gray-50 w-full max-w-6xl sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
-        <div class="bg-gray-900 px-6 py-4 sm:rounded-t-2xl sticky top-0 z-50 shadow-md flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center">
-                <i data-lucide="shield" class="w-5 h-5 mr-2.5 text-red-500"></i>
-                <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">Colgate Smile Corner — Admin Dashboard</h2>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="https://docs.google.com/spreadsheets/d/1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k/edit" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center shadow-sm">
-                    <i data-lucide="table" class="w-3.5 h-3.5 mr-1.5"></i> Open Google Sheet
-                </a>
-                <button onclick="logoutAdmin()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center">
-                    <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1.5"></i> Logout
-                </button>
-            </div>
-        </div>
-
-        <div class="p-6 space-y-6">
-            <!-- Real-Time KPI Cards -->
-            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                    <h3 class="text-sm font-bold text-gray-800 flex items-center"><i data-lucide="activity" class="w-4 h-4 text-green-500 mr-2"></i> Real-time Program Status</h3>
-                    <span id="adminDataDate" class="text-xs text-gray-400 font-medium">Syncing...</span>
-                </div>
-                <div id="adminStatsLoader" class="flex flex-col items-center justify-center py-6"><div class="loader mb-2"></div><p class="text-xs text-gray-400">Syncing live data...</p></div>
-                <div id="adminStatsContent" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
-                        <span class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Total Outlets</span>
-                        <span id="adminStatTotal" class="text-2xl font-extrabold text-gray-800">0</span>
+            if (!loggedIn) {
+                return (
+                    <div className="h-screen w-screen flex items-center justify-center bg-[#0B0F19]">
+                        <div className="bg-[#1E252D] border border-[#333D47] p-8 rounded-md shadow-2xl w-full max-w-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 bg-[#007AC2] text-white flex items-center justify-center font-bold text-xs mono rounded-sm">OPS</div>
+                                <div>
+                                    <h1 className="text-white font-bold tracking-tight">FIELD CONSOLE</h1>
+                                    <p className="text-[#5D8AA8] text-xs mono">ENTERPRISE LOGIN</p>
+                                </div>
+                            </div>
+                            <input 
+                                type="password" value={pin} onChange={(e) => setPin(e.target.value)} 
+                                placeholder="Enter PIN..." maxLength={4}
+                                className="w-full bg-[#121820] border border-[#333D47] text-white rounded p-3 mb-4 text-center text-xl tracking-[0.5em] focus:outline-none focus:border-[#007AC2]"
+                            />
+                            <button 
+                                onClick={() => pin === "1234" ? setLoggedIn(true) : alert("Invalid PIN")}
+                                className="w-full bg-[#007AC2] hover:bg-[#005f99] text-white font-semibold py-3 rounded-md transition-colors"
+                            >
+                                Authenticate
+                            </button>
+                        </div>
                     </div>
-                    <div class="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
-                        <span class="text-[11px] font-bold text-green-600 uppercase block mb-1">Uploaded Outlets</span>
-                        <span id="adminStatUploaded" class="text-2xl font-extrabold text-green-700">0</span>
-                    </div>
-                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
-                        <span class="text-[11px] font-bold text-blue-600 uppercase block mb-1">Display Outlets</span>
-                        <span id="adminStatDisplay" class="text-2xl font-extrabold text-blue-700">0</span>
-                    </div>
-                    <div class="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center">
-                        <span class="text-[11px] font-bold text-orange-600 uppercase block mb-1">Regular Outlets</span>
-                        <span id="adminStatRegular" class="text-2xl font-extrabold text-orange-700">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                <button id="btnAdminSubmissions" class="bg-red-50 p-4 rounded-2xl border-2 border-red-200 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-100 transition-all">
-                    <div class="bg-colgate p-3 rounded-full mb-2 text-white"><i data-lucide="camera" class="w-5 h-5"></i></div>
-                    <span class="text-xs font-extrabold text-colgate">Uploaded Photos</span>
-                    <span class="text-[10px] text-gray-500 mt-0.5">View Images & Data</span>
-                </button>
-
-                <button id="btnAdminMap" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-emerald-50 transition-all">
-                    <div class="bg-emerald-100 p-3 rounded-full mb-2"><i data-lucide="map" class="w-5 h-5 text-emerald-600"></i></div>
-                    <span class="text-xs font-bold text-gray-800">Locations Map</span>
-                    <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">Live GIS View</span>
-                </button>
-
-                <button id="btnAdminNewOutlet" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-red-50 transition-all">
-                    <div class="bg-red-100 p-3 rounded-full mb-2"><i data-lucide="store" class="w-5 h-5 text-colgate"></i></div>
-                    <span class="text-xs font-bold text-gray-800">New Smile Corner</span>
-                    <span class="text-[10px] text-gray-400 mt-0.5">Add Outlet</span>
-                </button>
-
-                <button id="btnAdminForceSync" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-all">
-                    <div class="bg-blue-100 p-3 rounded-full mb-2"><i data-lucide="refresh-cw" class="w-5 h-5 text-blue-600"></i></div>
-                    <span class="text-xs font-bold text-gray-800">Data Refresh</span>
-                    <span class="text-[10px] text-gray-400 mt-0.5">Manual Sync</span>
-                </button>
-
-                <button id="btnAdminNotice" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:bg-purple-50 transition-all">
-                    <div class="bg-purple-100 p-3 rounded-full mb-2"><i data-lucide="bell-ring" class="w-5 h-5 text-purple-600"></i></div>
-                    <span class="text-xs font-bold text-gray-800">Notice Board</span>
-                    <span class="text-[10px] text-gray-400 mt-0.5">Broadcast Message</span>
-                </button>
-
-                <button id="btnAdminGallery" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center transition-all">
-                    <div id="galleryIconBg" class="bg-gray-100 p-3 rounded-full mb-2"><i data-lucide="image" id="galleryIcon" class="w-5 h-5 text-gray-500"></i></div>
-                    <span class="text-xs font-bold text-gray-800">Gallery Access</span>
-                    <span id="galleryStatusText" class="text-[10px] font-bold text-red-500 mt-0.5">Locked</span>
-                </button>
-            </div>
-
-            <!-- ================= UPLOADED PHOTOS & DATA TABLE SECTION ================= -->
-            <div id="submissionsSection" class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-800 flex items-center">
-                            <i data-lucide="images" class="w-5 h-5 text-colgate mr-2"></i> Recent Uploaded Photos & Submissions
-                        </h3>
-                        <p class="text-xs text-gray-400 mt-0.5">Live feed from your Images & Report database tabs</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="submissionSearchInput" placeholder="Search Shop Code, Name, Town..." class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-colgate w-56">
-                        <button onclick="exportSubmissionsCSV()" class="bg-gray-900 hover:bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center">
-                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i> Export CSV
-                        </button>
-                    </div>
-                </div>
-
-                <div id="submissionsLoader" class="hidden flex-col items-center justify-center py-8">
-                    <div class="loader mb-2"></div>
-                    <p class="text-xs text-gray-400">Loading uploaded photos & rows...</p>
-                </div>
-
-                <div class="overflow-x-auto max-h-[460px]">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b bg-gray-50 text-[11px] font-bold text-gray-500 uppercase">
-                                <th class="py-3 px-3">#</th>
-                                <th class="py-3 px-3">Date / Time</th>
-                                <th class="py-3 px-3">Shop Code</th>
-                                <th class="py-3 px-3">Outlet Name</th>
-                                <th class="py-3 px-3">Town / Route</th>
-                                <th class="py-3 px-3">Merchandiser</th>
-                                <th class="py-3 px-3">GPS Location</th>
-                                <th class="py-3 px-3 text-right">Uploaded Photo</th>
-                            </tr>
-                        </thead>
-                        <tbody id="submissionsTableBody" class="divide-y divide-gray-100 text-xs text-gray-700">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Loading submissions...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Maintenance Mode Bar -->
-            <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
-                <div>
-                    <h4 class="text-sm font-bold text-gray-800 flex items-center"><i data-lucide="lock" class="w-4 h-4 text-orange-500 mr-2"></i> Maintenance Mode</h4>
-                    <p class="text-xs text-gray-400 mt-0.5">Temporarily disable the Field Website for all Merchandisers & SRs</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="maintenanceToggle" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notice Modal -->
-    <div id="noticeInputModal" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Global Notice</h3>
-            <textarea id="noticeTextInput" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none mb-4" placeholder="Type notice for field team..."></textarea>
-            <div class="flex gap-3">
-                <button onclick="saveNotice('')" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl text-xs">Clear</button>
-                <button onclick="saveNotice(document.getElementById('noticeTextInput').value)" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs">Publish Notice</button>
-            </div>
-            <button onclick="document.getElementById('noticeInputModal').classList.add('hidden')" class="w-full mt-3 text-xs text-gray-400">Cancel</button>
-        </div>
-    </div>
-
-    <!-- New Outlet Entry Modal -->
-    <div id="newOutletModal" class="fixed inset-0 bg-black/60 z-[300] hidden items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                <h3 class="text-lg font-bold text-gray-800">New Smile Corner</h3>
-                <button onclick="document.getElementById('newOutletModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            <div class="overflow-y-auto space-y-3 pr-1">
-                <select id="newOutletDistName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option value="">Select Distributor</option></select>
-                <select id="newOutletRouteName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" disabled><option value="">Select Route</option></select>
-                <input type="text" id="newOutletName" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Shop Name">
-                <input type="text" id="newOutletOwner" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Owner Name">
-                <input type="tel" id="newOutletPhone" maxlength="11" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="11 Digit Mobile No">
-                <select id="newOutletSlab" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option value="Regular">Regular</option></select>
-                <input type="text" id="newOutletEntryBy" class="w-full bg-gray-50 border rounded-xl p-3 text-sm" placeholder="Entered By (Name)">
-            </div>
-            <button id="submitNewOutletBtn" class="w-full bg-colgate text-white font-bold py-3 rounded-xl mt-4">Save Outlet</button>
-        </div>
-    </div>
-
-    <!-- ================= ADMIN LIVE MAP CONTAINER ================= -->
-    <div id="adminMapContainer" class="hidden bg-gray-50 w-full max-w-6xl sm:rounded-2xl sm:shadow-2xl h-screen sm:h-[90vh] flex-col relative mx-auto overflow-hidden z-[160]">
-        <div class="bg-gray-900 px-5 py-4 sm:rounded-t-2xl shadow-md flex items-center justify-between shrink-0">
-            <button onclick="closeAdminMap()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
-            </button>
-            <h2 class="text-sm font-bold text-white flex items-center">
-                <i data-lucide="map-pin" class="w-4 h-4 mr-1.5 text-red-500"></i> Smile Corners Live GIS Map
-            </h2>
-            <span id="mapCountDisplay" class="text-xs font-bold text-red-400">0 Outlets</span>
-        </div>
-
-        <div class="bg-white p-3 border-b border-gray-200 shrink-0 flex flex-wrap gap-2 items-center justify-between">
-            <div class="grid grid-cols-3 gap-2 flex-grow">
-                <select id="mapFilterMerch" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Merchandisers</option></select>
-                <select id="mapFilterTown" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Towns</option></select>
-                <select id="mapFilterRoute" class="w-full bg-gray-50 border rounded-lg p-2 text-xs font-bold text-gray-700"><option value="">All Routes</option></select>
-            </div>
-        </div>
-
-        <div class="flex-grow relative w-full bg-gray-200">
-            <div id="adminMap" class="w-full h-full"></div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        lucide.createIcons();
-
-        const API_BASE_URL = "https://colgate-smile-api.onrender.com";
-        const SHEET_ID = "1LE52K4tA60_-Ekd0TEF9gc2zMyq1tP5SOAC1zru8A6k";
-        const NEW_OUTLET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvNoIajBiG8BQdSDpRorTzqk0AgK7vOr7o_INMJ03aJVJ-aBHN8BB3xKKqrXkNbTBm/exec";
-
-        let adminToken = localStorage.getItem("colgate_admin_token") || null;
-        let pjpData = [];
-        let reportData = [];
-        let submissionsList = [];
-        let mapDataRaw = [];
-        let mapInstance = null, mapMarkerLayer = null;
-
-        window.showAlert = (msg) => {
-            document.getElementById("customAlertMsg").textContent = msg;
-            document.getElementById("customAlert").classList.remove("hidden");
-            document.getElementById("customAlert").classList.add("flex");
-        };
-
-        document.getElementById("btnVerifyAdminPin")?.addEventListener("click", async () => {
-            const pin = document.getElementById("frontAdminPinInput").value;
-            if (pin === "1234") {
-                localStorage.setItem("colgate_admin_token", "local_admin");
-                openDashboard();
-            } else {
-                document.getElementById("frontAdminErrorMsg").classList.remove("hidden");
-            }
-        });
-
-        function openDashboard() {
-            document.getElementById("adminLoginScreen").classList.add("hidden");
-            document.getElementById("adminDashboardContainer").classList.remove("hidden");
-            document.getElementById("adminDashboardContainer").classList.add("flex");
-            loadAdminDashboard();
-        }
-
-        window.logoutAdmin = () => {
-            localStorage.removeItem("colgate_admin_token");
-            location.reload();
-        };
-
-        async function fetchSheetData(tabName) {
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${tabName}&t=${new Date().getTime()}`;
-            try {
-                const response = await fetch(url);
-                const text = await response.text();
-                const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
-                return JSON.parse(jsonString).table.rows;
-            } catch (e) { return []; }
-        }
-
-        function extractDriveThumb(url) {
-            if (!url) return null;
-            const match = url.match(/[-\w]{25,}/);
-            return match ? `${row.image_url || row.Image_URL || row.Photo_Link || ""}&sz=w800` : url;
-        }
-
-        async function loadAdminDashboard() {
-            document.getElementById("adminDataDate").textContent = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-            const pjpRows = await fetchSheetData("PJP");
-            const pjpMap = new Map();
-
-            pjpData = pjpRows.map(row => {
-                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
-                const item = {
-                    region: getVal(0), zone: getVal(1), territory: getVal(2), distCode: getVal(3),
-                    townName: getVal(4), code: getVal(5), name: getVal(6), slab: getVal(7),
-                    routeCode: getVal(8), routeName: getVal(9), visitDay: getVal(10),
-                    merchandiser: getVal(11), status: getVal(12), outletType: getVal(13)
-                };
-                if (item.code) pjpMap.set(item.code.toUpperCase().replace(/\s+/g, ""), item);
-                return item;
-            }).filter(i => i.townName && !["TOWN NAME", "DB NAME", "TOWN"].includes(i.townName.toUpperCase()));
-
-            const reportRows = await fetchSheetData("Report");
-            reportData = reportRows.map(row => {
-                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].v).trim() : "";
-                return { code: getVal(3), imageUpload: getVal(13) };
-            }).filter(i => i.code !== "Outlet Code");
-
-            let displayCount = 0, regularCount = 0;
-            pjpData.forEach(out => {
-                if ((out.status || "").toLowerCase().includes("regular")) regularCount++; else displayCount++;
-            });
-            const uploadedCount = reportData.filter(r => r.imageUpload && ["Y", "YES"].includes(r.imageUpload.toUpperCase())).length;
-
-            document.getElementById("adminStatsLoader").classList.add("hidden");
-            document.getElementById("adminStatsContent").classList.remove("hidden");
-            document.getElementById("adminStatTotal").textContent = pjpData.length;
-            document.getElementById("adminStatDisplay").textContent = displayCount;
-            document.getElementById("adminStatRegular").textContent = regularCount;
-            document.getElementById("adminStatUploaded").textContent = uploadedCount;
-
-            await loadSubmissionsTable(pjpMap);
-        }
-
-        async function loadSubmissionsTable(pjpMap) {
-            submissionsList = [];
-            try {
-                const apiRes = await fetch(API_BASE_URL + '/api/submissions');
-                if (apiRes.ok) {
-                    const supaRows = await apiRes.json();
-                    supaRows.forEach(r => {
-                        const clean = (r.shop_code || '').toUpperCase().replace(/\s+/g, '');
-                        const pjpMatch = pjpMap.get(clean);
-                        submissionsList.push({
-                            date: r.created_at ? new Date(r.created_at).toLocaleString('en-GB') : 'Recent',
-                            code: clean,
-                            name: pjpMatch ? pjpMatch.name : (r.distribution_name || 'Outlet'),
-                            town: pjpMatch ? pjpMatch.townName : (r.distribution_name || 'N/A'),
-                            route: pjpMatch ? pjpMatch.routeName : (r.area_name || 'N/A'),
-                            merchandiser: r.merch_name || (pjpMatch ? pjpMatch.merchandiser : 'Field Team'),
-                            lat: r.lat ? Number(r.lat).toFixed(5) : '',
-                            lng: r.lng ? Number(r.lng).toFixed(5) : '',
-                            photoUrl: r.image_url || ''
-                        });
-                    });
-                }
-            } catch (e) { console.warn('Supabase API fetch skipped:', e); }
-            const existingSupaCount = submissionsList.length;
-            const imgRows = await fetchSheetData("Images");
-            for (let i = imgRows.length - 1; i >= 0; i--) {
-                const row = imgRows[i];
-                if (!row || !row.c) continue;
-                const getVal = (idx) => row.c[idx] && row.c[idx].v != null ? String(row.c[idx].f || row.c[idx].v).trim() : "";
-
-                let shopCode = "", pjpMatch = null, photoUrl = "", lat = "", lng = "", dateStr = getVal(0);
-
-                for (let col = 0; col < row.c.length; col++) {
-                    const raw = getVal(col);
-                    if (!raw) continue;
-                    const clean = raw.toUpperCase().replace(/\s+/g, "");
-                    if (!shopCode && pjpMap.has(clean)) {
-                        shopCode = clean;
-                        pjpMatch = pjpMap.get(clean);
-                    }
-                    if (!photoUrl && (raw.includes("drive.google.com") || raw.includes("googleusercontent.com") || raw.startsWith("http"))) {
-                        photoUrl = raw;
-                    }
-                    const num = parseFloat(raw);
-                    if (!isNaN(num)) {
-                        if (num > 20.0 && num < 27.5 && !lat) lat = num.toFixed(5);
-                        else if (num > 88.0 && num < 93.0 && !lng) lng = num.toFixed(5);
-                    }
-                }
-
-                if (!shopCode) shopCode = getVal(5) || getVal(4) || "";
-                if (!shopCode || shopCode.toUpperCase().includes("CODE")) continue;
-
-                submissionsList.push({
-                    date: dateStr || "Recent",
-                    code: shopCode,
-                    name: pjpMatch ? pjpMatch.name : (getVal(6) || "Outlet"),
-                    town: pjpMatch ? pjpMatch.townName : (getVal(4) || "N/A"),
-                    route: pjpMatch ? pjpMatch.routeName : "N/A",
-                    merchandiser: pjpMatch ? pjpMatch.merchandiser : "Field Team",
-                    lat, lng, photoUrl
-                });
-            }
-
-            renderSubmissionsTable();
-        }
-
-        function renderSubmissionsTable() {
-            const q = (document.getElementById("submissionSearchInput")?.value || "").toLowerCase().trim();
-            const tbody = document.getElementById("submissionsTableBody");
-            let filtered = submissionsList;
-            if (q) {
-                filtered = filtered.filter(s =>
-                    s.code.toLowerCase().includes(q) ||
-                    s.name.toLowerCase().includes(q) ||
-                    s.town.toLowerCase().includes(q) ||
-                    s.merchandiser.toLowerCase().includes(q)
                 );
             }
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">No uploaded submissions found matching your filter.</td></tr>`;
-                return;
-            }
+            const maxVal = Math.max(stats.total, stats.uploads, stats.display, stats.regular, 1);
+            const getH = (val) => Math.max(5, Math.min(95, (val/maxVal)*88)) + '%';
 
-            tbody.innerHTML = filtered.slice(0, 200).map((s, idx) => {
-                const gpsText = s.lat && s.lng ? `${s.lat}, ${s.lng}` : "Recorded";
-                const photoBtn = s.photoUrl
-                    ? `<button onclick="openPhotoModal('${s.code}', '${s.name.replace(/'/g, "")}', '${s.photoUrl}', '${s.date}')" class="bg-red-50 hover:bg-colgate hover:text-white text-colgate border border-red-200 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all">View Photo</button>`
-                    : `<span class="text-green-600 font-bold text-[11px]">Uploaded ✓</span>`;
+            return (
+                <div className="flex h-screen w-screen overflow-hidden bg-[#121820]">
+                    
+                    {/* SIDEBAR */}
+                    <aside className="w-[240px] bg-[#0B0F19] flex flex-col border-r border-[#333D47] z-20 shrink-0">
+                        <div className="h-14 px-4 flex items-center gap-3 border-b border-[#333D47]">
+                            <div className="w-6 h-6 bg-[#007AC2] text-white flex items-center justify-center font-bold text-[11px] mono">OPS</div>
+                            <div>
+                                <div className="text-[13px] font-bold tracking-tight text-[#FFFFFF]">FIELD CONSOLE</div>
+                                <div className="text-[10px] text-[#5D8AA8] mono">ENTERPRISE v2.4</div>
+                            </div>
+                        </div>
+                        <div className="px-4 pt-4 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#939598]">Workspace</div>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-semibold bg-[#007AC2] text-white rounded-sm text-left">Overview & KPIs</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-[#939598] hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">Coverage Analytics</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-[#939598] hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">Live GIS Route Map</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-[#939598] hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">System Controls</button>
+                        
+                        <div className="mt-auto p-4 border-t border-[#333D47]">
+                            <button onClick={() => setLoggedIn(false)} className="w-full py-2 bg-[#1E252D] hover:bg-[#333D47] text-[#FFFFFF] text-xs font-semibold rounded-sm border border-[#333D47] transition-colors">
+                                Exit Console
+                            </button>
+                        </div>
+                    </aside>
 
-                return `<tr class="hover:bg-gray-50">
-                    <td class="py-2.5 px-3 font-bold text-gray-400">${idx + 1}</td>
-                    <td class="py-2.5 px-3 whitespace-nowrap">${s.date}</td>
-                    <td class="py-2.5 px-3 font-extrabold text-gray-900">#${s.code}</td>
-                    <td class="py-2.5 px-3 font-semibold">${s.name}</td>
-                    <td class="py-2.5 px-3 text-gray-500">${s.town} • ${s.route}</td>
-                    <td class="py-2.5 px-3 font-medium">${s.merchandiser}</td>
-                    <td class="py-2.5 px-3 font-mono text-[11px] text-gray-500">${gpsText}</td>
-                    <td class="py-2.5 px-3 text-right">${photoBtn}</td>
-                </tr>`;
-            }).join("");
+                    {/* MAIN WORKSPACE */}
+                    <main className="flex-1 flex flex-col overflow-y-auto">
+                        <header className="h-14 bg-[#1E252D] border-b border-[#333D47] px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-[#939598] font-medium">Admin Console</span>
+                                <span className="text-[#333D47]">/</span>
+                                <span className="text-[13px] text-[#FFFFFF] font-semibold">Operations & Field Telemetry</span>
+                            </div>
+                            <div className="text-xs text-[#939598] font-medium flex items-center gap-2">
+                                Live Sync: <span className="mono text-[#00B082] font-bold">Connected</span>
+                                <div className="w-2 h-2 rounded-full bg-[#00B082] animate-pulse"></div>
+                            </div>
+                        </header>
+
+                        <div className="p-6 max-w-[1440px] w-full mx-auto flex flex-col gap-5">
+                            
+                            {/* KPI GRID */}
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="bg-[#1E252D] border border-[#333D47] rounded-md p-4">
+                                    <div className="text-[11px] font-semibold uppercase text-[#939598] mb-1">Total Outlets</div>
+                                    <div className="mono text-2xl font-bold text-[#FFFFFF] tracking-tight">{stats.total.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-[#1E252D] border border-[#007AC2] rounded-md p-4">
+                                    <div className="text-[11px] font-semibold uppercase text-[#007AC2] mb-1">Uploaded</div>
+                                    <div className="mono text-2xl font-bold text-[#FFFFFF] tracking-tight">{stats.uploads.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-[#1E252D] border border-[#333D47] rounded-md p-4">
+                                    <div className="text-[11px] font-semibold uppercase text-[#939598] mb-1">Display</div>
+                                    <div className="mono text-2xl font-bold text-[#FFFFFF] tracking-tight">{stats.display.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-[#1E252D] border border-[#333D47] rounded-md p-4">
+                                    <div className="text-[11px] font-semibold uppercase text-[#939598] mb-1">Regular</div>
+                                    <div className="mono text-2xl font-bold text-[#FFFFFF] tracking-tight">{stats.regular.toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            {/* CHARTS & CONTROLS */}
+                            <div className="grid grid-cols-[1.5fr_1fr] gap-6 bg-[#1E252D] border border-[#333D47] rounded-md p-6">
+                                
+                                {/* Chart */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-sm font-semibold text-[#FFFFFF]">Coverage Analytics</h2>
+                                        <div className="mono text-xs font-semibold text-[#00B082] border border-[#00B082] px-2 py-1 rounded-sm bg-[#00B082]/10">
+                                            {stats.total > 0 ? ((stats.uploads/stats.total)*100).toFixed(1) : '0.0'}% Executed
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-4 gap-4 h-40 border border-[#333D47] rounded-md p-4 items-end bg-[#0B0F19]">
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-[#FFFFFF] mb-1">{stats.total}</span>
+                                            <div className="w-10 bg-[#333D47] rounded-t-sm transition-all duration-300" style={{height: getH(stats.total)}}></div>
+                                            <span className="text-[11px] text-[#939598] mt-2 font-medium">Total</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-[#007AC2] mb-1">{stats.uploads}</span>
+                                            <div className="w-10 bg-[#007AC2] rounded-t-sm transition-all duration-300" style={{height: getH(stats.uploads)}}></div>
+                                            <span className="text-[11px] text-[#939598] mt-2 font-medium">Uploads</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-[#FFFFFF] mb-1">{stats.display}</span>
+                                            <div className="w-10 bg-[#5D8AA8] rounded-t-sm transition-all duration-300" style={{height: getH(stats.display)}}></div>
+                                            <span className="text-[11px] text-[#939598] mt-2 font-medium">Display</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-[#FFFFFF] mb-1">{stats.regular}</span>
+                                            <div className="w-10 bg-[#333D47] rounded-t-sm transition-all duration-300" style={{height: getH(stats.regular)}}></div>
+                                            <span className="text-[11px] text-[#939598] mt-2 font-medium">Regular</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex flex-col gap-5">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="text-[13px] font-semibold text-[#FFFFFF]">Daily Coverage Target</label>
+                                            <span className="mono text-xs font-semibold text-[#007AC2]">
+                                                Target: {targetVal}% ({Math.round((stats.total * targetVal)/100)})
+                                            </span>
+                                        </div>
+                                        <input 
+                                            type="range" min="10" max="100" value={targetVal} 
+                                            onChange={(e) => setTargetVal(e.target.value)} 
+                                            className="slider"
+                                        />
+                                    </div>
+
+                                    <div className="border border-[#333D47] p-4 rounded-md bg-[#0B0F19]">
+                                        <h3 className="text-[13px] font-semibold text-[#FFFFFF] mb-3">System Controls</h3>
+                                        <div className="flex flex-col gap-2.5">
+                                            <label className="flex items-center gap-2 text-[13px] font-medium text-[#E2E8F0] cursor-pointer hover:text-[#FFFFFF]">
+                                                <input type="checkbox" className="rounded bg-[#121820] border-[#333D47] text-[#007AC2] focus:ring-0" /> 
+                                                Allow Gallery Uploads
+                                            </label>
+                                            <label className="flex items-center gap-2 text-[13px] font-medium text-[#D2010D] cursor-pointer">
+                                                <input type="checkbox" className="rounded bg-[#121820] border-[#333D47] text-[#D2010D] focus:ring-0" /> 
+                                                Maintenance Mode (Block App)
+                                            </label>
+                                            <button 
+                                                onClick={() => alert('Settings Saved to Database')} 
+                                                className="mt-2 w-full py-2 bg-[#1E252D] hover:bg-[#333D47] text-[#FFFFFF] text-xs font-semibold rounded-sm transition-colors border border-[#333D47]"
+                                            >
+                                                Save Global Settings
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
         }
 
-        window.openPhotoModal = (code, name, url, date) => {
-            const modal = document.getElementById("photoPreviewModal");
-            document.getElementById("photoModalTitle").textContent = `${name} (#${code})`;
-            document.getElementById("photoModalMeta").textContent = `Uploaded: ${date}`;
-            document.getElementById("photoModalImg").src = extractDriveThumb(url);
-            document.getElementById("photoModalDriveLink").href = url;
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-        };
-
-        window.exportSubmissionsCSV = () => {
-            if (submissionsList.length === 0) return window.showAlert("No submissions to export yet.");
-            const headers = ["Date", "Shop Code", "Outlet Name", "Town", "Route", "Merchandiser", "Latitude", "Longitude", "Photo URL"];
-            const rows = submissionsList.map(s => [
-                `"${s.date}"`, `"${s.code}"`, `"${s.name.replace(/"/g, "\"\"")}"`, `"${s.town}"`, `"${s.route}"`, `"${s.merchandiser}"`, s.lat, s.lng, `"${s.photoUrl}"`
-            ]);
-            const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `SmileCorner_Uploads_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-        };
-
-        document.getElementById("submissionSearchInput")?.addEventListener("input", renderSubmissionsTable);
-        document.getElementById("btnAdminSubmissions")?.addEventListener("click", () => {
-            document.getElementById("submissionsSection")?.scrollIntoView({ behavior: "smooth" });
-        });
-        document.getElementById("btnAdminForceSync")?.addEventListener("click", loadAdminDashboard);
-
-        document.getElementById("btnAdminNotice")?.addEventListener("click", () => {
-            document.getElementById("noticeInputModal").classList.remove("hidden");
-            document.getElementById("noticeInputModal").classList.add("flex");
-        });
-
-        window.saveNotice = async (txt) => {
-            document.getElementById("noticeInputModal").classList.add("hidden");
-            window.showAlert(txt ? "Global Notice Published!" : "Global Notice Cleared!");
-        };
-
-        let galleryUnlocked = false;
-        document.getElementById("btnAdminGallery")?.addEventListener("click", () => {
-            galleryUnlocked = !galleryUnlocked;
-            document.getElementById("galleryStatusText").textContent = galleryUnlocked ? "Unlocked" : "Locked";
-            document.getElementById("galleryStatusText").className = `text-[10px] font-bold mt-0.5 ${galleryUnlocked ? "text-green-600" : "text-red-500"}`;
-        });
-
-        document.getElementById("btnAdminNewOutlet")?.addEventListener("click", () => {
-            const dbs = [...new Set(pjpData.map(i => i.townName))].filter(Boolean).sort();
-            document.getElementById("newOutletDistName").innerHTML = "<option value=\"\">Select Distributor</option>" + dbs.map(d => `<option value="${d}">${d}</option>`).join("");
-            document.getElementById("newOutletModal").classList.remove("hidden");
-            document.getElementById("newOutletModal").classList.add("flex");
-        });
-
-        document.getElementById("newOutletDistName")?.addEventListener("change", (e) => {
-            const dbName = e.target.value;
-            const routes = [...new Set(pjpData.filter(i => i.townName === dbName).map(i => i.routeName))].filter(Boolean).sort();
-            const rSel = document.getElementById("newOutletRouteName");
-            rSel.innerHTML = "<option value=\"\">Select Route</option>" + routes.map(r => `<option value="${r}">${r}</option>`).join("");
-            rSel.disabled = false;
-        });
-
-        document.getElementById("submitNewOutletBtn")?.addEventListener("click", async () => {
-            const payload = {
-                action: "newOutlet",
-                distName: document.getElementById("newOutletDistName").value,
-                routeName: document.getElementById("newOutletRouteName").value,
-                outletName: document.getElementById("newOutletName").value,
-                contactNumber: document.getElementById("newOutletPhone").value,
-                slab: document.getElementById("newOutletSlab").value,
-                createdName: document.getElementById("newOutletEntryBy").value
-            };
-            await fetch(RENDER_API_BASE + "/api/outlets", { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-            document.getElementById("newOutletModal").classList.add("hidden");
-            window.showAlert("New Smile Corner saved successfully!");
-        });
-
-        // Live GIS Map
-        document.getElementById("btnAdminMap")?.addEventListener("click", async () => {
-            document.getElementById("adminDashboardContainer").classList.add("hidden");
-            document.getElementById("adminMapContainer").classList.remove("hidden");
-            document.getElementById("adminMapContainer").classList.add("flex");
-
-            if (!mapInstance) {
-                mapInstance = L.map("adminMap", { center: [23.8103, 90.4125], zoom: 7 });
-                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(mapInstance);
-                mapMarkerLayer = L.featureGroup().addTo(mapInstance);
-                document.getElementById("mapFilterMerch")?.addEventListener("change", applyMapFilters);
-                document.getElementById("mapFilterTown")?.addEventListener("change", applyMapFilters);
-                document.getElementById("mapFilterRoute")?.addEventListener("change", applyMapFilters);
-            }
-            setTimeout(() => mapInstance.invalidateSize(), 200);
-            populateMapFromSubmissions();
-        });
-
-        window.closeAdminMap = () => {
-            document.getElementById("adminMapContainer").classList.add("hidden");
-            document.getElementById("adminDashboardContainer").classList.remove("hidden");
-        };
-
-        function populateMapFromSubmissions() {
-            const uniqueMap = new Map();
-            submissionsList.forEach(s => {
-                const lat = parseFloat(s.lat), lng = parseFloat(s.lng);
-                if (!isNaN(lat) && !isNaN(lng) && !uniqueMap.has(s.code)) {
-                    uniqueMap.set(s.code, { ...s, lat, lng });
-                }
-            });
-            mapDataRaw = Array.from(uniqueMap.values());
-            const merchs = [...new Set(mapDataRaw.map(d => d.merchandiser))].filter(Boolean).sort();
-            const towns = [...new Set(mapDataRaw.map(d => d.town))].filter(Boolean).sort();
-            const routes = [...new Set(mapDataRaw.map(d => d.route))].filter(Boolean).sort();
-            document.getElementById("mapFilterMerch").innerHTML = "<option value=\"\">All Merchandisers</option>" + merchs.map(m => `<option value="${m}">${m}</option>`).join("");
-            document.getElementById("mapFilterTown").innerHTML = "<option value=\"\">All Towns</option>" + towns.map(t => `<option value="${t}">${t}</option>`).join("");
-            document.getElementById("mapFilterRoute").innerHTML = "<option value=\"\">All Routes</option>" + routes.map(r => `<option value="${r}">${r}</option>`).join("");
-            applyMapFilters();
-        }
-
-        function applyMapFilters() {
-            const m = document.getElementById("mapFilterMerch").value;
-            const t = document.getElementById("mapFilterTown").value;
-            const r = document.getElementById("mapFilterRoute").value;
-            let filtered = mapDataRaw.filter(d => (!m || d.merchandiser === m) && (!t || d.town === t) && (!r || d.route === r));
-
-            document.getElementById("mapCountDisplay").textContent = `${filtered.length} Outlets Found`;
-            mapMarkerLayer.clearLayers();
-
-            filtered.forEach(d => {
-                const marker = L.circleMarker([d.lat, d.lng], { radius: 6, fillColor: "#da291c", color: "#fff", weight: 2, fillOpacity: 0.9 });
-                marker.bindPopup(`<b>${d.name}</b><br>Code: #${d.code}<br>Route: ${d.route}<br>Merch: ${d.merchandiser}`);
-                mapMarkerLayer.addLayer(marker);
-            });
-
-            if (filtered.length > 0) {
-                mapInstance.fitBounds(mapMarkerLayer.getBounds(), { padding: [30, 30], maxZoom: 15 });
-            }
-        }
-
-        if (adminToken) openDashboard();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
-
-    <!-- TARGET VS ACHIEVEMENT MANUAL UPLOAD CARD -->
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const dashScroll = document.querySelector('#adminDashboardContainer .overflow-y-auto');
-        if (!dashScroll || document.getElementById('targetUploadCard')) return;
-
-        const card = document.createElement('div');
-        card.id = 'targetUploadCard';
-        card.className = 'bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mt-4';
-        card.innerHTML = `
-          <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-            <div>
-              <h3 class="text-[13px] font-bold text-gray-800 flex items-center">
-                🎯 Target vs. Achievement Table (<code class="text-colgate ml-1">outlet_targets</code>)
-              </h3>
-              <p class="text-[10px] text-gray-400 mt-0.5">Manually upload CSV to update Outlet Target, Achieve, Balance & Payout</p>
-            </div>
-            <button onclick="downloadTargetSampleCSV()" class="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2.5 py-1.5 rounded-lg transition-all">
-              ⬇ Sample CSV Template
-            </button>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 items-center">
-            <input type="file" id="targetCsvFileInput" accept=".csv" class="block w-full text-[11px] text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-red-50 file:text-colgate hover:file:bg-red-100 border border-gray-200 rounded-xl p-1 bg-gray-50" />
-            <button onclick="uploadTargetCSV()" id="btnUploadTargetCsv" class="w-full sm:w-auto whitespace-nowrap bg-colgate hover:bg-red-700 text-white font-bold text-[12px] px-4 py-2.5 rounded-xl shadow-sm transition-all">
-              Upload to Supabase
-            </button>
-          </div>
-          <div id="targetUploadStatus" class="text-[11px] font-bold mt-2 hidden"></div>
-        `;
-        dashScroll.appendChild(card);
-      });
-
-      window.downloadTargetSampleCSV = () => {
-        const sample = [
-          'shop_code,month,enrolled,target,tot_stt,ach,balance,eligible,payout',
-          'BDC1001,November,Y,5000,3500,70%,1500,N,0',
-          'BDC1002,November,Y,8000,8500,106%,0,Y,500'
-        ].join('\n');
-        const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'outlet_targets_template.csv';
-        a.click();
-      };
-
-      window.parseTargetCSVText = (str) => {
-        const arr = [];
-        let quote = false, col = 0, row = 0;
-        for (let c = 0; c < str.length; c++) {
-          let cc = str[c], nc = str[c + 1];
-          arr[row] = arr[row] || [];
-          arr[row][col] = arr[row][col] || '';
-          if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
-          if (cc == '"') { quote = !quote; continue; }
-          if (cc == ',' && !quote) { ++col; continue; }
-          if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
-          if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-          if (cc == '\r' && !quote) { ++row; col = 0; continue; }
-          arr[row][col] += cc;
-        }
-        return arr;
-      };
-
-      window.uploadTargetCSV = async () => {
-        const fileInput = document.getElementById('targetCsvFileInput');
-        const statusEl = document.getElementById('targetUploadStatus');
-        const btn = document.getElementById('btnUploadTargetCsv');
-        if (!fileInput || !fileInput.files.length) {
-          window.showAlert('Please choose a .csv file first!');
-          return;
-        }
-
-        const file = fileInput.files[0];
-        const text = await file.text();
-        const rows = window.parseTargetCSVText(text);
-        if (rows.length < 2) {
-          window.showAlert('CSV file is empty or missing data rows.');
-          return;
-        }
-
-        const headers = rows[0].map(h => String(h || '').trim());
-        const items = [];
-
-        for (let i = 1; i < rows.length; i++) {
-          const r = rows[i];
-          if (!r || r.length === 0) continue;
-          const obj = {};
-          headers.forEach((h, idx) => {
-            obj[h] = r[idx] != null ? String(r[idx]).trim() : '';
-          });
-          // Also support your original 17-column Google Sheet Report CSV format automatically!
-          if (!obj.shop_code && !obj['Outlet Code'] && r.length >= 16) {
-            obj.month = r[0];
-            obj.shop_code = r[4];
-            obj.enrolled = r[8];
-            obj.target = r[9];
-            obj.tot_stt = r[10];
-            obj.ach = r[11];
-            obj.balance = r[12];
-            obj.eligible = r[13];
-            obj.payout = r[16];
-          }
-          if (obj.shop_code || obj.code || obj['Outlet Code']) {
-            items.push(obj);
-          }
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Uploading...';
-        statusEl.classList.remove('hidden');
-        statusEl.className = 'text-[11px] font-bold mt-2 text-blue-600';
-        statusEl.textContent = 'Uploading ' + items.length + ' target rows to Supabase...';
-
-        try {
-          const apiBase = window.RENDER_API_URL || 'https://colgate-smile-api.onrender.com';
-          const res = await fetch(apiBase + '/api/targets/bulk', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items })
-          });
-          const result = await res.json();
-          if (!res.ok || !result.success) throw new Error(result.error || 'Upload failed');
-
-          statusEl.className = 'text-[11px] font-bold mt-2 text-green-600';
-          statusEl.textContent = '✅ Successfully updated ' + result.uploadedCount + ' outlets in outlet_targets table!';
-          fileInput.value = '';
-        } catch (err) {
-          statusEl.className = 'text-[11px] font-bold mt-2 text-red-600';
-          statusEl.textContent = '❌ Error: ' + err.message;
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Upload to Supabase';
-        }
-      };
-    </script>
-    
-
-<!-- SUPABASE LIVE ADMIN DASHBOARD ENGINE -->
-<script>
-(function() {
-  const OUTLETS_API = "https://colgate-smile-api.onrender.com/api/outlets";
-  const SUBMISSIONS_API = "https://colgate-smile-api.onrender.com/api/submissions";
-
-  window.__allOutlets = [];
-  window.__allSubmissions = [];
-
-  async function loadSupabaseAdminData() {
-    try {
-      const [outRes, subRes] = await Promise.all([
-        fetch(OUTLETS_API).then(r => r.json()).catch(() => ({ outlets: [] })),
-        fetch(SUBMISSIONS_API).then(r => r.json()).catch(() => ({ submissions: [] }))
-      ]);
-
-      const outlets = outRes.outlets || outRes.data || [];
-      const submissions = subRes.submissions || subRes.data || [];
-
-      window.__allOutlets = outlets;
-      window.__allSubmissions = submissions;
-
-      // Map outlets by shop_code for fast lookup of Outlet Name / Slab / Route
-      const outletMap = {};
-      outlets.forEach(o => {
-        const code = String(o.shop_code || o.Shop_Code || '').trim();
-        if (code) outletMap[code] = o;
-      });
-
-      // 1. Update Top 4 KPI Cards (Total Outlets, Uploaded Outlets, Display Outlets, Regular Outlets)
-      const totalOutlets = outlets.length;
-      const uploadedShopCodes = new Set(
-        submissions.map(s => String(s.shop_code || '').trim()).filter(Boolean)
-      );
-      const uploadedCount = submissions.length;
-
-      let displayCount = 0;
-      let regularCount = 0;
-      outlets.forEach(o => {
-        const slab = String(o.slab || o.Slab || '').toUpperCase();
-        if (slab.includes('DCC') || slab.includes('DISPLAY') || slab.includes('SMT') || slab.includes('HIGH')) {
-          displayCount++;
-        } else {
-          regularCount++;
-        }
-      });
-
-      // Find the 4 counter numbers by their card titles or IDs
-      const allElements = document.querySelectorAll('div, span, p, h1, h2, h3, h4');
-      allElements.forEach(el => {
-        const txt = (el.textContent || '').trim().toUpperCase();
-        if (txt === 'TOTAL OUTLETS' && el.nextElementSibling) {
-          el.nextElementSibling.textContent = totalOutlets;
-        } else if (txt === 'UPLOADED OUTLETS' && el.nextElementSibling) {
-          el.nextElementSibling.textContent = uploadedCount;
-        } else if (txt === 'DISPLAY OUTLETS' && el.nextElementSibling) {
-          el.nextElementSibling.textContent = displayCount;
-        } else if (txt === 'REGULAR OUTLETS' && el.nextElementSibling) {
-          el.nextElementSibling.textContent = regularCount;
-        }
-      });
-
-      // Also update common IDs if present
-      const idMap = {
-        totalOutlets: totalOutlets,
-         'total-outlets': totalOutlets,
-        uploadedOutlets: uploadedCount,
-        'uploaded-outlets': uploadedCount,
-        displayOutlets: displayCount,
-        'display-outlets': displayCount,
-        regularOutlets: regularCount,
-        'regular-outlets': regularCount
-      };
-      Object.keys(idMap).forEach(id => {
-        const node = document.getElementById(id);
-        if (node) node.textContent = idMap[id];
-      });
-
-      // 2. Render Recent Uploaded Photos & Submissions Table
-      renderSubmissionsTable(submissions, outletMap, '');
-
-      // 3. Hook Search Input
-      const searchInput = document.querySelector('input[placeholder*="Search" i]');
-      if (searchInput && !searchInput.dataset.hooked) {
-        searchInput.dataset.hooked = 'true';
-        searchInput.addEventListener('input', (e) => {
-          renderSubmissionsTable(window.__allSubmissions, outletMap, e.target.value || '');
-        });
-      }
-
-      // 4. Hook Data Refresh Card
-      document.querySelectorAll('div, button').forEach(btn => {
-        if ((btn.textContent || '').includes('Data Refresh') && !btn.dataset.hooked) {
-          btn.dataset.hooked = 'true';
-          btn.addEventListener('click', () => loadSupabaseAdminData());
-        }
-      });
-
-      // 5. Populate Leaflet Map if present on page
-      updateLeafletMap(submissions, outletMap);
-
-    } catch (err) {
-      console.error('Supabase Admin Loader Error:', err);
-    }
-  }
-
-  function renderSubmissionsTable(submissions, outletMap, query) {
-    const tables = document.querySelectorAll('table');
-    if (!tables.length) return;
-    const targetTable = tables[0];
-    let tbody = targetTable.querySelector('tbody');
-    if (!tbody) {
-      tbody = document.createElement('tbody');
-      targetTable.appendChild(tbody);
-    }
-
-    const q = String(query || '').toLowerCase().trim();
-    const filtered = submissions.filter(s => {
-      if (!q) return true;
-      const code = String(s.shop_code || '').toLowerCase();
-      const o = outletMap[String(s.shop_code || '').trim()] || {};
-      const name = String(s.shop_name || o.shop_name || '').toLowerCase();
-      const merch = String(s.merch_name || o.merchandiser || '').toLowerCase();
-      const town = String(s.area_name || s.territory || o.zone || o.route_name || '').toLowerCase();
-      return code.includes(q) || name.includes(q) || merch.includes(q) || town.includes(q);
-    });
-
-    if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">No submissions found.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = filtered.map((s, idx) => {
-      const code = String(s.shop_code || '').trim();
-      const o = outletMap[code] || {};
-      const dateStr = s.created_at ? new Date(s.created_at).toLocaleString('en-GB', {
-        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      }) : 'Recent';
-      const outletName = s.shop_name || o.shop_name || ('Outlet #' + code);
-      const slab = s.slab || o.slab || '';
-      const townRoute = [
-        s.area_name || o.zone || s.territory || o.territory || '',
-        s.route_name || o.route_name || ''
-      ].filter(Boolean).join(' • ') || 'N/A';
-      const merch = s.merch_name || o.merchandiser || 'N/A';
-      const hasGps = s.lat && s.lng;
-      const gpsHtml = hasGps
-        ? `<a href="https://www.google.com/maps?q=${s.lat},${s.lng}" target="_blank" style="color:#0284c7;font-weight:600;text-decoration:none;">📍 ${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)}</a>`
-        : '<span style="color:#94a3b8;">No GPS</span>';
-
-      const imgUrl = s.image_url || s.imageUrl || '';
-      const photoHtml = imgUrl
-        ? `<a href="${imgUrl}" target="_blank" title="Click to open full photo" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
-             <img src="${imgUrl}" alt="Shop Photo" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.1);" />
-             <span style="font-size:12px;color:#dc2626;font-weight:600;">View HD</span>
-           </a>`
-        : '<span style="color:#94a3b8;font-size:12px;">No Image</span>';
-
-      return `<tr style="border-bottom:1px solid #f1f5f9;">
-        <td style="padding:12px 14px;font-weight:600;color:#64748b;">${idx + 1}</td>
-        <td style="padding:12px 14px;font-size:13px;color:#334155;">${dateStr}</td>
-        <td style="padding:12px 14px;"><span style="background:#fee2e2;color:#dc2626;padding:4px 8px;border-radius:6px;font-weight:700;font-size:12px;">${code}</span></td>
-        <td style="padding:12px 14px;font-weight:600;color:#0f172a;">${outletName} ${slab ? `<span style="font-size:11px;color:#64748b;font-weight:500;">(${slab})</span>` : ''}</td>
-        <td style="padding:12px 14px;font-size:13px;color:#475569;">${townRoute}</td>
-        <td style="padding:12px 14px;font-size:13px;font-weight:500;color:#1e293b;">${merch}</td>
-        <td style="padding:12px 14px;font-size:13px;">${gpsHtml}</td>
-        <td style="padding:12px 14px;">${photoHtml}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  function updateLeafletMap(submissions, outletMap) {
-    if (!window.L) return;
-    // If the page already initialized a Leaflet map instance, attach pins to it when Locations Map is clicked
-    setTimeout(() => {
-      try {
-        for (const key of Object.keys(window)) {
-          const val = window[key];
-          if (val && typeof val.addLayer === 'function' && typeof val.setView === 'function') {
-            submissions.forEach(s => {
-              if (s.lat && s.lng) {
-                const o = outletMap[String(s.shop_code || '').trim()] || {};
-                const imgHtml = s.image_url ? `<br><img src="${s.image_url}" style="width:140px;height:100px;object-fit:cover;border-radius:6px;margin-top:6px;">` : '';
-                window.L.marker([s.lat, s.lng])
-                  .addTo(val)
-                  .bindPopup(`<b>${o.shop_name || s.shop_code}</b><br>Code: ${s.shop_code}<br>Merch: ${s.merch_name || ''}${imgHtml}`);
-              }
-            });
-            break;
-          }
-        }
-      } catch (e) {}
-    }, 1000);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadSupabaseAdminData);
-  } else {
-    loadSupabaseAdminData();
-  }
-  setTimeout(loadSupabaseAdminData, 1500);
-})();
-</script>
-
-
-
-
-<!-- BULLETPROOF DIRECT SUPABASE + RENDER SETTINGS CONTROLLER -->
-<script>
-(function() {
-  const RENDER_SETTINGS_API = "https://colgate-smile-api.onrender.com/api/settings";
-  const SUPA_URL = "SUPABASE_SERVICE_KEY=";
-  const SUPA_KEY = "";
-
-  let state = {
-    notice_text: '',
-    notice_active: 'false',
-    gallery_access: 'locked'
-  };
-  let isSaving = false;
-
-  function cleanStr(v) {
-    if (v === undefined || v === null) return '';
-    let s = String(v).trim();
-    while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-      s = s.slice(1, -1).trim();
-    }
-    if (s === '""' || s === "''" || s === 'null' || s === 'undefined') return '';
-    return s;
-  }
-
-  // Read directly from Supabase REST API first (instant, no Render sleep/cache!), fallback to Render
-  async function readSettingsFromCloud() {
-    if (isSaving) return; // Never overwrite UI while a save is in progress!
-    try {
-      let map = {};
-      if (SUPA_KEY) {
-        const res = await fetch(SUPA_URL + '/rest/v1/settings?select=key,value', {
-          headers: {
-            'apikey': SUPA_KEY,
-            'Authorization': 'Bearer ' + SUPA_KEY,
-            'Cache-Control': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-        if (res.ok) {
-          const rows = await res.json();
-          (rows || []).forEach(r => { if (r.key) map[r.key] = cleanStr(r.value); });
-        }
-      }
-
-      // Fallback or merge with Render API if SUPA_KEY wasn't in local .env
-      if (Object.keys(map).length === 0) {
-        const res = await fetch(RENDER_SETTINGS_API + '?t=' + Date.now(), { cache: 'no-store' });
-        const data = await res.json();
-        const s = data.settings || data || {};
-        map.notice_text = cleanStr(s.notice_text || s.global_notice || '');
-        map.notice_active = (String(s.notice_active) === 'true' || map.notice_text.length > 0) ? 'true' : 'false';
-        map.gallery_access = (s.gallery_access === 'unlocked' || s.gallery_unlocked === true || s.gallery_unlocked === 'true') ? 'unlocked' : 'locked';
-      }
-
-      const txt = cleanStr(map.notice_text || map.global_notice || '');
-      const act = (map.notice_active === 'true' && txt.length > 0) ? 'true' : 'false';
-      const unl = (map.gallery_access === 'unlocked' || map.gallery_unlocked === 'true');
-
-      state = {
-        notice_text: txt,
-        notice_active: act,
-        gallery_access: unl ? 'unlocked' : 'locked'
-      };
-
-      localStorage.setItem('app_gallery', state.gallery_access);
-      localStorage.setItem('app_notice', state.notice_active === 'true' ? state.notice_text : '');
-      renderAdminUI();
-    } catch (err) {
-      console.warn('Settings read warning:', err);
-    }
-  }
-
-  // Write directly to Supabase REST API + Render API simultaneously
-  async function writeSettingsToCloud(newPartial) {
-    isSaving = true;
-    try {
-      if (newPartial.notice_text !== undefined) {
-        const cleanTxt = cleanStr(newPartial.notice_text);
-        state.notice_text = cleanTxt;
-        state.notice_active = cleanTxt.length > 0 ? 'true' : 'false';
-      }
-      if (newPartial.gallery_access !== undefined) {
-        state.gallery_access = newPartial.gallery_access === 'unlocked' ? 'unlocked' : 'locked';
-      }
-
-      localStorage.setItem('app_gallery', state.gallery_access);
-      localStorage.setItem('app_notice', state.notice_active === 'true' ? state.notice_text : '');
-      renderAdminUI();
-
-      const rowsToUpsert = [
-        { key: 'notice_text', value: state.notice_text },
-        { key: 'global_notice', value: state.notice_active === 'true' ? state.notice_text : '' },
-        { key: 'notice_active', value: state.notice_active },
-        { key: 'gallery_access', value: state.gallery_access },
-        { key: 'gallery_unlocked', value: state.gallery_access === 'unlocked' ? 'true' : 'false' }
-      ];
-
-      // 1. Direct write to Supabase table (50ms instant persistence)
-      if (SUPA_KEY) {
-        const supaRes = await fetch(SUPA_URL + '/rest/v1/settings?on_conflict=key', {
-          method: 'POST',
-          headers: {
-            'apikey': SUPA_KEY,
-            'Authorization': 'Bearer ' + SUPA_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=representation'
-          },
-          body: JSON.stringify(rowsToUpsert)
-        });
-        if (!supaRes.ok) {
-          const errTxt = await supaRes.text();
-          console.error('Supabase direct write error:', errTxt);
-        }
-      }
-
-      // 2. Also send to Render API
-      await fetch(RENDER_SETTINGS_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          notice_text: state.notice_text,
-          global_notice: state.notice_active === 'true' ? state.notice_text : '',
-          notice_active: state.notice_active,
-          gallery_access: state.gallery_access,
-          gallery_unlocked: state.gallery_access === 'unlocked'
-        })
-      }).catch(() => {});
-
-      renderAdminUI();
-    } catch (err) {
-      alert('Failed to save setting: ' + err.message);
-    } finally {
-      setTimeout(() => { isSaving = false; }, 1500);
-    }
-  }
-
-  function renderAdminUI() {
-    const isUnlocked = state.gallery_access === 'unlocked';
-    const hasNotice = state.notice_active === 'true' && state.notice_text.length > 0;
-
-    document.querySelectorAll('div, span, p, h3, h4').forEach(el => {
-      const t = (el.textContent || '').trim();
-      if (t === 'Gallery Access' && el.nextElementSibling) {
-        el.nextElementSibling.textContent = isUnlocked ? 'Unlocked (Enabled)' : 'Locked';
-        el.nextElementSibling.style.color = isUnlocked ? '#16a34a' : '#dc2626';
-        el.nextElementSibling.style.fontWeight = '700';
-      }
-      if (t === 'Notice Board' && el.nextElementSibling) {
-        el.nextElementSibling.textContent = hasNotice
-          ? 'Active: "' + state.notice_text.slice(0, 22) + '"'
-          : 'Broadcast Message';
-        el.nextElementSibling.style.color = hasNotice ? '#7c3aed' : '#64748b';
-        el.nextElementSibling.style.fontWeight = hasNotice ? '700' : '500';
-      }
-    });
-  }
-
-  function createNoticeModal() {
-    const old1 = document.getElementById('noticeModal');
-    if (old1) old1.remove();
-    const old2 = document.getElementById('cloudNoticeModal');
-    if (old2) old2.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'cloudNoticeModal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.72);z-index:999999;align-items:center;justify-content:center;padding:16px;';
-    modal.innerHTML = `
-      <div style="background:#fff;width:100%;max-width:440px;border-radius:18px;padding:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);font-family:sans-serif;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;">🔔 Broadcast Notice Board</h3>
-          <button type="button" id="closeCloudNoticeBtn" style="background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#64748b;">&times;</button>
-        </div>
-        <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Type your message below. It will pop up immediately on https://colgate-smile-corner.vercel.app/</p>
-        <textarea id="cloudNoticeInput" rows="4" placeholder="Type notice message here..." style="width:100%;box-sizing:border-box;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-bottom:16px;outline:none;"></textarea>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button type="button" id="clearCloudNoticeBtn" style="padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer;">Turn Off / Clear</button>
-          <button type="button" id="saveCloudNoticeBtn" style="padding:10px 18px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">Save & Broadcast</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById('closeCloudNoticeBtn').onclick = () => { modal.style.display = 'none'; };
-    document.getElementById('saveCloudNoticeBtn').onclick = async () => {
-      const btn = document.getElementById('saveCloudNoticeBtn');
-      const val = document.getElementById('cloudNoticeInput').value.trim();
-      btn.textContent = 'Saving...';
-      await writeSettingsToCloud({ notice_text: val });
-      btn.textContent = 'Save & Broadcast';
-      modal.style.display = 'none';
-    };
-    document.getElementById('clearCloudNoticeBtn').onclick = async () => {
-      document.getElementById('cloudNoticeInput').value = '';
-      await writeSettingsToCloud({ notice_text: '' });
-      modal.style.display = 'none';
-    };
-  }
-
-  function setupClickInterceptor() {
-    createNoticeModal();
-
-    document.addEventListener('click', async function(e) {
-      if (!e.target || e.target.closest('#cloudNoticeModal')) return;
-
-      let node = e.target;
-      let isNoticeCard = false;
-      let isGalleryCard = false;
-
-      for (let i = 0; i < 5 && node && node !== document.body; i++) {
-        const txt = (node.innerText || node.textContent || '').trim();
-        if (txt.startsWith('Notice Board') && txt.length < 80) { isNoticeCard = true; break; }
-        if (txt.startsWith('Gallery Access') && txt.length < 80) { isGalleryCard = true; break; }
-        node = node.parentElement;
-      }
-
-      if (isNoticeCard) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        const modal = document.getElementById('cloudNoticeModal');
-        const input = document.getElementById('cloudNoticeInput');
-        input.value = state.notice_text || '';
-        modal.style.display = 'flex';
-        input.focus();
-      } else if (isGalleryCard) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        const nextGallery = state.gallery_access === 'unlocked' ? 'locked' : 'unlocked';
-        await writeSettingsToCloud({ gallery_access: nextGallery });
-      }
-    }, true);
-  }
-
-  // Keep watching DOM in case original script tries to overwrite text with 'Locked'
-  setInterval(renderAdminUI, 400);
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setupClickInterceptor();
-      readSettingsFromCloud();
-    });
-  } else {
-    setupClickInterceptor();
-    readSettingsFromCloud();
-  }
-})();
-</script>
 </body>
 </html>
-
-
-<script>
-        const RENDER_API_BASE = window.RENDER_API_URL || 'https://colgate-smile-api.onrender.com';
-
-        async function loadAllData() {
-            document.getElementById('adminStatsLoader')?.classList.remove('hidden');
-            document.getElementById('adminStatsContent')?.classList.add('hidden');
-            try {
-                const [outletsRes, subsRes] = await Promise.all([
-                    fetch(RENDER_API_BASE + '/api/outlets'),
-                    fetch(RENDER_API_BASE + '/api/submissions')
-                ]);
-                const outletsJson = await outletsRes.json();
-                const subsJson = await subsRes.json();
-
-                const uploadedCodes = new Set(
-                    (Array.isArray(subsJson) ? subsJson : []).map(s => String(s.shop_code || '').toUpperCase().trim())
-                );
-
-                pjpData = (Array.isArray(outletsJson) ? outletsJson : []).map(o => ({
-                    region: o.region || '',
-                    zone: o.zone || '',
-                    territory: o.territory || '',
-                    distCode: o.db_code || '',
-                    townName: o.db_name || '',
-                    code: String(o.shop_code || '').toUpperCase().trim(),
-                    name: o.shop_name || '',
-                    slab: o.slab || '',
-                    routeCode: o.route_code || '',
-                    routeName: o.route_name || '',
-                    visitDay: o.visit_day || '',
-                    merchandiser: o.merchandiser || '',
-                    status: o.status || 'Display',
-                    outletType: o.unit || 'DCC',
-                    lat: o.lat,
-                    lng: o.lng
-                }));
-
-                reportData = pjpData.map(p => ({
-                    code: p.code,
-                    imageUpload: uploadedCodes.has(p.code) ? 'Y' : 'N'
-                }));
-
-                isDataLoaded = true;
-                updateAdminStats();
-                if (typeof loadSubmissionsGallery === 'function') loadSubmissionsGallery();
-            } catch (e) {
-                console.error("Admin Supabase load error:", e);
-            }
-        }
-
-        async function loadMapDataFromSheet() {
-            const loader = document.getElementById('mapLoader');
-            if (loader) { loader.classList.remove('hidden'); loader.classList.add('flex'); }
-            try {
-                if (!isDataLoaded) await loadAllData();
-                const res = await fetch(RENDER_API_BASE + '/api/submissions');
-                const subs = await res.json();
-                const pjpMap = new Map();
-                pjpData.forEach(p => { if (p.code) pjpMap.set(p.code, p); });
-
-                const uniqueLocationsMap = new Map();
-                (Array.isArray(subs) ? subs : []).forEach(s => {
-                    const code = String(s.shop_code || '').toUpperCase().trim();
-                    const lat = parseFloat(s.lat);
-                    const lng = parseFloat(s.lng);
-                    if (code && !isNaN(lat) && !isNaN(lng) && !uniqueLocationsMap.has(code)) {
-                        const pjpMatch = pjpMap.get(code);
-                        uniqueLocationsMap.set(code, {
-                            code,
-                            lat,
-                            lng,
-                            name: pjpMatch ? pjpMatch.name : (s.distribution_name || 'Outlet #' + code),
-                            town: pjpMatch ? pjpMatch.townName : (s.distribution_name || 'Unknown'),
-                            route: pjpMatch ? pjpMatch.routeName : (s.route_name || 'Unknown'),
-                            merchandiser: pjpMatch ? pjpMatch.merchandiser : (s.merch_name || 'Unknown')
-                        });
-                    }
-                });
-                mapDataRaw = Array.from(uniqueLocationsMap.values());
-                populateMapFilters();
-            } catch (err) {
-                console.error(err);
-            } finally {
-                if (loader) { loader.classList.add('hidden'); loader.classList.remove('flex'); }
-            }
-        }
-  </script>
