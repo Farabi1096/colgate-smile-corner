@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="bn">
 <head>
 
@@ -35,7 +35,7 @@
   <script>window.RENDER_API_BASE = "https://colgate-smile-api.onrender.com"; const RENDER_API_BASE = "https://colgate-smile-api.onrender.com";</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>কোলগেট স্মাইল কর্ণার - Field App</title>
+    <title>à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦° - Field App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -134,7 +134,7 @@
     color: #d9232e !important; /* Tuned Colgate ruby */
   }
 
-  /* 4. Tone down the neon green "রিপোর্ট শেয়ার করুন" button into a sleek Dark Slate / Emerald-Teal button */
+  /* 4. Tone down the neon green "à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ à¦¶à§‡à§Ÿà¦¾à¦° à¦•à¦°à§à¦¨" button into a sleek Dark Slate / Emerald-Teal button */
   button.bg-green-600,
   button.bg-green-500,
   .bg-emerald-600,
@@ -165,7 +165,7 @@
             <i data-lucide="info" class="w-12 h-12 text-colgate mx-auto mb-3"></i>
             <h3 class="text-lg font-bold text-gray-800 mb-2">Notice</h3>
             <p id="customAlertMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed whitespace-pre-line"></p>
-            <button onclick="closeCustomAlert()" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl hover:bg-red-700 transition-all shadow-md w-full">ঠিক আছে</button>
+            <button onclick="closeCustomAlert()" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl hover:bg-red-700 transition-all shadow-md w-full">à¦ à¦¿à¦• à¦†à¦›à§‡</button>
         </div>
     </div>
 
@@ -173,11 +173,11 @@
     <div id="customConfirm" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
         <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
             <i data-lucide="help-circle" class="w-12 h-12 text-blue-500 mx-auto mb-3"></i>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">নিশ্চিত করুন</h3>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦•à¦°à§à¦¨</h3>
             <p id="customConfirmMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed"></p>
             <div class="flex gap-3">
-                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition-all">না</button>
-                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-colgate text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all shadow-md">হ্যাঁ</button>
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition-all">à¦¨à¦¾</button>
+                <button onclick="closeCustomConfirm(true)" class="flex-1 bg-colgate text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all shadow-md">à¦¹à§à¦¯à¦¾à¦</button>
             </div>
         </div>
     </div>
@@ -212,13 +212,13 @@
                 <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="user" class="w-5 h-5 text-colgate mr-2"></i> Merchandiser Login</h3>
                 <button onclick="closeMerchLoginModal()" class="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 p-1.5 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <p class="text-[13px] text-gray-500 mb-4 text-center">আপনার নাম সিলেক্ট করে লগইন করুন</p>
+            <p class="text-[13px] text-gray-500 mb-4 text-center">à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨</p>
             <div id="merchModalLoader" class="hidden flex-col items-center justify-center py-6">
                 <div class="loader mb-3"></div>
-                <span class="text-[12px] text-gray-500 mt-2">নাম লোড হচ্ছে...</span>
+                <span class="text-[12px] text-gray-500 mt-2">à¦¨à¦¾à¦® à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...</span>
             </div>
             <select id="modalMerchSelect" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[14px] outline-none focus:border-colgate focus:ring-1 focus:ring-colgate transition-all mb-3 font-medium text-gray-700 custom-scrollbar">
-                <option value="" disabled selected>আপনার নাম খুঁজুন...</option>
+                <option value="" disabled selected>à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦–à§à¦à¦œà§à¦¨...</option>
             </select>
         </div>
     </div>
@@ -231,7 +231,7 @@
                 <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
             <div class="flex items-center justify-center mb-1.5">
-                <h2 class="text-lg sm:text-xl font-bold text-white tracking-wide">কোলগেট স্মাইল কর্ণার</h2>
+                <h2 class="text-lg sm:text-xl font-bold text-white tracking-wide">à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°</h2>
             </div>
             <p id="headerSubtitle" class="text-white/90 text-[11px] sm:text-[12px] leading-relaxed px-3 py-0.5 bg-red-800/30 rounded-full inline-block font-medium">
                 Loading Panel...
@@ -243,13 +243,13 @@
             <!-- Toggle Tabs -->
             <div id="tabsContainer" class="flex p-1 bg-gray-100 rounded-xl mb-6 shadow-inner overflow-x-auto hide-scrollbar">
                 <button type="button" id="tabForm" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg bg-white shadow-sm text-colgate transition-all whitespace-nowrap px-2">
-                    <i data-lucide="camera" class="h-4 w-4 mr-1.5"></i> ফর্ম
+                    <i data-lucide="camera" class="h-4 w-4 mr-1.5"></i> à¦«à¦°à§à¦®
                 </button>
                 <button type="button" id="tabMyDay" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
-                    <i data-lucide="clock" class="h-4 w-4 mr-1.5"></i> আমার দিন
+                    <i data-lucide="clock" class="h-4 w-4 mr-1.5"></i> à¦†à¦®à¦¾à¦° à¦¦à¦¿à¦¨
                 </button>
                 <button type="button" id="tabReport" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
-                    <i data-lucide="bar-chart-2" class="h-4 w-4 mr-1.5"></i> রিপোর্ট
+                    <i data-lucide="bar-chart-2" class="h-4 w-4 mr-1.5"></i> à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ
                 </button>
             </div>
 
@@ -259,8 +259,8 @@
                     <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
                         <div class="border-b border-gray-200 pb-3 mb-4 flex justify-between items-center gap-2">
                             <h3 class="text-[15px] sm:text-[17px] font-bold text-gray-800 flex items-center leading-tight">
-                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2 font-bold shrink-0">১</span>
-                                দোকানের তথ্য
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2 font-bold shrink-0">à§§</span>
+                                à¦¦à§‹à¦•à¦¾à¦¨à§‡à¦° à¦¤à¦¥à§à¦¯
                             </h3>
                             <div class="flex bg-gray-100 p-1 rounded-xl w-[170px] sm:w-[210px] shrink-0 shadow-inner border border-gray-200 mr-1">
                                 <label class="flex-1 text-center cursor-pointer m-0">
@@ -280,57 +280,57 @@
 
                         <div class="space-y-4">
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">মাস <span class="text-colgate">*</span></label>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦®à¦¾à¦¸ <span class="text-colgate">*</span></label>
                                 <select name="display_month" id="formMonth" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium"></select>
                             </div>
 
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">এরিয়া <span class="text-colgate">*</span></label>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦à¦°à¦¿à¦¯à¦¼à¦¾ <span class="text-colgate">*</span></label>
                                 <select name="area_name" id="areaSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
-                                    <option value="" disabled selected>প্রথমে টাইপ সিলেক্ট করুন</option>
+                                    <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦Ÿà¦¾à¦‡à¦ª à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
 
                             <div id="srTerritoryGroup" class="input-group relative hidden">
-                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">টেরিটোরি <span class="text-colgate">*</span></label>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦Ÿà§‡à¦°à¦¿à¦Ÿà§‹à¦°à¦¿ <span class="text-colgate">*</span></label>
                                 <select name="territory" id="territorySelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
-                                    <option value="" disabled selected>প্রথমে এরিয়া সিলেক্ট করুন</option>
+                                    <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦à¦°à¦¿à¦¯à¦¼à¦¾ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
 
                             <input type="hidden" name="db_code" id="formDbCode">
 
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">ডিস্ট্রিবিউশন নাম <span class="text-colgate">*</span></label>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦¶à¦¨ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
                                 <select name="distribution_name" id="distSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
-                                    <option value="" disabled selected>প্রথমে এরিয়া/টেরিটোরি সিলেক্ট করুন</option>
+                                    <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦à¦°à¦¿à¦¯à¦¼à¦¾/à¦Ÿà§‡à¦°à¦¿à¦Ÿà§‹à¦°à¦¿ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
 
                             <div id="srFieldsGroup" class="space-y-4 hidden">
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">রুট নাম <span class="text-colgate">*</span></label>
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦°à§à¦Ÿ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
                                     <select name="sr_route" id="srRouteSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
-                                        <option value="" disabled selected>প্রথমে ডিস্ট্রিবিউটর সিলেক্ট করুন</option>
+                                        <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦Ÿà¦° à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                     </select>
                                 </div>
                                 <div class="input-group relative">
-                                    <label id="srOutletLabel" class="block text-[13px] font-bold text-gray-700 mb-1.5">আউটলেট (শুধুমাত্র স্ল্যাব) <span class="text-colgate">*</span></label>
+                                    <label id="srOutletLabel" class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿ (à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦¸à§à¦²à§à¦¯à¦¾à¦¬) <span class="text-colgate">*</span></label>
                                     <select name="sr_outlet" id="srOutletSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
-                                        <option value="" disabled selected>প্রথমে রুট সিলেক্ট করুন</option>
+                                        <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦°à§à¦Ÿ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div id="merchFieldsGroup" class="space-y-4">
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">স্ল্যাব <span class="text-colgate">*</span></label>
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦¸à§à¦²à§à¦¯à¦¾à¦¬ <span class="text-colgate">*</span></label>
                                     <select name="slab" id="formSlab" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium">
-                                        <option value="" disabled selected>লোড হচ্ছে...</option>
+                                        <option value="" disabled selected>à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...</option>
                                     </select>
                                 </div>
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">কোড <span class="text-colgate">*</span></label>
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦•à§‹à¦¡ <span class="text-colgate">*</span></label>
                                     <input type="text" name="shop_code" id="formShopCode" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none uppercase font-semibold tracking-wide" placeholder="BDC...">
                                 </div>
                             </div>
@@ -341,8 +341,8 @@
                     <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
                         <div class="border-b border-gray-200 pb-3 mb-4">
                             <h3 class="text-[17px] font-bold text-gray-800 flex items-center">
-                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2.5 font-bold">২</span>
-                                ছবি স্ক্যান
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2.5 font-bold">à§¨</span>
+                                à¦›à¦¬à¦¿ à¦¸à§à¦•à§à¦¯à¦¾à¦¨
                             </h3>
                         </div>
 
@@ -354,12 +354,12 @@
                                         <i data-lucide="scan" class="h-[22px] w-[22px] text-colgate"></i>
                                     </div>
                                     <div class="flex flex-col items-start ml-3">
-                                        <span class="text-[15px] font-bold text-colgate leading-tight">স্মার্ট ক্যামেরা স্ক্যানার</span>
-                                        <span class="text-[11px] text-red-400 font-medium">ছবি তুলতে এখানে ক্লিক করুন</span>
+                                        <span class="text-[15px] font-bold text-colgate leading-tight">à¦¸à§à¦®à¦¾à¦°à§à¦Ÿ à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾ à¦¸à§à¦•à§à¦¯à¦¾à¦¨à¦¾à¦°</span>
+                                        <span class="text-[11px] text-red-400 font-medium">à¦›à¦¬à¦¿ à¦¤à§à¦²à¦¤à§‡ à¦à¦–à¦¾à¦¨à§‡ à¦•à§à¦²à¦¿à¦• à¦•à¦°à§à¦¨</span>
                                     </div>
                                 </button>
                                 <button type="button" id="manualUploadBtn" class="hidden mt-3 text-[13px] font-medium text-gray-500 hover:text-colgate transition-colors flex items-center justify-center">
-                                    <i data-lucide="cloud-upload" class="h-4 w-4 mr-1.5"></i> গ্যালারি থেকে আপলোড
+                                    <i data-lucide="cloud-upload" class="h-4 w-4 mr-1.5"></i> à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡
                                 </button>
                             </div>
 
@@ -369,7 +369,7 @@
                                     <div class="absolute top-3 inset-x-0 flex justify-center z-20 pointer-events-none px-4">
                                         <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5">
                                             <i data-lucide="map-pin" class="h-3.5 w-3.5 text-colgate"></i>
-                                            <span id="cameraLocationBadge" class="text-white text-[11px] font-medium truncate">লোকেশন খোঁজা হচ্ছে...</span>
+                                            <span id="cameraLocationBadge" class="text-white text-[11px] font-medium truncate">à¦²à§‹à¦•à§‡à¦¶à¦¨ à¦–à§‹à¦à¦œà¦¾ à¦¹à¦šà§à¦›à§‡...</span>
                                         </div>
                                     </div>
                                     <div class="absolute inset-x-0 bottom-6 flex justify-center items-center z-20 px-6">
@@ -383,7 +383,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <button type="button" id="closeCameraBtn" class="mt-4 text-[13px] font-semibold text-gray-500 w-full text-center hover:text-red-500">ক্যামেরা বন্ধ করুন</button>
+                                <button type="button" id="closeCameraBtn" class="mt-4 text-[13px] font-semibold text-gray-500 w-full text-center hover:text-red-500">à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾ à¦¬à¦¨à§à¦§ à¦•à¦°à§à¦¨</button>
                             </div>
 
                             <div id="previewContainer" class="hidden mt-4 relative animate-fade-in">
@@ -401,7 +401,7 @@
                     <div class="pt-2 pb-2">
                         <button type="submit" id="submitBtn" class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-md text-[15px] font-bold text-white bg-colgate hover:bg-red-700 transition-all">
                             <i data-lucide="send" class="h-[18px] w-[18px] mr-2" id="btnIcon"></i>
-                            <span id="btnText">জমা দিন (Submit)</span>
+                            <span id="btnText">à¦œà¦®à¦¾ à¦¦à¦¿à¦¨ (Submit)</span>
                             <div id="btnLoader" class="loader hidden !border-t-white ml-2"></div>
                         </button>
                     </div>
@@ -411,8 +411,8 @@
                     <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 mb-4 border border-green-100">
                         <i data-lucide="check-circle-2" class="h-8 w-8 text-green-500"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">সফলভাবে জমা দেওয়া হয়েছে!</h3>
-                    <button onclick="resetForm()" class="bg-gray-50 text-gray-700 border border-gray-200 font-semibold py-2.5 px-6 rounded-full mt-4 text-[14px]">আরেকটি ফর্ম পূরণ করুন</button>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦œà¦®à¦¾ à¦¦à§‡à¦“à¦¯à¦¼à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡!</h3>
+                    <button onclick="resetForm()" class="bg-gray-50 text-gray-700 border border-gray-200 font-semibold py-2.5 px-6 rounded-full mt-4 text-[14px]">à¦†à¦°à§‡à¦•à¦Ÿà¦¿ à¦«à¦°à§à¦® à¦ªà§‚à¦°à¦£ à¦•à¦°à§à¦¨</button>
                 </div>
             </div>
 
@@ -421,7 +421,7 @@
                 <div class="mb-3 text-left">
                     <div class="flex justify-between items-center mb-2.5 gap-2">
                         <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
-                            <i data-lucide="map" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> আজকের PJP
+                            <i data-lucide="map" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> à¦†à¦œà¦•à§‡à¦° PJP
                         </h3>
                         <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
                             <label class="flex-1 text-center cursor-pointer m-0">
@@ -445,9 +445,9 @@
 
                     <div class="bg-gray-50 border border-gray-100 p-2 rounded-xl shadow-sm mb-3">
                         <div class="grid grid-cols-3 gap-2">
-                            <select id="myDayTownSelect" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (টাউন)</option></select>
-                            <select id="myDayVisitDaySelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (বার)</option></select>
-                            <select id="myDayRouteSelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Route (রুট)</option></select>
+                            <select id="myDayTownSelect" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
+                            <select id="myDayVisitDaySelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
+                            <select id="myDayRouteSelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Route (à¦°à§à¦Ÿ)</option></select>
                         </div>
                     </div>
                 </div>
@@ -472,7 +472,7 @@
                 <div id="myDayLoader" class="hidden flex flex-col items-center justify-center py-6"><div class="loader mb-3"></div></div>
                 <div id="myDayPjpContainer" class="hidden bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
                     <div class="border-b border-gray-100 pb-2 mb-2.5">
-                        <h4 class="font-bold text-[13px] text-gray-800 mb-2 truncate">রুট: <span id="myDaySelectedRouteLabel" class="text-colgate">All</span></h4>
+                        <h4 class="font-bold text-[13px] text-gray-800 mb-2 truncate">à¦°à§à¦Ÿ: <span id="myDaySelectedRouteLabel" class="text-colgate">All</span></h4>
                         <div class="flex gap-2">
                             <div class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Display: <span id="myDayDisplayCount">0</span></div>
                             <div class="bg-gray-50 text-gray-600 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Regular: <span id="myDayRegularCount">0</span></div>
@@ -487,7 +487,7 @@
                 <div class="mb-3 text-left">
                     <div class="flex justify-between items-center mb-2.5 gap-2">
                         <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
-                            <i data-lucide="bar-chart-2" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> আউটলেট রিপোর্ট
+                            <i data-lucide="bar-chart-2" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿ à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ
                         </h3>
                         <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
                             <label class="flex-1 text-center cursor-pointer m-0">
@@ -512,11 +512,11 @@
                     <div id="onePagerContainer" class="animate-fade-in pb-1">
                         <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl shadow-sm mb-3">
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <select id="onePagerTown" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (টাউন)</option></select>
+                                <select id="onePagerTown" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
                                 <input type="date" id="onePagerDate" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <select id="onePagerDay" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (বার)</option></select>
+                                <select id="onePagerDay" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
                                 <select id="onePagerCluster" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Cluster</option></select>
                             </div>
                         </div>
@@ -531,7 +531,7 @@
 
                         <div class="mt-4">
                             <button type="button" onclick="shareSnapshot(this)" class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-md text-[15px] font-bold text-white bg-[#25D366] hover:bg-[#128C7E] transition-all">
-                                রিপোর্ট শেয়ার করুন
+                                à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ à¦¶à§‡à¦¯à¦¼à¦¾à¦° à¦•à¦°à§à¦¨
                             </button>
                         </div>
                     </div>
@@ -598,7 +598,7 @@
                 if (res.ok) {
                     const settings = await res.json();
                     if (settings.maintenance_mode === true) {
-                        document.body.innerHTML = `<div class="flex flex-col items-center justify-center h-screen bg-white text-center p-6"><h2 class="text-xl font-bold text-gray-800 mb-2">System Maintenance</h2><p class="text-gray-500 text-[13px]">অ্যাপটিতে বর্তমানে আপডেটের কাজ চলছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।</p></div>`;
+                        document.body.innerHTML = `<div class="flex flex-col items-center justify-center h-screen bg-white text-center p-6"><h2 class="text-xl font-bold text-gray-800 mb-2">System Maintenance</h2><p class="text-gray-500 text-[13px]">à¦…à§à¦¯à¦¾à¦ªà¦Ÿà¦¿à¦¤à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨à§‡ à¦†à¦ªà¦¡à§‡à¦Ÿà§‡à¦° à¦•à¦¾à¦œ à¦šà¦²à¦›à§‡à¥¤ à¦¦à¦¯à¦¼à¦¾ à¦•à¦°à§‡ à¦•à¦¿à¦›à§à¦•à§à¦·à¦£ à¦ªà¦° à¦†à¦¬à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à§à¦¨à¥¤</p></div>`;
                         return;
                     }
                     if (settings.global_notice && !sessionStorage.getItem('notice_seen')) {
@@ -742,7 +742,7 @@
                 loader.classList.add('hidden'); loader.classList.remove('flex'); select.classList.remove('hidden');
             }
             const merchs = [...new Set(pjpData.map(p => p.merchandiser))].filter(Boolean).sort();
-            select.innerHTML = '<option value="" disabled selected>আপনার নাম খুঁজুন...</option>' + merchs.map(m => `<option value="${m}">${m}</option>`).join('');
+            select.innerHTML = '<option value="" disabled selected>à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦–à§à¦à¦œà§à¦¨...</option>' + merchs.map(m => `<option value="${m}">${m}</option>`).join('');
         });
 
         document.getElementById('modalMerchSelect')?.addEventListener('change', (e) => {
@@ -761,7 +761,7 @@
         });
 
         window.logoutRole = () => {
-            window.showConfirm("আপনি কি লগআউট করতে চান?", (confirmed) => {
+            window.showConfirm("à¦†à¦ªà¦¨à¦¿ à¦•à¦¿ à¦²à¦—à¦†à¦‰à¦Ÿ à¦•à¦°à¦¤à§‡ à¦šà¦¾à¦¨?", (confirmed) => {
                 if (confirmed) {
                     localStorage.removeItem('colgate_app_role');
                     localStorage.removeItem('colgate_app_merch_name');
@@ -777,20 +777,20 @@
             if (areaSelect && formSelectedType) {
                 const formPjp = currentPJP.filter(i => i.outletType && i.outletType.toUpperCase() === formSelectedType.toUpperCase());
                 const areas = [...new Set(formPjp.map(i => i.region))].filter(Boolean).sort();
-                areaSelect.innerHTML = '<option value="" disabled selected>এরিয়া সিলেক্ট করুন</option>' + areas.map(a => `<option value="${a}">${a}</option>`).join('');
+                areaSelect.innerHTML = '<option value="" disabled selected>à¦à¦°à¦¿à¦¯à¦¼à¦¾ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>' + areas.map(a => `<option value="${a}">${a}</option>`).join('');
                 areaSelect.disabled = areas.length === 0;
             }
 
             const uniqueSlabs = [...new Set(currentPJP.map(i => i.slab))].filter(Boolean).sort();
             const formSlab = document.getElementById('formSlab');
             if (formSlab) {
-                formSlab.innerHTML = '<option value="" disabled selected>স্ল্যাব সিলেক্ট করুন</option>' + uniqueSlabs.map(s => `<option value="${s}">${s}</option>`).join('');
+                formSlab.innerHTML = '<option value="" disabled selected>à¦¸à§à¦²à§à¦¯à¦¾à¦¬ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>' + uniqueSlabs.map(s => `<option value="${s}">${s}</option>`).join('');
             }
 
             const myDayTownSelect = document.getElementById('myDayTownSelect');
             if (myDayTownSelect) {
                 const towns = [...new Set(currentPJP.map(i => i.townName))].filter(Boolean).sort();
-                myDayTownSelect.innerHTML = '<option value="">Town (টাউন)</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
+                myDayTownSelect.innerHTML = '<option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
                 myDayTownSelect.disabled = towns.length === 0;
             }
         }
@@ -803,7 +803,7 @@
             let filtered = getFilteredPJP().filter(i => i.region === selectedArea && (!selectedType || i.outletType.toUpperCase() === selectedType));
             const dists = [...new Set(filtered.map(i => i.townName))].filter(Boolean).sort();
             const distSelect = document.getElementById('distSelect');
-            distSelect.innerHTML = '<option value="" disabled selected>ডিস্ট্রিবিউশন সিলেক্ট করুন</option>' + dists.map(d => `<option value="${d}">${d}</option>`).join('');
+            distSelect.innerHTML = '<option value="" disabled selected>à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦¶à¦¨ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>' + dists.map(d => `<option value="${d}">${d}</option>`).join('');
             distSelect.disabled = dists.length === 0;
         });
 
@@ -818,7 +818,7 @@
             let filtered = getFilteredPJP().filter(i => !town || i.townName === town);
             const days = [...new Set(filtered.map(i => i.visitDay))].filter(Boolean).sort();
             const daySelect = document.getElementById('myDayVisitDaySelect');
-            daySelect.innerHTML = '<option value="">Day (বার)</option>' + days.map(d => `<option value="${d}">${d}</option>`).join('');
+            daySelect.innerHTML = '<option value="">Day (à¦¬à¦¾à¦°)</option>' + days.map(d => `<option value="${d}">${d}</option>`).join('');
             daySelect.disabled = false;
             renderMyDayPJP();
         });
@@ -828,7 +828,7 @@
             let filtered = getFilteredPJP().filter(i => (!town || i.townName === town) && (!day || i.visitDay === day));
             const routes = [...new Set(filtered.map(i => i.routeName))].filter(Boolean).sort();
             const routeSelect = document.getElementById('myDayRouteSelect');
-            routeSelect.innerHTML = '<option value="">Route (রুট)</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
+            routeSelect.innerHTML = '<option value="">Route (à¦°à§à¦Ÿ)</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
             routeSelect.disabled = false;
             renderMyDayPJP();
         });
@@ -858,7 +858,7 @@
                 html += `<div class="flex items-center justify-between p-3 rounded-lg border ${isCompleted ? 'border-green-400 bg-green-50/60' : 'border-red-200 bg-white'} mb-2">
                     <div>
                         <div class="font-bold text-[13px] text-gray-800">${out.name}</div>
-                        <div class="text-[11px] text-gray-500">#${outCode} • ${out.slab || 'Regular'}</div>
+                        <div class="text-[11px] text-gray-500">#${outCode} â€¢ ${out.slab || 'Regular'}</div>
                     </div>
                     <span class="px-2 py-1 rounded text-[10px] font-bold ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-colgate text-white'}">${isCompleted ? 'Uploaded' : 'Pending'}</span>
                 </div>`;
@@ -924,7 +924,7 @@
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } });
                 document.getElementById('cameraFeed').srcObject = stream;
-            } catch (e) { window.showAlert("ক্যামেরা ওপেন করা যাচ্ছে না।"); }
+            } catch (e) { window.showAlert("à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾ à¦“à¦ªà§‡à¦¨ à¦•à¦°à¦¾ à¦¯à¦¾à¦šà§à¦›à§‡ à¦¨à¦¾à¥¤"); }
         }
 
         document.getElementById('openCameraBtn')?.addEventListener('click', async () => {
@@ -979,11 +979,11 @@
 
         document.getElementById('customForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!capturedImageData) return window.showAlert("দয়া করে আউটলেটের ছবি তুলুন!");
-            if (!isLocationAcquired) return window.showAlert("অনুগ্রহ করে আপনার ফোনের GPS/Location চালু করুন!");
+            if (!capturedImageData) return window.showAlert("à¦¦à¦¯à¦¼à¦¾ à¦•à¦°à§‡ à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿà§‡à¦° à¦›à¦¬à¦¿ à¦¤à§à¦²à§à¦¨!");
+            if (!isLocationAcquired) return window.showAlert("à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¾à¦° à¦«à§‹à¦¨à§‡à¦° GPS/Location à¦šà¦¾à¦²à§ à¦•à¦°à§à¦¨!");
 
             const btn = document.getElementById('submitBtn'), loader = document.getElementById('btnLoader'), text = document.getElementById('btnText');
-            btn.disabled = true; loader.classList.remove('hidden'); text.textContent = "আপলোড হচ্ছে...";
+            btn.disabled = true; loader.classList.remove('hidden'); text.textContent = "à¦†à¦ªà¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...";
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
@@ -1026,7 +1026,7 @@
             } catch (err) {
                 window.showAlert((err && err.message ? 'Error: ' + err.message : 'Error sending data.'));
             } finally {
-                btn.disabled = false; loader.classList.add('hidden'); text.textContent = "জমা দিন (Submit)";
+                btn.disabled = false; loader.classList.add('hidden'); text.textContent = "à¦œà¦®à¦¾ à¦¦à¦¿à¦¨ (Submit)";
             }
         });
 
@@ -1319,7 +1319,7 @@
     const allElements = document.querySelectorAll('button, label, a, div, span');
     allElements.forEach(el => {
       const directText = (el.textContent || '').trim();
-      if (directText === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2) {
+      if (directText === 'à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡' && el.children.length <= 2) {
         const targetBtn = el.closest('button, label, a') || el;
 
         if (isUnlocked) {
@@ -1407,7 +1407,7 @@
           </svg>
         </div>
         <div class="minimal-notice-content">
-          <div class="minimal-notice-label">নোটিশ • Notice</div>
+          <div class="minimal-notice-label">à¦¨à§‹à¦Ÿà¦¿à¦¶ â€¢ Notice</div>
           <div class="minimal-notice-text">${clean}</div>
         </div>
         <button type="button" class="minimal-notice-close" title="Close" onclick="window.__dismissCurrentNotice('${escapedForJs}')">&times;</button>
@@ -1548,7 +1548,7 @@
     }
   }
 
-  /* 4. Login Screen Redesign — Inspired by IdeaBoard Ocean Teal-Slate Reference */
+  /* 4. Login Screen Redesign â€” Inspired by IdeaBoard Ocean Teal-Slate Reference */
   #loginScreen, #roleSelectionScreen, [id*="login" i][class*="fixed"] {
     background: radial-gradient(circle at 50% 18%, #1e5a70 0%, #0f3140 58%, #091f29 100%) !important;
     color: #ffffff !important;
@@ -1561,7 +1561,7 @@
     box-shadow: 0 20px 40px rgba(5, 18, 24, 0.4) !important;
   }
 
-  /* 5. App Top Header & Navigation Bar — Calm Deep Ocean Slate & Flat Bottom Edge */
+  /* 5. App Top Header & Navigation Bar â€” Calm Deep Ocean Slate & Flat Bottom Edge */
   header,
   .bg-red-600, .bg-red-700, .bg-red-500, .bg-rose-600,
   [class*="from-red-"], [class*="to-red-"], [class*="via-red-"],
@@ -1627,7 +1627,7 @@
     border-radius: 8px !important;
   }
 
-  /* 9. Primary Submit Button — Clean Rectangular 8px Radius (No Pill Bar) */
+  /* 9. Primary Submit Button â€” Clean Rectangular 8px Radius (No Pill Bar) */
   button[type="submit"], #submitBtn {
     background: var(--coral-accent) !important;
     color: #ffffff !important;
@@ -1671,7 +1671,7 @@
   window.showCustomAlert = function(title, message) {
     const t = String(title || '');
     const m = String(message || '');
-    if (t === 'Notice' && !m.toLowerCase().includes('error') && !m.includes('সফল') && !m.includes('ব্যর্থ')) {
+    if (t === 'Notice' && !m.toLowerCase().includes('error') && !m.includes('à¦¸à¦«à¦²') && !m.includes('à¦¬à§à¦¯à¦°à§à¦¥')) {
       return;
     }
     if (typeof origShowCustomAlert === 'function') {
@@ -1686,7 +1686,7 @@
 
     document.querySelectorAll('button, label, div, span').forEach(el => {
       const txt = (el.textContent || '').trim();
-      if (txt === 'গ্যালারি থেকে আপলোড' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
+      if (txt === 'à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡' || el.id === 'galleryUploadBtn' || el.id === 'btnGalleryUpload') {
         const container = el.closest('button, label') || el;
         container.style.display = isUnlocked ? 'inline-flex' : 'none';
         container.classList.remove('hidden');
@@ -1730,10 +1730,10 @@
         </button>
       </div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;text-align:left;">
-        অ্যাডমিন নোটিশ • আজকের আপডেট
+        à¦…à§à¦¯à¦¾à¦¡à¦®à¦¿à¦¨ à¦¨à§‹à¦Ÿà¦¿à¦¶ â€¢ à¦†à¦œà¦•à§‡à¦° à¦†à¦ªà¦¡à§‡à¦Ÿ
       </div>
       <button id="ackMinimalNoticeBtn" style="width:100%;background:#e05a47;color:#ffffff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">
-        ঠিক আছে (Got it)
+        à¦ à¦¿à¦• à¦†à¦›à§‡ (Got it)
       </button>
     `;
 
@@ -1816,7 +1816,7 @@
     border-radius: 0px !important;
   }
 
-  /* 3. Navigation Tabs (ফর্ম / আমার দিন / রিপোর্ট): Calm Slate pills instead of loud red */
+  /* 3. Navigation Tabs (à¦«à¦°à§à¦® / à¦†à¦®à¦¾à¦° à¦¦à¦¿à¦¨ / à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ): Calm Slate pills instead of loud red */
   #tabForm.bg-red-600,
   #tabMyDay.bg-red-600,
   #tabReport.bg-red-600,
@@ -1867,7 +1867,7 @@
     background-color: var(--brand-coral-soft) !important;
   }
 
-  /* 7. Step Number Badges (১, ২) & Soft Tints: Harmonious soft slate/coral instead of clashing blue */
+  /* 7. Step Number Badges (à§§, à§¨) & Soft Tints: Harmonious soft slate/coral instead of clashing blue */
   .bg-red-50, .bg-red-100 {
     background-color: #f1f5f9 !important;
     color: var(--slate-950) !important;
@@ -1922,10 +1922,10 @@
   const REST_URL = SUPABASE_URL + "/rest/v1/settings";
   let dismissedForCurrentLoad = false;
 
-  // Hide old center alert ONLY if it contains 'নোটিশ:'
+  // Hide old center alert ONLY if it contains 'à¦¨à§‹à¦Ÿà¦¿à¦¶:'
   setInterval(() => {
     const oldAlert = document.getElementById('customAlertModal');
-    if (oldAlert && oldAlert.textContent && oldAlert.textContent.includes('নোটিশ:')) {
+    if (oldAlert && oldAlert.textContent && oldAlert.textContent.includes('à¦¨à§‹à¦Ÿà¦¿à¦¶:')) {
       oldAlert.classList.add('hidden');
       oldAlert.style.display = 'none';
     }
@@ -1940,7 +1940,7 @@
 
     document.querySelectorAll('button, label, a, div, span').forEach(el => {
       const txt = (el.textContent || '').trim();
-      if (txt === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2) {
+      if (txt === 'à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡' && el.children.length <= 2) {
         const targetBtn = el.closest('button, label, a') || el;
         targetBtn.style.display = isUnlocked ? '' : 'none';
       }
@@ -1965,13 +1965,13 @@
     pill.innerHTML = `
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">জরুরী নোটিশ • Notice</div>
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">à¦œà¦°à§à¦°à§€ à¦¨à§‹à¦Ÿà¦¿à¦¶ â€¢ Notice</div>
           <div style="font-size:14.5px;font-weight:600;color:#ffffff;line-height:1.45;word-break:break-word;">${rawText}</div>
         </div>
         <button id="closeMinimalNoticeX" title="Close" style="background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer;">&times;</button>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-        <button id="okMinimalNoticeBtn" style="background:#c82333;border:none;color:#ffffff;font-size:12px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;">ঠিক আছে (Okay)</button>
+        <button id="okMinimalNoticeBtn" style="background:#c82333;border:none;color:#ffffff;font-size:12px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;">à¦ à¦¿à¦• à¦†à¦›à§‡ (Okay)</button>
       </div>
     `;
 
@@ -2032,7 +2032,7 @@
 <script id="merchProfileHeaderScript">
 (function() {
   function upgradeHeader() {
-    // Find the heading text "কোলগেট স্মাইল কর্ণার" or #userRoleDisplay
+    // Find the heading text "à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°" or #userRoleDisplay
     const roleEl = document.getElementById('userRoleDisplay');
     if (!roleEl) return;
 
@@ -2121,7 +2121,7 @@
           <polyline points="16 17 21 12 16 7"></polyline>
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
-        <span>লগআউট</span>
+        <span>à¦²à¦—à¦†à¦‰à¦Ÿ</span>
       </button>
     `;
 
@@ -2208,7 +2208,7 @@
     box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.20) !important;
   }
 
-  /* 3. Segmented Navigation Tabs (ফর্ম / আমার দিন / রিপোর্ট) — Airbnb/iOS Style */
+  /* 3. Segmented Navigation Tabs (à¦«à¦°à§à¦® / à¦†à¦®à¦¾à¦° à¦¦à¦¿à¦¨ / à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ) â€” Airbnb/iOS Style */
   .grid-cols-3,
   div[class*="grid-cols-3"] {
     background: #f1f5f9 !important;
@@ -2256,7 +2256,7 @@
     outline: none !important;
   }
 
-  /* Soften Step Number Circles (১, ২) */
+  /* Soften Step Number Circles (à§§, à§¨) */
   .bg-red-50.text-red-600,
   span.rounded-full.bg-red-50,
   div.rounded-full.bg-red-50 {
@@ -2322,7 +2322,7 @@
     headerBox.id = 'customProfileHeaderBar';
     headerBox.style.cssText = 'background:#0f172a !important;padding:14px 18px !important;border-radius:0px !important;border-bottom:3px solid #d9232e !important;position:relative !important;';
 
-    // Hide original children ("কোলগেট স্মাইল কর্ণার" & old pill) without breaking DOM IDs
+    // Hide original children ("à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°" & old pill) without breaking DOM IDs
     Array.from(headerBox.children).forEach(ch => {
       if (ch.id !== 'liveMerchProfileRow') ch.style.display = 'none';
     });
@@ -2351,13 +2351,13 @@
             <div style="font-size:16px;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;">${displayName}</div>
           </div>
         </div>
-        <button type="button" id="profileHeaderLogoutBtn" title="লগআউট (Logout)" style="background:rgba(255,255,255,0.08); hover:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.14); color:#f8fafc; padding:8px 12px; border-radius:9px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:600; flex-shrink:0;">
+        <button type="button" id="profileHeaderLogoutBtn" title="à¦²à¦—à¦†à¦‰à¦Ÿ (Logout)" style="background:rgba(255,255,255,0.08); hover:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.14); color:#f8fafc; padding:8px 12px; border-radius:9px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:600; flex-shrink:0;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
           </svg>
-          <span>লগআউট</span>
+          <span>à¦²à¦—à¦†à¦‰à¦Ÿ</span>
         </button>
       `;
 
@@ -2390,11 +2390,11 @@
 <script>
 (function() {
   function transformTopHeader() {
-    // 1. Find the heading that says "কোলগেট স্মাইল কর্ণার"
+    // 1. Find the heading that says "à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°"
     const headings = document.querySelectorAll('h1, h2, h3, div, span');
     let titleEl = null;
     for (const el of headings) {
-      if (el.children.length === 0 && (el.textContent || '').trim() === 'কোলগেট স্মাইল কর্ণার') {
+      if (el.children.length === 0 && (el.textContent || '').trim() === 'à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°') {
         titleEl = el;
         break;
       }
@@ -2411,7 +2411,7 @@
     for (const s of subEls) {
       const t = (s.textContent || '').trim();
       if (t.includes('Merchandiser') || t.includes('Sales Team') || t.includes('SR') || t.includes('TM') || (s.id && s.id.toLowerCase().includes('role'))) {
-        if (t !== 'কোলগেট স্মাইল কর্ণার' && t.length < 80) {
+        if (t !== 'à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°' && t.length < 80) {
           rawRoleText = t;
           break;
         }
@@ -2442,7 +2442,7 @@
     // Find original logout button inside the header so we can trigger it
     const origLogoutBtn = headerContainer.querySelector('button');
 
-    // Hide the old centered children ("কোলগেট স্মাইল কর্ণার", old logout icon, old pill)
+    // Hide the old centered children ("à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦°", old logout icon, old pill)
     Array.from(headerContainer.children).forEach(child => {
       if (child.id !== 'modernMerchHeaderBar') {
         child.style.display = 'none';
@@ -2488,7 +2488,7 @@
         </div>
 
         <!-- Right: Clean Logout Button -->
-        <button type="button" id="newHeaderLogoutBtn" title="লগআউট (Logout)" style="background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.16);color:#f8fafc;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s ease;">
+        <button type="button" id="newHeaderLogoutBtn" title="à¦²à¦—à¦†à¦‰à¦Ÿ (Logout)" style="background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.16);color:#f8fafc;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s ease;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
@@ -2528,14 +2528,14 @@
       document.body.appendChild(fileInput);
     }
 
-    // 2. Find the "গ্যালারি থেকে আপলোড" button/wrapper by ID or Bengali text
+    // 2. Find the "à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡" button/wrapper by ID or Bengali text
     const allClickables = Array.from(document.querySelectorAll('button, label, div, span'));
     const galleryBtns = allClickables.filter(el => {
       const txt = (el.textContent || '').trim();
       return (
         el.id === 'galleryUploadBtn' ||
         el.id === 'galleryBtnWrapper' ||
-        (txt === 'গ্যালারি থেকে আপলোড' && el.children.length <= 2)
+        (txt === 'à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡' && el.children.length <= 2)
       );
     });
 
@@ -3071,6 +3071,31 @@
 })();
 </script>
 
+<!-- ADMIN_HIJACK_START -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Find the Admin button and change its click behavior
+        const adminBtn = document.getElementById('btnAdminLogin') || document.querySelector('button[onclick*="adminModal"]') || Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Admin'));
+        
+        if (adminBtn) {
+            adminBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = '/admin'; // Redirect to the new Enterprise Dashboard
+            };
+        }
+        
+        // 2. Overwrite the old global functions so they can't trigger the modal
+        window.showAdminModal = function() {
+            window.location.href = '/admin';
+        };
+        window.openAdminLogin = function() {
+            window.location.href = '/admin';
+        };
+    });
+</script>
+<!-- ADMIN_HIJACK_END -->
 </body>
 </html>
+
 
