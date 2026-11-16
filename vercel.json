@@ -1,5 +1,5 @@
 ﻿{
-  "framework": null,
-  "cleanUrls": true,
-  "trailingSlash": false
+  "buildCommand": "echo \"No build required\"",
+  "outputDirectory": ".",
+  "cleanUrls": true
 }
