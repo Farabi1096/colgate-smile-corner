@@ -3097,76 +3097,87 @@
 <!-- ADMIN_HIJACK_END -->
 
 
-<!-- INLINE MODAL LOGIN FIX -->
+
+<!-- BULLETPROOF MODAL FIX -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Check if the user is already logged in from a previous session
-    if (localStorage.getItem("merch_logged_in") === "true") {
-        const oldModal = document.getElementById("loginModal");
-        if (oldModal) oldModal.style.display = "none";
-        
-        const roleDisplay = document.getElementById("userRoleDisplay");
-        if (roleDisplay) roleDisplay.innerText = "Test Merchandiser";
-        
-        window.currentUserRole = "Merchandiser";
-        if (typeof loadPJPData === "function") loadPJPData();
-    }
+      // Run a rapid scanner to find the modal the exact moment it opens
+      const fixModal = setInterval(() => {
+          // Hunt for the exact search box from your screenshot
+          const searchInput = document.querySelector('input[placeholder*="আপনার নাম খুঁজুন"]');
+          
+          if (searchInput) {
+              // Found it! Grab its container
+              const container = searchInput.parentElement;
+              
+              // Find the subtitle and update it
+              const allTags = document.querySelectorAll('p, span, div');
+              allTags.forEach(tag => {
+                  if (tag.innerText && tag.innerText.includes('আপনার নাম সিলেক্ট করে লগইন করুন')) {
+                      tag.innerText = 'Phone Number এবং PIN দিয়ে লগইন করুন';
+                  }
+              });
 
-    const merchGroup = document.getElementById("merchSelectGroup");
-    if (merchGroup) {
-        // Replace the <select> dropdown with sleek Phone & PIN inputs
-        merchGroup.innerHTML = `
-          <div class="text-left mt-3">
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
-            <input type="tel" id="merchPhone" placeholder="01700000000" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-4 outline-none font-bold text-gray-800" />
-            
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Secure PIN</label>
-            <input type="password" id="merchPin" placeholder="••••" maxlength="4" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-3 outline-none text-center tracking-[0.5em] text-lg font-bold text-gray-800" />
-            
-            <div id="loginErrorMsg" class="hidden text-[#D2010D] text-xs font-bold text-center mb-3 bg-red-50 border border-red-100 p-2 rounded-lg"></div>
-            
-            <button id="btnConfirmMerchLogin" class="w-full bg-[#D2010D] text-white font-bold py-3 rounded-xl shadow-lg shadow-red-200 hover:bg-[#A8000A] transition-all">
-              Login
-            </button>
-          </div>
-        `;
+              // Replace the search box and dropdown list with Phone/PIN UI
+              container.innerHTML = `
+                  <div class="text-left mt-2 w-full">
+                      <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 mt-2">Phone Number</label>
+                      <input type="tel" id="merchPhone" placeholder="01700000000" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-4 outline-none font-bold text-gray-800" />
+                      
+                      <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Secure PIN</label>
+                      <input type="password" id="merchPin" placeholder="••••" maxlength="4" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-3 outline-none text-center tracking-[0.5em] text-lg font-bold text-gray-800" />
+                      
+                      <div id="loginErrorMsg" class="hidden text-[#D2010D] text-xs font-bold text-center mb-3 bg-red-50 border border-red-100 p-2 rounded-lg"></div>
+                  </div>
+              `;
 
-        // Override original confirm button logic to check the PIN instead
-        setTimeout(() => {
-            const loginBtn = document.getElementById("btnConfirmMerchLogin");
-            if(loginBtn) {
-                loginBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    const phone = document.getElementById("merchPhone").value.trim();
-                    const pin = document.getElementById("merchPin").value.trim();
-                    const errorDiv = document.getElementById("loginErrorMsg");
-
-                    if(phone === "01700000000" && pin === "1234") {
-                        // Success!
-                        errorDiv.classList.add("hidden");
-                        const loginModal = document.getElementById("loginModal");
-                        if(loginModal) loginModal.style.display = "none";
-                        
-                        // Save session so they don't have to log in on refresh
-                        localStorage.setItem("merch_logged_in", "true");
-                        
-                        const roleDisplay = document.getElementById("userRoleDisplay");
-                        if(roleDisplay) roleDisplay.innerText = "Test Merchandiser";
-                        
-                        window.currentUserRole = "Merchandiser";
-                        if(typeof loadPJPData === "function") loadPJPData();
-                    } else {
-                        // Fail
-                        errorDiv.innerText = "Invalid credentials. Use test account: 01700000000 / 1234";
-                        errorDiv.classList.remove("hidden");
-                    }
-                });
-            }
-        }, 100);
-    }
+              // Find the modal window
+              const modal = searchInput.closest('div[id*="Modal"], .fixed');
+              if (modal) {
+                  // Hijack the main Login button
+                  const buttons = modal.querySelectorAll('button');
+                  buttons.forEach(btn => {
+                      if (btn.innerText.includes('লগইন') || btn.innerText.includes('লগ ইন') || btn.innerText.includes('Login') || btn.innerText.includes('Enter')) {
+                          
+                          // Clone the button to wipe out the old dropdown logic
+                          const newBtn = btn.cloneNode(true);
+                          btn.parentNode.replaceChild(newBtn, btn);
+                          
+                          // Attach the new Secure PIN logic
+                          newBtn.addEventListener('click', (e) => {
+                              e.preventDefault();
+                              const phone = document.getElementById("merchPhone").value.trim();
+                              const pin = document.getElementById("merchPin").value.trim();
+                              const err = document.getElementById("loginErrorMsg");
+                              
+                              if(phone === "01700000000" && pin === "1234") {
+                                  // Success
+                                  err.classList.add("hidden");
+                                  modal.style.display = "none";
+                                  
+                                  const roleDisplay = document.getElementById("userRoleDisplay");
+                                  if(roleDisplay) roleDisplay.innerText = "Test Merchandiser";
+                                  
+                                  window.currentUserRole = "Merchandiser";
+                                  localStorage.setItem("merch_logged_in", "true");
+                                  
+                                  if(typeof loadPJPData === "function") loadPJPData();
+                              } else {
+                                  // Fail
+                                  err.innerText = "Invalid credentials. Use test account: 01700000000 / 1234";
+                                  err.classList.remove("hidden");
+                              }
+                          });
+                      }
+                  });
+              }
+              // Stop hunting once we have successfully replaced it
+              clearInterval(fixModal); 
+          }
+      }, 100); 
   });
 </script>
-<!-- END INLINE MODAL LOGIN FIX -->
+<!-- END BULLETPROOF MODAL FIX -->
 </body>
 </html>
 
