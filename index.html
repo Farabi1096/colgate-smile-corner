@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="bn">
 <head>
 
@@ -3095,6 +3095,92 @@
     });
 </script>
 <!-- ADMIN_HIJACK_END -->
+<!-- SECURE LOGIN OVERLAY START -->
+<div id="secureLoginOverlay" class="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#F4F8FB] p-6 text-center" style="font-family: 'Segoe UI', sans-serif; transition: opacity 0.4s ease;">
+  <h1 class="text-3xl font-bold text-[#D2010D] mb-1">Colgate Smile Corner</h1>
+  <p class="text-[#003B5C] mb-8 text-sm font-semibold tracking-wide uppercase">Field Execution App</p>
+
+  <form id="secureLoginForm" class="w-full max-w-xs space-y-5 bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+    <div id="loginErrorMsg" class="hidden text-[#D2010D] text-sm font-bold bg-red-50 border border-red-100 p-3 rounded-lg"></div>
+
+    <div class="text-left">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Phone Number</label>
+      <input type="tel" id="loginPhone" placeholder="e.g. 01700000000" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl bg-gray-50 text-[#003B5C] focus:outline-none focus:ring-2 focus:ring-[#007AC2] transition-all font-bold" required />
+    </div>
+
+    <div class="text-left">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Secure PIN</label>
+      <input type="password" id="loginPin" placeholder="••••" maxlength="4" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl bg-gray-50 text-[#003B5C] focus:outline-none focus:ring-2 focus:ring-[#007AC2] transition-all text-center tracking-[0.5em] font-bold text-xl" required />
+    </div>
+
+    <button type="submit" id="btnLoginSubmit" class="w-full py-4 px-4 mt-2 bg-[#D2010D] text-white rounded-xl font-bold hover:bg-[#A8000A] transition-all shadow-lg shadow-red-200 text-lg">
+      Secure Login
+    </button>
+  </form>
+</div>
+
+<script>
+  // 1. Check if user is already logged in
+  if (localStorage.getItem('merch_logged_in') === 'true') {
+    document.getElementById('secureLoginOverlay').style.display = 'none';
+    
+    // Automatically hide your old prototype login modal if it pops up
+    const oldModal = document.getElementById('loginModal');
+    if (oldModal) oldModal.style.display = 'none';
+  }
+
+  // 2. Handle Login Submission
+  document.getElementById('secureLoginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('loginPhone').value.trim();
+    const pin = document.getElementById('loginPin').value.trim();
+    const errorDiv = document.getElementById('loginErrorMsg');
+    const submitBtn = document.getElementById('btnLoginSubmit');
+
+    errorDiv.classList.add('hidden');
+    submitBtn.innerText = 'Verifying...';
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70');
+
+    try {
+      // Local Database Check (Test Account)
+      if (phone === '01700000000' && pin === '1234') {
+        setTimeout(() => {
+          // Save login state
+          localStorage.setItem('merch_logged_in', 'true');
+          
+          // Smooth fade out
+          const overlay = document.getElementById('secureLoginOverlay');
+          overlay.style.opacity = '0';
+          
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            
+            // Hide the old prototype modal
+            const oldModal = document.getElementById('loginModal');
+            if (oldModal) oldModal.style.display = 'none';
+            
+            // Update name in your UI if the element exists
+            const nameDisplay = document.getElementById('userRoleDisplay');
+            if (nameDisplay) nameDisplay.innerText = 'Test Merchandiser';
+          }, 400);
+        }, 800);
+        return;
+      }
+
+      // If wrong PIN
+      throw new Error('Database not linked yet. Use test account: 01700000000 / 1234');
+
+    } catch (err) {
+      errorDiv.innerText = err.message;
+      errorDiv.classList.remove('hidden');
+      submitBtn.innerText = 'Secure Login';
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-70');
+    }
+  });
+</script>
+<!-- SECURE LOGIN OVERLAY END -->
 </body>
 </html>
 
