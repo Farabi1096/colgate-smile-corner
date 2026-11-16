@@ -3095,92 +3095,71 @@
     });
 </script>
 <!-- ADMIN_HIJACK_END -->
-<!-- SECURE LOGIN OVERLAY START -->
-<div id="secureLoginOverlay" class="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#F4F8FB] p-6 text-center" style="font-family: 'Segoe UI', sans-serif; transition: opacity 0.4s ease;">
-  <h1 class="text-3xl font-bold text-[#D2010D] mb-1">Colgate Smile Corner</h1>
-  <p class="text-[#003B5C] mb-8 text-sm font-semibold tracking-wide uppercase">Field Execution App</p>
 
-  <form id="secureLoginForm" class="w-full max-w-xs space-y-5 bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-    <div id="loginErrorMsg" class="hidden text-[#D2010D] text-sm font-bold bg-red-50 border border-red-100 p-3 rounded-lg"></div>
-
-    <div class="text-left">
-      <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Phone Number</label>
-      <input type="tel" id="loginPhone" placeholder="e.g. 01700000000" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl bg-gray-50 text-[#003B5C] focus:outline-none focus:ring-2 focus:ring-[#007AC2] transition-all font-bold" required />
-    </div>
-
-    <div class="text-left">
-      <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Secure PIN</label>
-      <input type="password" id="loginPin" placeholder="••••" maxlength="4" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl bg-gray-50 text-[#003B5C] focus:outline-none focus:ring-2 focus:ring-[#007AC2] transition-all text-center tracking-[0.5em] font-bold text-xl" required />
-    </div>
-
-    <button type="submit" id="btnLoginSubmit" class="w-full py-4 px-4 mt-2 bg-[#D2010D] text-white rounded-xl font-bold hover:bg-[#A8000A] transition-all shadow-lg shadow-red-200 text-lg">
-      Secure Login
-    </button>
-  </form>
-</div>
-
+<!-- INLINE MODAL LOGIN FIX -->
 <script>
-  // 1. Check if user is already logged in
-  if (localStorage.getItem('merch_logged_in') === 'true') {
-    document.getElementById('secureLoginOverlay').style.display = 'none';
-    
-    // Automatically hide your old prototype login modal if it pops up
-    const oldModal = document.getElementById('loginModal');
-    if (oldModal) oldModal.style.display = 'none';
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+    // Check if the user is already logged in from a previous session
+    if (localStorage.getItem('merch_logged_in') === 'true') {
+        const oldModal = document.getElementById('loginModal');
+        if (oldModal) oldModal.style.display = 'none';
+        
+        const roleDisplay = document.getElementById('userRoleDisplay');
+        if (roleDisplay) roleDisplay.innerText = 'Test Merchandiser';
+        
+        window.currentUserRole = 'Merchandiser';
+        if (typeof loadPJPData === 'function') loadPJPData();
+    }
 
-  // 2. Handle Login Submission
-  document.getElementById('secureLoginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const phone = document.getElementById('loginPhone').value.trim();
-    const pin = document.getElementById('loginPin').value.trim();
-    const errorDiv = document.getElementById('loginErrorMsg');
-    const submitBtn = document.getElementById('btnLoginSubmit');
-
-    errorDiv.classList.add('hidden');
-    submitBtn.innerText = 'Verifying...';
-    submitBtn.disabled = true;
-    submitBtn.classList.add('opacity-70');
-
-    try {
-      // Local Database Check (Test Account)
-      if (phone === '01700000000' && pin === '1234') {
-        setTimeout(() => {
-          // Save login state
-          localStorage.setItem('merch_logged_in', 'true');
-          
-          // Smooth fade out
-          const overlay = document.getElementById('secureLoginOverlay');
-          overlay.style.opacity = '0';
-          
-          setTimeout(() => {
-            overlay.style.display = 'none';
+    const merchGroup = document.getElementById('merchSelectGroup');
+    if (merchGroup) {
+        // Replace the <select> dropdown with sleek Phone & PIN inputs
+        merchGroup.innerHTML = `
+          <div class="text-left mt-3">
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
+            <input type="tel" id="merchPhone" placeholder="01700000000" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-4 outline-none font-bold text-gray-800" />
             
-            // Hide the old prototype modal
-            const oldModal = document.getElementById('loginModal');
-            if (oldModal) oldModal.style.display = 'none';
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Secure PIN</label>
+            <input type="password" id="merchPin" placeholder="••••" maxlength="4" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-[#007AC2] mb-3 outline-none text-center tracking-[0.5em] text-lg font-bold text-gray-800" />
             
-            // Update name in your UI if the element exists
-            const nameDisplay = document.getElementById('userRoleDisplay');
-            if (nameDisplay) nameDisplay.innerText = 'Test Merchandiser';
-          }, 400);
-        }, 800);
-        return;
-      }
+            <div id="loginErrorMsg" class="hidden text-[#D2010D] text-xs font-bold text-center mb-3 bg-red-50 border border-red-100 p-2 rounded-lg"></div>
+            
+            <button id="btnConfirmMerchLogin" class="w-full bg-[#D2010D] text-white font-bold py-3 rounded-xl shadow-lg shadow-red-200 hover:bg-[#A8000A] transition-all">
+              Login
+            </button>
+          </div>
+        `;
 
-      // If wrong PIN
-      throw new Error('Database not linked yet. Use test account: 01700000000 / 1234');
+        // Override original confirm button logic to check the PIN instead
+        document.getElementById('btnConfirmMerchLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('merchPhone').value.trim();
+            const pin = document.getElementById('merchPin').value.trim();
+            const errorDiv = document.getElementById('loginErrorMsg');
 
-    } catch (err) {
-      errorDiv.innerText = err.message;
-      errorDiv.classList.remove('hidden');
-      submitBtn.innerText = 'Secure Login';
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('opacity-70');
+            if(phone === '01700000000' && pin === '1234') {
+                // Success!
+                errorDiv.classList.add('hidden');
+                document.getElementById('loginModal').style.display = 'none';
+                
+                // Save session so they don't have to log in on refresh
+                localStorage.setItem('merch_logged_in', 'true');
+                
+                const roleDisplay = document.getElementById('userRoleDisplay');
+                if(roleDisplay) roleDisplay.innerText = 'Test Merchandiser';
+                
+                window.currentUserRole = 'Merchandiser';
+                if(typeof loadPJPData === 'function') loadPJPData();
+            } else {
+                // Fail
+                errorDiv.innerText = 'Invalid credentials. Use test account: 01700000000 / 1234';
+                errorDiv.classList.remove('hidden');
+            }
+        });
     }
   });
 </script>
-<!-- SECURE LOGIN OVERLAY END -->
+<!-- END INLINE MODAL LOGIN FIX -->
 </body>
 </html>
 
