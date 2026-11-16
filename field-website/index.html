@@ -2651,6 +2651,558 @@
 })();
 </script>
 
+
+<!-- GLOBAL ENTERPRISE ADMIN PANEL UI (MINIMAL, SHARP CORNERS, SIDEBAR + CHARTS) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style id="enterpriseAdminStyles">
+  :root {
+    --adm-bg: #F8FAFC;
+    --adm-surface: #FFFFFF;
+    --adm-sidebar: #0B0F19;
+    --adm-sidebar-hover: #1E293B;
+    --adm-border: #E2E8F0;
+    --adm-border-strong: #CBD5E1;
+    --adm-text: #0F172A;
+    --adm-muted: #64748B;
+    --adm-accent: #2563EB;
+    --adm-accent-soft: #EFF6FF;
+    --adm-radius: 5px;
+  }
+
+  /* Force sharp architectural corners & neutral global palette inside Admin views */
+  body.enterprise-admin-mode,
+  #adminModal,
+  #adminLoginModal {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    color: var(--adm-text) !important;
+  }
+
+  /* Override all heavy rounded corners inside Admin */
+  body.enterprise-admin-mode *,
+  #adminModal *,
+  #adminLoginModal * {
+    border-radius: var(--adm-radius) !important;
+  }
+
+  /* Make Admin Modal Full-Screen Workspace with Sidebar */
+  #adminModal {
+    background: var(--adm-bg) !important;
+    padding: 0 !important;
+  }
+  #adminModal > div {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0px !important;
+    border: none !important;
+    background: var(--adm-bg) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow: hidden !important;
+  }
+
+  /* Admin Login Box - Minimal Enterprise Auth Card */
+  #adminLoginModal {
+    background: rgba(11, 15, 25, 0.75) !important;
+    backdrop-filter: blur(6px) !important;
+  }
+  #adminLoginModal > div {
+    background: #FFFFFF !important;
+    border: 1px solid var(--adm-border) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18) !important;
+    padding: 28px !important;
+  }
+  #adminLoginModal button.bg-red-600,
+  #adminLoginModal button[onclick*="verifyAdmin"] {
+    background: #0F172A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #0F172A !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+  }
+
+  /* Strip rainbow colors from KPI cards & inner containers */
+  #adminModal .bg-green-50,
+  #adminModal .bg-blue-50,
+  #adminModal .bg-orange-50,
+  #adminModal .bg-red-50,
+  #adminModal .bg-purple-50,
+  #adminModal .bg-yellow-50,
+  #adminModal .bg-indigo-50,
+  #adminModal .bg-gray-50 {
+    background: var(--adm-surface) !important;
+    border: 1px solid var(--adm-border) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  /* Unify all KPI numbers & labels into Monochrome Slate (No rainbow text) */
+  #adminModal .text-green-600,
+  #adminModal .text-green-700,
+  #adminModal .text-blue-600,
+  #adminModal .text-blue-700,
+  #adminModal .text-orange-600,
+  #adminModal .text-orange-700,
+  #adminModal .text-red-600,
+  #adminModal .text-red-700 {
+    color: var(--adm-text) !important;
+  }
+
+  #totalOutletsCount,
+  #totalUploadsCount,
+  #displayOutletsCount,
+  #regularOutletsCount {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* Enterprise Sidebar Styling */
+  #entSidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--adm-sidebar);
+    color: #F8FAFC;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid #1E293B;
+    user-select: none;
+    z-index: 20;
+  }
+  .ent-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    margin: 2px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94A3B8;
+    background: transparent;
+    border: none;
+    border-radius: 4px !important;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    width: calc(100% - 20px);
+  }
+  .ent-nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #F8FAFC;
+  }
+  .ent-nav-item.active {
+    background: var(--adm-accent);
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+
+  /* Main Workspace Content Scroll Area */
+  #entMainWorkspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--adm-bg);
+  }
+
+  /* Top Enterprise Command Bar */
+  #entTopbar {
+    height: 56px;
+    min-height: 56px;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--adm-border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+  }
+
+  /* Analytics & Slider Panel */
+  #entAnalyticsSection {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 900px) {
+    #entSidebar {
+      display: none !important;
+    }
+    #entAnalyticsSection {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ent-card {
+    background: #FFFFFF;
+    border: 1px solid var(--adm-border);
+    border-radius: 5px !important;
+    padding: 18px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  }
+
+  /* Custom Range Slider */
+  .ent-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    background: #E2E8F0;
+    outline: none;
+    border-radius: 3px !important;
+  }
+  .ent-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #0F172A;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: pointer;
+    border-radius: 3px !important;
+  }
+
+  /* Clean Buttons inside Admin */
+  #adminButtonsGrid button,
+  #adminModal button:not(.ent-nav-item) {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid var(--adm-border-strong) !important;
+    border-radius: 5px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    transition: all 0.15s ease !important;
+  }
+  #adminButtonsGrid button:hover,
+  #adminModal button:not(.ent-nav-item):hover {
+    background: #F1F5F9 !important;
+    border-color: #94A3B8 !important;
+  }
+  #btnSaveNotice {
+    background: #0F172A !important;
+    color: #FFFFFF !important;
+    border-color: #0F172A !important;
+  }
+  #btnSaveNotice:hover {
+    background: #1E293B !important;
+  }
+</style>
+
+<script id="enterpriseAdminScript">
+(function() {
+  function upgradeAdminToEnterpriseUI() {
+    const adminModal = document.getElementById('adminModal');
+    if (!adminModal) return;
+
+    const modalCard = adminModal.firstElementChild;
+    if (!modalCard || modalCard.dataset.enterpriseUpgraded === 'true') {
+      updateEnterpriseCharts();
+      return;
+    }
+
+    modalCard.dataset.enterpriseUpgraded = 'true';
+
+    // Collect existing inner content of Admin Modal
+    const existingChildren = Array.from(modalCard.children);
+
+    // Create Left Sidebar
+    const sidebar = document.createElement('aside');
+    sidebar.id = 'entSidebar';
+    sidebar.innerHTML = `
+      <div>
+        <div style="height:56px; padding:0 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1E293B;">
+          <div style="width:26px; height:26px; background:#2563EB; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; font-family:'JetBrains Mono',monospace;">
+            OPS
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#FFFFFF; letter-spacing:-0.01em;">FIELD CONSOLE</div>
+            <div style="font-size:10px; color:#64748B; font-family:'JetBrains Mono',monospace;">ENTERPRISE v2.4</div>
+          </div>
+        </div>
+
+        <div style="padding:14px 18px 6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#475569;">
+          Workspace
+        </div>
+        <button type="button" class="ent-nav-item active" data-section="all">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview & KPIs
+        </button>
+        <button type="button" class="ent-nav-item" data-section="analytics">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Coverage Analytics
+        </button>
+        <button type="button" class="ent-nav-item" data-section="map">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          Live GIS Route Map
+        </button>
+        <button type="button" class="ent-nav-item" data-section="controls">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          System Controls
+        </button>
+      </div>
+
+      <div style="padding:14px 16px; border-top:1px solid #1E293B;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+          <span style="font-size:11px; color:#94A3B8;">System Status</span>
+          <span style="font-size:11px; color:#10B981; font-family:'JetBrains Mono',monospace;">● ONLINE</span>
+        </div>
+        <button type="button" id="entExitAdminBtn" style="width:100%; padding:8px 12px; background:#1E293B !important; color:#F8FAFC !important; border:1px solid #334155 !important; font-size:12px; font-weight:600; cursor:pointer;">
+          Exit Admin Console
+        </button>
+      </div>
+    `;
+
+    // Create Main Content Area
+    const mainWorkspace = document.createElement('div');
+    mainWorkspace.id = 'entMainWorkspace';
+
+    const todayFormatted = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
+
+    const topbar = document.createElement('header');
+    topbar.id = 'entTopbar';
+    topbar.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:12px; color:#64748B; font-weight:500;">Admin Console</span>
+        <span style="color:#CBD5E1;">/</span>
+        <span style="font-size:13px; color:#0F172A; font-weight:600;">Operations & Field Telemetry</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:12px; color:#64748B; font-family:'JetBrains Mono',monospace; background:#F8FAFC; padding:5px 10px; border:1px solid #E2E8F0;">
+          ${todayFormatted}
+        </span>
+      </div>
+    `;
+
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = 'padding: 20px 24px; max-width: 1440px; width: 100%; margin: 0 auto;';
+
+    // Create Analytics Chart + Target Slider Section
+    const analyticsSection = document.createElement('div');
+    analyticsSection.id = 'entAnalyticsSection';
+    analyticsSection.innerHTML = `
+      <!-- Left: Bar Chart + Target Slider -->
+      <div class="ent-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <div>
+            <div style="font-size:14px; font-weight:600; color:#0F172A;">Outlet Execution & Coverage Analytics</div>
+            <div style="font-size:12px; color:#64748B;">Real-time comparison across Total, Uploaded, Display, and Regular segments</div>
+          </div>
+          <span id="entCompletionBadge" style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#2563EB; background:#EFF6FF; padding:4px 8px; border:1px solid #BFDBFE;">
+            0.0% Executed
+          </span>
+        </div>
+
+        <!-- Bar Chart Container -->
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; align-items:end; height:140px; padding:16px 12px 8px; background:#F8FAFC; border:1px solid #E2E8F0; margin-bottom:14px;">
+          <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+            <div id="barValTotal" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:#0F172A; font-weight:600; margin-bottom:4px;">0</div>
+            <div id="barFillTotal" style="width:36px; height:85%; background:#0F172A; transition:height 0.3s ease;"></div>
+            <div style="font-size:11px; color:#64748B; margin-top:6px; font-weight:500;">Total</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+            <div id="barValUploads" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:#2563EB; font-weight:600; margin-bottom:4px;">0</div>
+            <div id="barFillUploads" style="width:36px; height:15%; background:#2563EB; transition:height 0.3s ease;"></div>
+            <div style="font-size:11px; color:#64748B; margin-top:6px; font-weight:500;">Uploaded</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+            <div id="barValDisplay" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:#334155; font-weight:600; margin-bottom:4px;">0</div>
+            <div id="barFillDisplay" style="width:36px; height:50%; background:#475569; transition:height 0.3s ease;"></div>
+            <div style="font-size:11px; color:#64748B; margin-top:6px; font-weight:500;">Display</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+            <div id="barValRegular" style="font-size:11px; font-family:'JetBrains Mono',monospace; color:#64748B; font-weight:600; margin-bottom:4px;">0</div>
+            <div id="barFillRegular" style="width:36px; height:35%; background:#94A3B8; transition:height 0.3s ease;"></div>
+            <div style="font-size:11px; color:#64748B; margin-top:6px; font-weight:500;">Regular</div>
+          </div>
+        </div>
+
+        <!-- Interactive Target Benchmark Slider -->
+        <div style="padding-top:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label for="entTargetSlider" style="font-size:12px; font-weight:600; color:#334155;">
+              Daily Coverage Target Benchmark Slider
+            </label>
+            <span id="entTargetSliderLabel" style="font-size:12px; font-family:'JetBrains Mono',monospace; font-weight:600; color:#0F172A;">
+              Target: 80% (0 Outlets)
+            </span>
+          </div>
+          <input id="entTargetSlider" type="range" min="10" max="100" value="80" class="ent-slider" />
+        </div>
+      </div>
+
+      <!-- Right: Portfolio Split & Gap Telemetry -->
+      <div class="ent-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="font-size:14px; font-weight:600; color:#0F172A; margin-bottom:4px;">Portfolio Composition</div>
+          <div style="font-size:12px; color:#64748B; margin-bottom:16px;">Distribution of Display vs. Regular outlets</div>
+
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+              <span style="color:#334155; font-weight:500;">Display Program Outlets</span>
+              <span id="entDisplayPct" style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#0F172A;">0%</span>
+            </div>
+            <div style="width:100%; height:7px; background:#F1F5F9; overflow:hidden;">
+              <div id="entDisplayBar" style="width:0%; height:100%; background:#0F172A; transition:width 0.3s ease;"></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+              <span style="color:#334155; font-weight:500;">Regular Retail Outlets</span>
+              <span id="entRegularPct" style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#0F172A;">0%</span>
+            </div>
+            <div style="width:100%; height:7px; background:#F1F5F9; overflow:hidden;">
+              <div id="entRegularBar" style="width:0%; height:100%; background:#64748B; transition:width 0.3s ease;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+              <span style="color:#334155; font-weight:500;">Audit Upload Completion</span>
+              <span id="entUploadPct" style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#2563EB;">0%</span>
+            </div>
+            <div style="width:100%; height:7px; background:#F1F5F9; overflow:hidden;">
+              <div id="entUploadBar" style="width:0%; height:100%; background:#2563EB; transition:width 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:10px 12px; background:#F8FAFC; border:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+          <span style="font-size:12px; color:#64748B;">Remaining Unvisited</span>
+          <span id="entRemainingCount" style="font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:#0F172A;">0</span>
+        </div>
+      </div>
+    `;
+
+    contentContainer.appendChild(analyticsSection);
+
+    // Move existing Admin elements into the Main Workspace
+    existingChildren.forEach(child => {
+      contentContainer.appendChild(child);
+    });
+
+    mainWorkspace.appendChild(topbar);
+    mainWorkspace.appendChild(contentContainer);
+
+    modalCard.innerHTML = '';
+    modalCard.appendChild(sidebar);
+    modalCard.appendChild(mainWorkspace);
+
+    // Wire up Exit Admin Button
+    const exitBtn = document.getElementById('entExitAdminBtn');
+    if (exitBtn) {
+      exitBtn.addEventListener('click', () => {
+        adminModal.classList.add('hidden');
+      });
+    }
+
+    // Wire up Sidebar Navigation smooth scroll / filter
+    const navButtons = sidebar.querySelectorAll('.ent-nav-item');
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        navButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const sec = btn.dataset.section;
+        if (sec === 'analytics') {
+          analyticsSection.scrollIntoView({ behavior: 'smooth' });
+        } else if (sec === 'map') {
+          const mapEl = document.getElementById('adminMap');
+          if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth' });
+        } else if (sec === 'controls') {
+          const noticeEl = document.getElementById('adminNoticeInput');
+          if (noticeEl) noticeEl.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          mainWorkspace.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Wire up Target Slider
+    const slider = document.getElementById('entTargetSlider');
+    if (slider) {
+      slider.addEventListener('input', updateEnterpriseCharts);
+    }
+
+    updateEnterpriseCharts();
+  }
+
+  function updateEnterpriseCharts() {
+    const totalEl = document.getElementById('totalOutletsCount');
+    const uploadsEl = document.getElementById('totalUploadsCount');
+    const displayEl = document.getElementById('displayOutletsCount');
+    const regularEl = document.getElementById('regularOutletsCount');
+    if (!totalEl) return;
+
+    const total = parseInt((totalEl.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    const uploads = parseInt((uploadsEl ? uploadsEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+    const display = parseInt((displayEl ? displayEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+    const regular = parseInt((regularEl ? regularEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+    const maxVal = Math.max(total, uploads, display, regular, 1);
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setH = (id, pct) => { const el = document.getElementById(id); if (el) el.style.height = Math.max(8, Math.min(92, pct)) + '%'; };
+    const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
+
+    setTxt('barValTotal', total.toLocaleString());
+    setTxt('barValUploads', uploads.toLocaleString());
+    setTxt('barValDisplay', display.toLocaleString());
+    setTxt('barValRegular', regular.toLocaleString());
+
+    setH('barFillTotal', (total / maxVal) * 88);
+    setH('barFillUploads', (uploads / maxVal) * 88);
+    setH('barFillDisplay', (display / maxVal) * 88);
+    setH('barFillRegular', (regular / maxVal) * 88);
+
+    const uploadPct = total > 0 ? ((uploads / total) * 100).toFixed(1) : '0.0';
+    const displayPct = total > 0 ? Math.round((display / total) * 100) : 0;
+    const regularPct = total > 0 ? Math.round((regular / total) * 100) : 0;
+    const remaining = Math.max(0, total - uploads);
+
+    setTxt('entCompletionBadge', uploadPct + '% Executed');
+    setTxt('entDisplayPct', displayPct + '%');
+    setTxt('entRegularPct', regularPct + '%');
+    setTxt('entUploadPct', uploadPct + '%');
+    setTxt('entRemainingCount', remaining.toLocaleString());
+
+    setW('entDisplayBar', displayPct);
+    setW('entRegularBar', regularPct);
+    setW('entUploadBar', uploadPct);
+
+    const slider = document.getElementById('entTargetSlider');
+    if (slider) {
+      const targetPct = parseInt(slider.value, 10) || 80;
+      const targetCount = Math.round((total * targetPct) / 100);
+      setTxt('entTargetSliderLabel', 'Target: ' + targetPct + '% (' + targetCount.toLocaleString() + ' Outlets)');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', upgradeAdminToEnterpriseUI);
+  } else {
+    upgradeAdminToEnterpriseUI();
+  }
+  setInterval(upgradeAdminToEnterpriseUI, 600);
+})();
+</script>
+
 </body>
 </html>
 
