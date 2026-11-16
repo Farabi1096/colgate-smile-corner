@@ -1,9 +1,7 @@
 ﻿{
-  "cleanUrls": true,
+  "buildCommand": "echo 'No build step required'",
+  "outputDirectory": ".",
   "rewrites": [
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    }
+    { "source": "/admin", "destination": "/admin.html" }
   ]
 }

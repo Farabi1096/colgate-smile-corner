@@ -1,176 +1,218 @@
 ﻿<!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Field Console | Enterprise Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load React, ReactDOM, and Babel directly in the browser -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #0F172A; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; overflow: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .sidebar { width: 240px; background-color: #0B0F19; color: #F8FAFC; display: flex; flex-direction: column; border-right: 1px solid #1E293B; z-index: 20; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin: 2px 10px; font-size: 13px; font-weight: 500; color: #94A3B8; background: transparent; border: none; border-radius: 4px; cursor: pointer; text-align: left; transition: all 0.15s ease; }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.06); color: #F8FAFC; }
-        .nav-item.active { background: #2563EB; color: #FFFFFF; font-weight: 600; }
-        .workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .topbar { height: 56px; background: #FFFFFF; border-bottom: 1px solid #E2E8F0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 15; }
-        .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 5px; padding: 18px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03); }
-        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700; color: #0F172A; letter-spacing: -0.02em; }
         .slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; background: #E2E8F0; border-radius: 3px; outline: none; }
         .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #0F172A; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.3); border-radius: 3px; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div id="root"></div>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div>
-            <div style="height:56px; padding:0 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1E293B;">
-                <div style="width:26px; height:26px; background:#2563EB; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;" class="mono">OPS</div>
-                <div>
-                    <div style="font-size:13px; font-weight:700; color:#FFFFFF; letter-spacing:-0.01em;">FIELD CONSOLE</div>
-                    <div style="font-size:10px; color:#64748B;" class="mono">ENTERPRISE v2.4</div>
-                </div>
-            </div>
-            <div style="padding:14px 18px 6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#475569;">Workspace</div>
-            <button class="nav-item active">Overview & KPIs</button>
-            <button class="nav-item">Coverage Analytics</button>
-            <button class="nav-item">Live GIS Route Map</button>
-            <button class="nav-item">System Controls</button>
-        </div>
-        <div style="padding:14px 16px; border-top:1px solid #1E293B; margin-top: auto;">
-            <button onclick="window.location.href='/'" style="width:100%; padding:8px 12px; background:#1E293B; color:#F8FAFC; border:1px solid #334155; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">
-                Exit Admin Console
-            </button>
-        </div>
-    </aside>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    <!-- MAIN WORKSPACE -->
-    <main class="workspace">
-        <header class="topbar">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:12px; color:#64748B; font-weight:500;">Admin Console</span>
-                <span style="color:#CBD5E1;">/</span>
-                <span style="font-size:13px; color:#0F172A; font-weight:600;">Operations & Field Telemetry</span>
-            </div>
-            <div style="font-size:12px; color:#64748B;">Live Sync: <span class="mono" style="color:#00B082;">Connected</span></div>
-        </header>
+        function App() {
+            const [pin, setPin] = useState("");
+            const [loggedIn, setLoggedIn] = useState(false);
+            const [targetVal, setTargetVal] = useState(80);
+            const [stats, setStats] = useState({ total: 1000, uploads: 12, display: 0, regular: 1000 });
 
-        <div style="padding: 24px; max-width: 1440px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
-            
-            <!-- KPI Grid -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-                <div class="card">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#64748B; margin-bottom:4px;">Total Outlets</div>
-                    <div class="stat-value" id="valTotal">1,000</div>
-                </div>
-                <div class="card">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#2563EB; margin-bottom:4px;">Uploaded</div>
-                    <div class="stat-value" id="valUploads" style="color:#2563EB;">12</div>
-                </div>
-                <div class="card">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#475569; margin-bottom:4px;">Display</div>
-                    <div class="stat-value" id="valDisplay" style="color:#334155;">0</div>
-                </div>
-                <div class="card">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#64748B; margin-bottom:4px;">Regular</div>
-                    <div class="stat-value" id="valRegular" style="color:#64748B;">1,000</div>
-                </div>
-            </div>
+            useEffect(() => {
+                try {
+                    const pjp = JSON.parse(localStorage.getItem('pjpData') || '[]');
+                    const subs = JSON.parse(localStorage.getItem('submissions') || '[]');
+                    if (pjp.length > 0) {
+                        const d = pjp.filter(r => (r.status||'').toLowerCase().includes('display')).length;
+                        setStats({ total: pjp.length, uploads: subs.length, display: d, regular: pjp.length - d });
+                    }
+                } catch(e){}
+            }, []);
 
-            <!-- Analytics & Target Slider -->
-            <div class="card" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
-                <div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
-                        <div style="font-size:14px; font-weight:600;">Coverage Analytics</div>
-                        <div class="mono" id="completionBadge" style="font-size:12px; font-weight:600; color:#2563EB; background:#EFF6FF; padding:4px 8px; border:1px solid #BFDBFE; border-radius:4px;">1.2% Executed</div>
+            const maxVal = Math.max(stats.total, stats.uploads, stats.display, stats.regular, 1);
+            const getH = (val) => Math.max(5, Math.min(95, (val/maxVal)*88)) + '%';
+
+            if (!loggedIn) {
+                return (
+                    <div className="h-screen w-screen flex items-center justify-center bg-[#0B0F19]">
+                        <div className="bg-[#1E293B] border border-slate-700 p-8 rounded shadow-2xl w-full max-w-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center font-bold text-xs mono rounded-sm">OPS</div>
+                                <div>
+                                    <h1 className="text-white font-bold tracking-tight">FIELD CONSOLE</h1>
+                                    <p className="text-slate-400 text-xs mono">ENTERPRISE LOGIN</p>
+                                </div>
+                            </div>
+                            <input 
+                                type="password" value={pin} onChange={(e) => setPin(e.target.value)} 
+                                placeholder="Enter PIN..." maxLength={4}
+                                className="w-full bg-[#0F172A] border border-slate-600 text-white rounded p-3 mb-4 text-center text-xl tracking-[0.5em] focus:outline-none focus:border-blue-500"
+                            />
+                            <button 
+                                onClick={() => pin === "1234" ? setLoggedIn(true) : alert("Invalid PIN")}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition-colors"
+                            >
+                                Authenticate
+                            </button>
+                        </div>
                     </div>
+                );
+            }
+
+            return (
+                <div className="flex h-screen w-screen bg-slate-50 text-slate-900 overflow-hidden">
                     
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; align-items:end; height:160px; padding:16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:4px;">
-                        <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                            <div class="mono" style="font-size:11px; font-weight:600; margin-bottom:4px;" id="barTotal">1,000</div>
-                            <div id="fillTotal" style="width:40px; height:85%; background:#0F172A; border-radius:3px 3px 0 0; transition:height 0.3s;"></div>
-                            <div style="font-size:11px; color:#64748B; margin-top:8px;">Total</div>
+                    {/* SIDEBAR */}
+                    <aside className="w-[240px] bg-[#0B0F19] text-slate-50 flex flex-col border-r border-slate-800 z-20 shrink-0">
+                        <div className="h-14 px-4 flex items-center gap-3 border-b border-slate-800">
+                            <div className="w-6 h-6 bg-blue-600 text-white flex items-center justify-center font-bold text-[11px] mono">OPS</div>
+                            <div>
+                                <div className="text-[13px] font-bold tracking-tight text-white">FIELD CONSOLE</div>
+                                <div className="text-[10px] text-slate-400 mono">ENTERPRISE v2.4</div>
+                            </div>
                         </div>
-                        <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                            <div class="mono" style="font-size:11px; font-weight:600; color:#2563EB; margin-bottom:4px;" id="barUploads">12</div>
-                            <div id="fillUploads" style="width:40px; height:15%; background:#2563EB; border-radius:3px 3px 0 0; transition:height 0.3s;"></div>
-                            <div style="font-size:11px; color:#64748B; margin-top:8px;">Uploads</div>
+                        <div className="px-4 pt-4 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Workspace</div>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-semibold bg-blue-600 text-white rounded-sm text-left">Overview & KPIs</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">Coverage Analytics</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">Live GIS Route Map</button>
+                        <button className="flex items-center gap-2 mx-2 px-3 py-2 text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-sm text-left transition-colors">System Controls</button>
+                        
+                        <div className="mt-auto p-4 border-t border-slate-800">
+                            <button onClick={() => setLoggedIn(false)} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded border border-slate-700 transition-colors">
+                                Exit Console
+                            </button>
                         </div>
-                        <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                            <div class="mono" style="font-size:11px; font-weight:600; color:#334155; margin-bottom:4px;" id="barDisplay">0</div>
-                            <div id="fillDisplay" style="width:40px; height:10%; background:#475569; border-radius:3px 3px 0 0; transition:height 0.3s;"></div>
-                            <div style="font-size:11px; color:#64748B; margin-top:8px;">Display</div>
+                    </aside>
+
+                    {/* MAIN WORKSPACE */}
+                    <main className="flex-1 flex flex-col overflow-y-auto">
+                        <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500 font-medium">Admin Console</span>
+                                <span className="text-slate-300">/</span>
+                                <span className="text-[13px] text-slate-900 font-semibold">Operations & Field Telemetry</span>
+                            </div>
+                            <div className="text-xs text-slate-500 font-medium">
+                                Live Sync: <span className="mono text-emerald-600 font-bold ml-1">Connected</span>
+                            </div>
+                        </header>
+
+                        <div className="p-6 max-w-[1440px] w-full mx-auto flex flex-col gap-5">
+                            
+                            {/* KPI GRID */}
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="bg-white border border-slate-200 rounded p-4 shadow-sm">
+                                    <div className="text-[11px] font-semibold uppercase text-slate-500 mb-1">Total Outlets</div>
+                                    <div className="mono text-2xl font-bold text-slate-900 tracking-tight">{stats.total.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-white border border-blue-100 rounded p-4 shadow-sm">
+                                    <div className="text-[11px] font-semibold uppercase text-blue-600 mb-1">Uploaded</div>
+                                    <div className="mono text-2xl font-bold text-blue-600 tracking-tight">{stats.uploads.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-white border border-slate-200 rounded p-4 shadow-sm">
+                                    <div className="text-[11px] font-semibold uppercase text-slate-600 mb-1">Display</div>
+                                    <div className="mono text-2xl font-bold text-slate-700 tracking-tight">{stats.display.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-white border border-slate-200 rounded p-4 shadow-sm">
+                                    <div className="text-[11px] font-semibold uppercase text-slate-500 mb-1">Regular</div>
+                                    <div className="mono text-2xl font-bold text-slate-500 tracking-tight">{stats.regular.toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            {/* CHARTS & CONTROLS */}
+                            <div className="grid grid-cols-[1.5fr_1fr] gap-6 bg-white border border-slate-200 rounded shadow-sm p-6">
+                                
+                                {/* Chart */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-sm font-semibold text-slate-900">Coverage Analytics</h2>
+                                        <div className="mono text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded">
+                                            {stats.total > 0 ? ((stats.uploads/stats.total)*100).toFixed(1) : '0.0'}% Executed
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-4 gap-4 h-40 bg-slate-50 border border-slate-200 rounded p-4 items-end">
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold mb-1">{stats.total}</span>
+                                            <div className="w-10 bg-slate-900 rounded-t-sm transition-all duration-300" style={{height: getH(stats.total)}}></div>
+                                            <span className="text-[11px] text-slate-500 mt-2 font-medium">Total</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-blue-600 mb-1">{stats.uploads}</span>
+                                            <div className="w-10 bg-blue-600 rounded-t-sm transition-all duration-300" style={{height: getH(stats.uploads)}}></div>
+                                            <span className="text-[11px] text-slate-500 mt-2 font-medium">Uploads</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-slate-700 mb-1">{stats.display}</span>
+                                            <div className="w-10 bg-slate-600 rounded-t-sm transition-all duration-300" style={{height: getH(stats.display)}}></div>
+                                            <span className="text-[11px] text-slate-500 mt-2 font-medium">Display</span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-end h-full">
+                                            <span className="mono text-[11px] font-semibold text-slate-500 mb-1">{stats.regular}</span>
+                                            <div className="w-10 bg-slate-400 rounded-t-sm transition-all duration-300" style={{height: getH(stats.regular)}}></div>
+                                            <span className="text-[11px] text-slate-500 mt-2 font-medium">Regular</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex flex-col gap-5">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="text-[13px] font-semibold text-slate-900">Daily Coverage Target</label>
+                                            <span className="mono text-xs font-semibold text-slate-700">
+                                                Target: {targetVal}% ({Math.round((stats.total * targetVal)/100)})
+                                            </span>
+                                        </div>
+                                        <input 
+                                            type="range" min="10" max="100" value={targetVal} 
+                                            onChange={(e) => setTargetVal(e.target.value)} 
+                                            className="slider"
+                                        />
+                                    </div>
+
+                                    <div className="bg-slate-50 border border-slate-200 p-4 rounded">
+                                        <h3 className="text-[13px] font-semibold text-slate-900 mb-3">System Controls</h3>
+                                        <div className="flex flex-col gap-2.5">
+                                            <label className="flex items-center gap-2 text-[13px] font-medium text-slate-700 cursor-pointer">
+                                                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" /> 
+                                                Allow Gallery Uploads
+                                            </label>
+                                            <label className="flex items-center gap-2 text-[13px] font-medium text-red-600 cursor-pointer">
+                                                <input type="checkbox" className="rounded border-slate-300 text-red-600 focus:ring-red-500" /> 
+                                                Maintenance Mode (Block App)
+                                            </label>
+                                            <button 
+                                                onClick={() => alert('Settings Saved!')} 
+                                                className="mt-2 w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded transition-colors"
+                                            >
+                                                Save Global Settings
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
-                        <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                            <div class="mono" style="font-size:11px; font-weight:600; color:#64748B; margin-bottom:4px;" id="barRegular">1,000</div>
-                            <div id="fillRegular" style="width:40px; height:85%; background:#94A3B8; border-radius:3px 3px 0 0; transition:height 0.3s;"></div>
-                            <div style="font-size:11px; color:#64748B; margin-top:8px;">Regular</div>
-                        </div>
-                    </div>
+                    </main>
                 </div>
-
-                <div style="display:flex; flex-direction:column; gap:20px;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <label style="font-size:13px; font-weight:600;">Daily Coverage Target</label>
-                            <span class="mono" id="sliderLabel" style="font-size:12px; font-weight:600;">Target: 80%</span>
-                        </div>
-                        <input id="targetSlider" type="range" min="10" max="100" value="80" class="slider" oninput="updateStats()">
-                    </div>
-                    
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:16px; border-radius:4px;">
-                        <h3 style="font-size:13px; font-weight:600; margin-bottom:12px;">System Controls</h3>
-                        <div style="display:flex; flex-direction:column; gap:10px;">
-                            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                                <input type="checkbox" id="chkGallery"> Allow Gallery Uploads
-                            </label>
-                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#D2010D;">
-                                <input type="checkbox" id="chkMaintenance"> Maintenance Mode (Block App)
-                            </label>
-                            <button onclick="alert('Settings Saved!')" style="margin-top:8px; width:100%; padding:8px; background:#0F172A; color:#FFF; border:none; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Save Global Settings</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <script>
-        function updateStats() {
-            let pjpData = [];
-            try { pjpData = JSON.parse(localStorage.getItem('pjpData') || '[]'); } catch(e){}
-            let submissions = [];
-            try { submissions = JSON.parse(localStorage.getItem('submissions') || '[]'); } catch(e){}
-            
-            // Fallbacks to match screenshot data if empty
-            const total = pjpData.length > 0 ? pjpData.length : 1000;
-            const display = pjpData.length > 0 ? pjpData.filter(r => (r.status||'').toLowerCase().includes('display')).length : 0;
-            const regular = total - display;
-            const uploads = submissions.length > 0 ? submissions.length : 12;
-
-            const maxVal = Math.max(total, uploads, display, regular, 1);
-            
-            const setTxt = (id, val) => document.getElementById(id).textContent = val.toLocaleString();
-            const setH = (id, val) => document.getElementById(id).style.height = Math.max(5, Math.min(95, (val/maxVal)*88)) + '%';
-
-            setTxt('valTotal', total); setTxt('valUploads', uploads); setTxt('valDisplay', display); setTxt('valRegular', regular);
-            setTxt('barTotal', total); setTxt('barUploads', uploads); setTxt('barDisplay', display); setTxt('barRegular', regular);
-            
-            setH('fillTotal', total); setH('fillUploads', uploads); setH('fillDisplay', display); setH('fillRegular', regular);
-
-            const pct = total > 0 ? ((uploads/total)*100).toFixed(1) : '0.0';
-            document.getElementById('completionBadge').textContent = pct + '% Executed';
-
-            const slider = document.getElementById('targetSlider');
-            document.getElementById('sliderLabel').textContent = `Target: ${slider.value}% (${Math.round((total * slider.value)/100)} Outlets)`;
+            );
         }
 
-        window.onload = function() {
-            updateStats();
-        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
