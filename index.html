@@ -3178,62 +3178,82 @@
   });
 </script>
 <!-- END BULLETPROOF MODAL FIX -->
-<!-- MERCH LOGIN HIJACK -->
+<!-- MID LOGIN OVERRIDE -->
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    const originalOpenModal = window.openModal;
-    if(typeof originalOpenModal === 'function') {
-        window.openModal = function(role) {
-            // Let the original modal show up first
-            originalOpenModal(role);
-            
-            // If they clicked Merchandiser, hijack the UI immediately!
-            if(role === 'Merchandiser') {
-                const modal = document.getElementById("loginModal");
-                if(modal) {
-                    const inner = modal.querySelector('div.bg-white');
-                    if(inner) {
-                        inner.innerHTML = 
-                            <div class="flex justify-between items-center mb-6">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="user" class="w-5 h-5 text-red-600"></i>
-                                    <h3 class="font-bold text-gray-800">Merchandiser Login</h3>
-                                </div>
-                                <button onclick="closeModal()" class="p-1.5 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-500 mb-4 font-medium text-center">আপনার ফোন নম্বর এবং পিন দিন</p>
-                            <div class="space-y-4">
-                                <input type="tel" id="merchPhone" placeholder="Phone Number (e.g. 017...)" class="w-full py-3 px-4 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 text-gray-800">
-                                <input type="password" id="merchPin" placeholder="4-Digit PIN" maxlength="4" class="w-full py-3 px-4 border border-gray-200 rounded-xl text-center text-lg tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 text-gray-800 font-bold">
-                            </div>
-                            <button onclick="handleSecureMerchLogin()" class="w-full mt-6 bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-red-700">লগইন করুন</button>
-                        ;
-                        if(typeof lucide !== 'undefined') lucide.createIcons();
-                    }
-                }
-            }
-        };
-    }
-
-    // Our new secure login function
-    window.handleSecureMerchLogin = function() {
-        const phone = document.getElementById("merchPhone").value;
-        const pin = document.getElementById("merchPin").value;
-        
-        if(phone === "01700000000" && pin === "1234") {
-            currentUser = { role: "Merchandiser", name: "Test Merch (Local)", phone: phone };
-            closeModal();
-            document.getElementById("loginScreen").classList.add("hidden");
-            document.getElementById("mainApp").classList.remove("hidden");
-            if(typeof updateProfileHeader === "function") updateProfileHeader();
-            if(typeof showCustomAlert === "function") showCustomAlert("লগইন সফল হয়েছে!"); // Login successful!
-        } else {
-            alert("Invalid Phone or PIN! Try Phone: 01700000000 and PIN: 1234");
-        }
-    };
+      // This tracker runs twice a second to hunt down the old dropdown and destroy it
+      setInterval(function() {
+          // Look for any text or input containing the old Bengali instructions
+          const elements = Array.from(document.querySelectorAll('div, p, span, input, select'));
+          const oldDropdown = elements.find(el => 
+              (el.textContent && el.textContent.includes('আপনার নাম সিলেক্ট করে লগইন করুন')) || 
+              (el.placeholder && el.placeholder.includes('আপনার নাম খুঁজুন')) ||
+              (el.textContent && el.textContent.includes('Akash Karmokar'))
+          );
+          
+          if (oldDropdown) {
+              const modalInner = oldDropdown.closest('.bg-white'); // Find the white modal box
+              
+              if (modalInner && !modalInner.hasAttribute('data-mid-injected')) {
+                  modalInner.setAttribute('data-mid-injected', 'true'); // Mark as fixed
+                  
+                  // Completely overwrite the inside of the modal with MID and PIN!
+                  modalInner.innerHTML = 
+                      <div class="flex justify-between items-center mb-6">
+                          <div class="flex items-center gap-2">
+                              <svg class="w-5 h-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                              <h3 class="font-bold text-gray-800 text-lg">Merchandiser Login</h3>
+                          </div>
+                          <button onclick="document.getElementById('loginModal').classList.add('hidden')" class="p-1.5 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200">
+                              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                      </div>
+                      
+                      <p class="text-xs text-gray-500 mb-5 font-medium text-center">আপনার MID এবং পিন দিন</p>
+                      
+                      <div class="space-y-4">
+                          <input type="text" id="merchId" placeholder="MID (Merchandiser ID)" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-600 bg-gray-50 text-gray-900 font-bold uppercase placeholder-gray-400 shadow-sm transition-all">
+                          
+                          <input type="password" id="merchPin" placeholder="4-Digit PIN" maxlength="4" class="w-full py-3.5 px-4 border border-gray-300 rounded-xl text-center text-xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-red-600 bg-gray-50 text-gray-900 font-bold shadow-sm transition-all">
+                      </div>
+                      
+                      <button onclick="handleMIDLogin()" class="w-full mt-6 bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-red-700 hover:shadow-lg transition-all active:scale-[0.98]">লগইন করুন</button>
+                  ;
+              }
+          }
+      }, 500);
   });
+
+  // The login function attached to the new button
+  window.handleMIDLogin = function() {
+      const midInput = document.getElementById("merchId");
+      const pinInput = document.getElementById("merchPin");
+      
+      const mid = midInput ? midInput.value.trim() : "";
+      const pin = pinInput ? pinInput.value.trim() : "";
+      
+      if(mid && pin) {
+          // Fake login success for now
+          window.currentUser = { role: "Merchandiser", name: "MID: " + mid.toUpperCase() };
+          
+          // Hide all modals
+          const modal = document.getElementById('loginModal');
+          if (modal) modal.classList.add('hidden');
+          
+          const loginScreen = document.getElementById('loginScreen');
+          if (loginScreen) loginScreen.classList.add('hidden');
+          
+          // Show app
+          const mainApp = document.getElementById('mainApp');
+          if (mainApp) mainApp.classList.remove('hidden');
+          
+          // Trigger profile header update if function exists
+          if(typeof updateProfileHeader === "function") updateProfileHeader();
+          if(typeof showCustomAlert === "function") showCustomAlert("লগইন সফল হয়েছে!");
+      } else {
+          alert("দয়া করে MID এবং PIN দিন! (Please enter both MID and PIN)");
+      }
+  };
 </script>
 </body>
 </html>
