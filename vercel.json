@@ -1,5 +1,9 @@
 ﻿{
-  "framework": null,
-  "buildCommand": "echo 'Static HTML site, skipping build'",
-  "outputDirectory": "."
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    }
+  ]
 }
