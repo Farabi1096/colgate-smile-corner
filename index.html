@@ -37,9 +37,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>à¦•à§‹à¦²à¦—à§‡à¦Ÿ à¦¸à§à¦®à¦¾à¦‡à¦² à¦•à¦°à§à¦£à¦¾à¦° - Field App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            background: linear-gradient(180deg, #ffe6e6 0%, #f9fafb 25%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #da291c; 
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes float-sparkle {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-5px) scale(1.15) rotate(10deg); opacity: 1; }
+        }
+        .animate-sparkle { animation: float-sparkle 3s ease-in-out infinite; }
+        .sparkle-delay-1 { animation-delay: 1s; }
+        .sparkle-delay-2 { animation-delay: 2s; }
+        @keyframes subtlePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(218, 41, 28, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(218, 41, 28, 0); }
+        }
+        .animate-subtle-pulse { animation: subtlePulse 2s infinite; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .bg-colgate { background-color: #da291c; }
+        .text-colgate { color: #da291c; }
+        .border-colgate { border-color: #da291c; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
 
 
 
@@ -78,16 +121,16 @@
   }
 
   /* Soften the 4 stat numbers so they don't look like raw rainbow HTML colors */
-  #snapshotCard .text-corpgreen,
-  .grid-cols-4 .text-corpgreen {
+  #snapshotCard .text-green-600,
+  .grid-cols-4 .text-green-600 {
     color: #059669 !important; /* Calm clinical emerald */
   }
   #snapshotCard .text-blue-600,
   .grid-cols-4 .text-blue-600 {
     color: #0284c7 !important; /* Calm clinical sky-blue */
   }
-  #snapshotCard .text-corpred,
-  .grid-cols-4 .text-corpred {
+  #snapshotCard .text-red-600,
+  .grid-cols-4 .text-red-600 {
     color: #d9232e !important; /* Tuned Colgate ruby */
   }
 
@@ -113,124 +156,78 @@
   }
 </style>
 
-<!-- Deep Slate Config Injection -->
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          slatebg: '#121820',
-          slatecard: '#1E252D',
-          slatedivider: '#333D47',
-          corpblue: '#007AC2',
-          corpred: '#D2010D',
-          corpcrimson: '#BE123C',
-          corpgreen: '#00B082',
-          corpmuted: '#939598',
-          corplight: '#E2E8F0'
-        },
-        fontFamily: {
-          sans: ['"Segoe UI"', 'sans-serif'],
-          mono: ['"Fira Code"', 'monospace']
-        }
-      }
-    }
-  }
-</script>
-<style>
-  /* Base & Typography Overrides */
-  body { background-color: #121820 !important; color: #E2E8F0 !important; }
-  h1, h2 { color: #FFFFFF !important; }
-  h3, .section-title { color: #007AC2 !important; }
-  
-  /* Gridline-Free Tables & Containers */
-  table, th, td { border: none !important; }
-  .border, .border-b, .border-t, .border-l, .border-r, hr { border-color: #333D47 !important; }
-  
-  /* Fira Code for Numbers & Codes */
-  .shop-code, .metric, td, .time-stamp { font-family: 'Fira Code', monospace; }
-  
-  /* Inactive Icons */
-  svg.inactive { color: #5D8AA8 !important; fill: #5D8AA8 !important; }
-  
-  /* Subdued Scrollbars for Deep Slate */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #121820; }
-  ::-webkit-scrollbar-thumb { background: #333D47; border-radius: 4px; }
-</style>
 </head>
-<body class="bg-slatebg font-sans text-corplight antialiased">
+<body class="flex items-start sm:items-center justify-center min-h-screen p-0 sm:p-4">
 
     <!-- Custom Alert Box -->
     <div id="customAlert" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
-        <div class="bg-slatecard rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
             <i data-lucide="info" class="w-12 h-12 text-colgate mx-auto mb-3"></i>
-            <h3 class="text-lg font-bold text-corplight mb-2">Notice</h3>
-            <p id="customAlertMsg" class="text-[14px] text-corpmuted mb-5 leading-relaxed whitespace-pre-line"></p>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Notice</h3>
+            <p id="customAlertMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed whitespace-pre-line"></p>
             <button onclick="closeCustomAlert()" class="bg-colgate text-white font-bold py-2.5 px-8 rounded-xl hover:bg-red-700 transition-all shadow-md w-full">à¦ à¦¿à¦• à¦†à¦›à§‡</button>
         </div>
     </div>
 
     <!-- Custom Confirm Box -->
     <div id="customConfirm" class="fixed inset-0 bg-black/60 z-[500] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
-        <div class="bg-slatecard rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center transform scale-95 transition-transform">
             <i data-lucide="help-circle" class="w-12 h-12 text-blue-500 mx-auto mb-3"></i>
-            <h3 class="text-lg font-bold text-corplight mb-2">à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦•à¦°à§à¦¨</h3>
-            <p id="customConfirmMsg" class="text-[14px] text-corpmuted mb-5 leading-relaxed"></p>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦•à¦°à§à¦¨</h3>
+            <p id="customConfirmMsg" class="text-[14px] text-gray-600 mb-5 leading-relaxed"></p>
             <div class="flex gap-3">
-                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-slatebg text-corplight font-bold py-2.5 rounded-xl hover:bg-gray-200 transition-all">à¦¨à¦¾</button>
+                <button onclick="closeCustomConfirm(false)" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition-all">à¦¨à¦¾</button>
                 <button onclick="closeCustomConfirm(true)" class="flex-1 bg-colgate text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all shadow-md">à¦¹à§à¦¯à¦¾à¦</button>
             </div>
         </div>
     </div>
 
     <!-- ================= ROLE SELECTION SCREEN (FIELD STAFF ONLY) ================= -->
-    <div id="roleSelectionContainer" class="flex flex-col h-screen w-full items-center justify-center p-6 text-center bg-slatecard z-[100] fixed inset-0">
+    <div id="roleSelectionContainer" class="flex flex-col h-screen w-full items-center justify-center p-6 text-center bg-white z-[100] fixed inset-0">
         <div class="mb-8 relative w-full max-w-[280px] mx-auto flex flex-col items-center">
             <div class="h-24 w-24 mx-auto mb-4 relative z-10 flex items-center justify-center">
                 <img src="https://i.postimg.cc/85V7jkK5/Smile-Image.png" alt="Colgate Smile" class="w-full h-full object-contain drop-shadow-sm">
             </div>
-            <h1 class="text-2xl font-bold text-white tracking-tight relative z-10">Smile Corner</h1>
-            <p class="text-xs text-corpmuted mt-1">Field Operations Portal</p>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight relative z-10">Smile Corner</h1>
+            <p class="text-xs text-gray-400 mt-1">Field Operations Portal</p>
         </div>
 
         <div class="w-full max-w-[280px] space-y-4 relative z-10">
-            <button type="button" id="btnRoleMerch" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-slatecard border-[1.5px] border-slatedivider rounded-xl hover:border-colgate hover:bg-slatebg transition-all duration-200 shadow-sm group">
-                <i data-lucide="user" class="h-[18px] w-[18px] absolute left-4 text-corpmuted group-hover:text-colgate transition-colors"></i>
-                <span class="font-semibold text-[14px] text-corplight group-hover:text-colgate transition-colors">Merchandiser</span>
+            <button type="button" id="btnRoleMerch" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-white border-[1.5px] border-gray-200 rounded-xl hover:border-colgate hover:bg-red-50 transition-all duration-200 shadow-sm group">
+                <i data-lucide="user" class="h-[18px] w-[18px] absolute left-4 text-gray-400 group-hover:text-colgate transition-colors"></i>
+                <span class="font-semibold text-[14px] text-gray-800 group-hover:text-colgate transition-colors">Merchandiser</span>
             </button>
 
-            <button type="button" id="btnRoleSR" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-slatecard border-[1.5px] border-slatedivider rounded-xl hover:border-colgate hover:bg-slatebg transition-all duration-200 shadow-sm group">
-                <i data-lucide="briefcase" class="h-[18px] w-[18px] absolute left-4 text-corpmuted group-hover:text-colgate transition-colors"></i>
-                <span class="font-semibold text-[14px] text-corplight group-hover:text-colgate transition-colors">Sales Team (TM / SR)</span>
+            <button type="button" id="btnRoleSR" class="w-full relative flex items-center justify-center py-3.5 px-4 bg-white border-[1.5px] border-gray-200 rounded-xl hover:border-colgate hover:bg-red-50 transition-all duration-200 shadow-sm group">
+                <i data-lucide="briefcase" class="h-[18px] w-[18px] absolute left-4 text-gray-400 group-hover:text-colgate transition-colors"></i>
+                <span class="font-semibold text-[14px] text-gray-800 group-hover:text-colgate transition-colors">Sales Team (TM / SR)</span>
             </button>
         </div>
     </div>
 
     <!-- Merchandiser Login Modal -->
     <div id="merchLoginModal" class="fixed inset-0 bg-black/60 z-[400] hidden items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity">
-        <div class="bg-slatecard rounded-2xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform">
             <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                <h3 class="text-lg font-bold text-corplight flex items-center"><i data-lucide="user" class="w-5 h-5 text-colgate mr-2"></i> Merchandiser Login</h3>
-                <button onclick="closeMerchLoginModal()" class="text-corpmuted hover:text-red-500 transition-colors bg-slatebg p-1.5 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="user" class="w-5 h-5 text-colgate mr-2"></i> Merchandiser Login</h3>
+                <button onclick="closeMerchLoginModal()" class="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 p-1.5 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <p class="text-[13px] text-corpmuted mb-4 text-center">à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨</p>
+            <p class="text-[13px] text-gray-500 mb-4 text-center">à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨</p>
             <div id="merchModalLoader" class="hidden flex-col items-center justify-center py-6">
                 <div class="loader mb-3"></div>
-                <span class="text-[12px] text-corpmuted mt-2">à¦¨à¦¾à¦® à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...</span>
+                <span class="text-[12px] text-gray-500 mt-2">à¦¨à¦¾à¦® à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...</span>
             </div>
-            <select id="modalMerchSelect" class="w-full bg-slatebg border border-slatedivider rounded-xl p-3 text-[14px] outline-none focus:border-colgate focus:ring-1 focus:ring-colgate transition-all mb-3 font-medium text-corplight custom-scrollbar">
+            <select id="modalMerchSelect" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[14px] outline-none focus:border-colgate focus:ring-1 focus:ring-colgate transition-all mb-3 font-medium text-gray-700 custom-scrollbar">
                 <option value="" disabled selected>à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦–à§à¦à¦œà§à¦¨...</option>
             </select>
         </div>
     </div>
 
     <!-- ================= MAIN FIELD APP CONTAINER ================= -->
-    <div id="mainAppContainer" class="hidden bg-slatecard w-full max-w-md sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
+    <div id="mainAppContainer" class="hidden bg-white w-full max-w-md sm:rounded-2xl sm:shadow-2xl min-h-screen sm:min-h-0 flex-col relative mx-auto overflow-hidden">
         <!-- Header -->
         <div class="bg-colgate px-5 py-4 sm:py-6 text-center sm:rounded-t-2xl sticky top-0 z-50 shadow-md relative">
-            <button onclick="logoutRole()" class="absolute left-4 top-4 sm:top-6 bg-slatecard/20 hover:bg-slatecard/30 text-white p-2 rounded-full transition-colors flex items-center justify-center backdrop-blur-sm">
+            <button onclick="logoutRole()" class="absolute left-4 top-4 sm:top-6 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors flex items-center justify-center backdrop-blur-sm">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
             <div class="flex items-center justify-center mb-1.5">
@@ -244,14 +241,14 @@
         <!-- Content Area -->
         <div class="px-4 sm:px-5 py-5 flex-grow overflow-y-auto">
             <!-- Toggle Tabs -->
-            <div id="tabsContainer" class="flex p-1 bg-slatebg rounded-xl mb-6 shadow-inner overflow-x-auto hide-scrollbar">
-                <button type="button" id="tabForm" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg bg-slatecard shadow-sm text-colgate transition-all whitespace-nowrap px-2">
+            <div id="tabsContainer" class="flex p-1 bg-gray-100 rounded-xl mb-6 shadow-inner overflow-x-auto hide-scrollbar">
+                <button type="button" id="tabForm" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg bg-white shadow-sm text-colgate transition-all whitespace-nowrap px-2">
                     <i data-lucide="camera" class="h-4 w-4 mr-1.5"></i> à¦«à¦°à§à¦®
                 </button>
-                <button type="button" id="tabMyDay" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-corpmuted hover:text-corplight transition-all whitespace-nowrap px-2">
+                <button type="button" id="tabMyDay" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
                     <i data-lucide="clock" class="h-4 w-4 mr-1.5"></i> à¦†à¦®à¦¾à¦° à¦¦à¦¿à¦¨
                 </button>
-                <button type="button" id="tabReport" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-corpmuted hover:text-corplight transition-all whitespace-nowrap px-2">
+                <button type="button" id="tabReport" class="flex-1 min-w-[100px] flex items-center justify-center py-2.5 text-[12px] sm:text-[13px] font-bold rounded-lg text-gray-500 hover:text-gray-700 transition-all whitespace-nowrap px-2">
                     <i data-lucide="bar-chart-2" class="h-4 w-4 mr-1.5"></i> à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ
                 </button>
             </div>
@@ -259,44 +256,44 @@
             <!-- VIEW 1: FORM -->
             <div id="formView" class="animate-fade-in">
                 <form id="customForm" class="space-y-6">
-                    <div class="bg-slatebg border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
-                        <div class="border-b border-slatedivider pb-3 mb-4 flex justify-between items-center gap-2">
-                            <h3 class="text-[15px] sm:text-[17px] font-bold text-corplight flex items-center leading-tight">
-                                <span class="bg-slatecard shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2 font-bold shrink-0">à§§</span>
+                    <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
+                        <div class="border-b border-gray-200 pb-3 mb-4 flex justify-between items-center gap-2">
+                            <h3 class="text-[15px] sm:text-[17px] font-bold text-gray-800 flex items-center leading-tight">
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2 font-bold shrink-0">à§§</span>
                                 à¦¦à§‹à¦•à¦¾à¦¨à§‡à¦° à¦¤à¦¥à§à¦¯
                             </h3>
-                            <div class="flex bg-slatebg p-1 rounded-xl w-[170px] sm:w-[210px] shrink-0 shadow-inner border border-slatedivider mr-1">
+                            <div class="flex bg-gray-100 p-1 rounded-xl w-[170px] sm:w-[210px] shrink-0 shadow-inner border border-gray-200 mr-1">
                                 <label class="flex-1 text-center cursor-pointer m-0">
                                     <input type="radio" name="outlet_type" value="DCC" class="peer hidden" required>
-                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm transition-all">DCC</div>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">DCC</div>
                                 </label>
                                 <label class="flex-1 text-center cursor-pointer m-0">
                                     <input type="radio" name="outlet_type" value="ROB" class="peer hidden" required>
-                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm transition-all">ROB</div>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">ROB</div>
                                 </label>
                                 <label class="flex-1 text-center cursor-pointer m-0">
                                     <input type="radio" name="outlet_type" value="SMT" class="peer hidden" required>
-                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm transition-all">SMT</div>
+                                    <div class="py-1.5 text-[12px] sm:text-[13px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm transition-all">SMT</div>
                                 </label>
                             </div>
                         </div>
 
                         <div class="space-y-4">
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦®à¦¾à¦¸ <span class="text-colgate">*</span></label>
-                                <select name="display_month" id="formMonth" required class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium"></select>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦®à¦¾à¦¸ <span class="text-colgate">*</span></label>
+                                <select name="display_month" id="formMonth" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium"></select>
                             </div>
 
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦à¦°à¦¿à¦¯à¦¼à¦¾ <span class="text-colgate">*</span></label>
-                                <select name="area_name" id="areaSelect" required class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦à¦°à¦¿à¦¯à¦¼à¦¾ <span class="text-colgate">*</span></label>
+                                <select name="area_name" id="areaSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
                                     <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦Ÿà¦¾à¦‡à¦ª à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
 
                             <div id="srTerritoryGroup" class="input-group relative hidden">
-                                <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦Ÿà§‡à¦°à¦¿à¦Ÿà§‹à¦°à¦¿ <span class="text-colgate">*</span></label>
-                                <select name="territory" id="territorySelect" class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦Ÿà§‡à¦°à¦¿à¦Ÿà§‹à¦°à¦¿ <span class="text-colgate">*</span></label>
+                                <select name="territory" id="territorySelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
                                     <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦à¦°à¦¿à¦¯à¦¼à¦¾ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
@@ -304,22 +301,22 @@
                             <input type="hidden" name="db_code" id="formDbCode">
 
                             <div class="input-group relative">
-                                <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦¶à¦¨ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
-                                <select name="distribution_name" id="distSelect" required class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦¶à¦¨ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
+                                <select name="distribution_name" id="distSelect" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
                                     <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦à¦°à¦¿à¦¯à¦¼à¦¾/à¦Ÿà§‡à¦°à¦¿à¦Ÿà§‹à¦°à¦¿ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                 </select>
                             </div>
 
                             <div id="srFieldsGroup" class="space-y-4 hidden">
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦°à§à¦Ÿ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
-                                    <select name="sr_route" id="srRouteSelect" class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦°à§à¦Ÿ à¦¨à¦¾à¦® <span class="text-colgate">*</span></label>
+                                    <select name="sr_route" id="srRouteSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
                                         <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦¡à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿à¦¬à¦¿à¦‰à¦Ÿà¦° à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                     </select>
                                 </div>
                                 <div class="input-group relative">
-                                    <label id="srOutletLabel" class="block text-[13px] font-bold text-corplight mb-1.5">à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿ (à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦¸à§à¦²à§à¦¯à¦¾à¦¬) <span class="text-colgate">*</span></label>
-                                    <select name="sr_outlet" id="srOutletSelect" class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
+                                    <label id="srOutletLabel" class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿ (à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦¸à§à¦²à§à¦¯à¦¾à¦¬) <span class="text-colgate">*</span></label>
+                                    <select name="sr_outlet" id="srOutletSelect" class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium disabled:opacity-50" disabled>
                                         <option value="" disabled selected>à¦ªà§à¦°à¦¥à¦®à§‡ à¦°à§à¦Ÿ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨</option>
                                     </select>
                                 </div>
@@ -327,24 +324,24 @@
 
                             <div id="merchFieldsGroup" class="space-y-4">
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦¸à§à¦²à§à¦¯à¦¾à¦¬ <span class="text-colgate">*</span></label>
-                                    <select name="slab" id="formSlab" required class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none font-medium">
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦¸à§à¦²à§à¦¯à¦¾à¦¬ <span class="text-colgate">*</span></label>
+                                    <select name="slab" id="formSlab" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none font-medium">
                                         <option value="" disabled selected>à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...</option>
                                     </select>
                                 </div>
                                 <div class="input-group relative">
-                                    <label class="block text-[13px] font-bold text-corplight mb-1.5">à¦•à§‹à¦¡ <span class="text-colgate">*</span></label>
-                                    <input type="text" name="shop_code" id="formShopCode" required class="px-4 block w-full rounded-xl border border-slatedivider bg-slatecard text-corplight text-[14px] py-3 outline-none uppercase font-semibold tracking-wide" placeholder="BDC...">
+                                    <label class="block text-[13px] font-bold text-gray-700 mb-1.5">à¦•à§‹à¦¡ <span class="text-colgate">*</span></label>
+                                    <input type="text" name="shop_code" id="formShopCode" required class="px-4 block w-full rounded-xl border border-gray-200 bg-white text-gray-800 text-[14px] py-3 outline-none uppercase font-semibold tracking-wide" placeholder="BDC...">
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Section 2: Camera -->
-                    <div class="bg-slatebg border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
-                        <div class="border-b border-slatedivider pb-3 mb-4">
-                            <h3 class="text-[17px] font-bold text-corplight flex items-center">
-                                <span class="bg-slatecard shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2.5 font-bold">à§¨</span>
+                    <div class="bg-gray-50 border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm">
+                        <div class="border-b border-gray-200 pb-3 mb-4">
+                            <h3 class="text-[17px] font-bold text-gray-800 flex items-center">
+                                <span class="bg-white shadow-sm text-colgate rounded-full w-7 h-7 flex items-center justify-center text-sm mr-2.5 font-bold">à§¨</span>
                                 à¦›à¦¬à¦¿ à¦¸à§à¦•à§à¦¯à¦¾à¦¨
                             </h3>
                         </div>
@@ -352,8 +349,8 @@
                         <div class="input-group relative">
                             <input type="file" id="manualFileInput" accept="image/*" class="hidden">
                             <div id="cameraTriggerContainer" class="flex flex-col items-center">
-                                <button type="button" id="openCameraBtn" class="flex flex-row items-center justify-center w-full py-4 border-[1.5px] border-dashed border-red-300 rounded-2xl bg-slatecard hover:bg-slatebg transition-colors group">
-                                    <div class="bg-slatebg p-2 rounded-full mr-3 shadow-sm border border-red-100">
+                                <button type="button" id="openCameraBtn" class="flex flex-row items-center justify-center w-full py-4 border-[1.5px] border-dashed border-red-300 rounded-2xl bg-white hover:bg-red-50 transition-colors group">
+                                    <div class="bg-red-50 p-2 rounded-full mr-3 shadow-sm border border-red-100">
                                         <i data-lucide="scan" class="h-[22px] w-[22px] text-colgate"></i>
                                     </div>
                                     <div class="flex flex-col items-start ml-3">
@@ -361,7 +358,7 @@
                                         <span class="text-[11px] text-red-400 font-medium">à¦›à¦¬à¦¿ à¦¤à§à¦²à¦¤à§‡ à¦à¦–à¦¾à¦¨à§‡ à¦•à§à¦²à¦¿à¦• à¦•à¦°à§à¦¨</span>
                                     </div>
                                 </button>
-                                <button type="button" id="manualUploadBtn" class="hidden mt-3 text-[13px] font-medium text-corpmuted hover:text-colgate transition-colors flex items-center justify-center">
+                                <button type="button" id="manualUploadBtn" class="hidden mt-3 text-[13px] font-medium text-gray-500 hover:text-colgate transition-colors flex items-center justify-center">
                                     <i data-lucide="cloud-upload" class="h-4 w-4 mr-1.5"></i> à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦†à¦ªà¦²à§‹à¦¡
                                 </button>
                             </div>
@@ -376,8 +373,8 @@
                                         </div>
                                     </div>
                                     <div class="absolute inset-x-0 bottom-6 flex justify-center items-center z-20 px-6">
-                                        <button type="button" id="captureBtn" class="bg-slatecard rounded-full p-1 animate-subtle-pulse shadow-lg mx-auto">
-                                            <div class="w-12 h-12 rounded-full border-[3px] border-colgate flex items-center justify-center bg-slatecard">
+                                        <button type="button" id="captureBtn" class="bg-white rounded-full p-1 animate-subtle-pulse shadow-lg mx-auto">
+                                            <div class="w-12 h-12 rounded-full border-[3px] border-colgate flex items-center justify-center bg-white">
                                                 <div class="w-9 h-9 rounded-full bg-colgate flex items-center justify-center text-white"><i data-lucide="camera" class="h-4 w-4"></i></div>
                                             </div>
                                         </button>
@@ -386,13 +383,13 @@
                                         </button>
                                     </div>
                                 </div>
-                                <button type="button" id="closeCameraBtn" class="mt-4 text-[13px] font-semibold text-corpmuted w-full text-center hover:text-red-500">à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾ à¦¬à¦¨à§à¦§ à¦•à¦°à§à¦¨</button>
+                                <button type="button" id="closeCameraBtn" class="mt-4 text-[13px] font-semibold text-gray-500 w-full text-center hover:text-red-500">à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾ à¦¬à¦¨à§à¦§ à¦•à¦°à§à¦¨</button>
                             </div>
 
                             <div id="previewContainer" class="hidden mt-4 relative animate-fade-in">
                                 <div class="relative rounded-2xl overflow-hidden border-2 border-colgate shadow-md w-full bg-black mb-4">
                                     <img id="capturedImagePreview" class="w-full h-auto block" alt="Preview">
-                                    <button type="button" id="retakeBtn" class="absolute top-3 right-3 bg-slatecard/90 text-colgate rounded-full p-2.5 shadow-lg">
+                                    <button type="button" id="retakeBtn" class="absolute top-3 right-3 bg-white/90 text-colgate rounded-full p-2.5 shadow-lg">
                                         <i data-lucide="refresh-cw" class="h-5 w-5"></i>
                                     </button>
                                 </div>
@@ -414,8 +411,8 @@
                     <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 mb-4 border border-green-100">
                         <i data-lucide="check-circle-2" class="h-8 w-8 text-green-500"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2">à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦œà¦®à¦¾ à¦¦à§‡à¦“à¦¯à¦¼à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡!</h3>
-                    <button onclick="resetForm()" class="bg-slatebg text-corplight border border-slatedivider font-semibold py-2.5 px-6 rounded-full mt-4 text-[14px]">à¦†à¦°à§‡à¦•à¦Ÿà¦¿ à¦«à¦°à§à¦® à¦ªà§‚à¦°à¦£ à¦•à¦°à§à¦¨</button>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦œà¦®à¦¾ à¦¦à§‡à¦“à¦¯à¦¼à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡!</h3>
+                    <button onclick="resetForm()" class="bg-gray-50 text-gray-700 border border-gray-200 font-semibold py-2.5 px-6 rounded-full mt-4 text-[14px]">à¦†à¦°à§‡à¦•à¦Ÿà¦¿ à¦«à¦°à§à¦® à¦ªà§‚à¦°à¦£ à¦•à¦°à§à¦¨</button>
                 </div>
             </div>
 
@@ -423,62 +420,62 @@
             <div id="myDayView" class="hidden animate-fade-in">
                 <div class="mb-3 text-left">
                     <div class="flex justify-between items-center mb-2.5 gap-2">
-                        <h3 class="font-bold text-corplight text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
+                        <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
                             <i data-lucide="map" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> à¦†à¦œà¦•à§‡à¦° PJP
                         </h3>
-                        <div class="flex bg-slatebg p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-slatedivider">
+                        <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="myday_outlet_type" value="ALL" class="peer hidden" checked>
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">All</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">All</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="myday_outlet_type" value="DCC" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="myday_outlet_type" value="ROB" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="myday_outlet_type" value="SMT" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
                             </label>
                         </div>
                     </div>
 
-                    <div class="bg-slatebg border border-gray-100 p-2 rounded-xl shadow-sm mb-3">
+                    <div class="bg-gray-50 border border-gray-100 p-2 rounded-xl shadow-sm mb-3">
                         <div class="grid grid-cols-3 gap-2">
-                            <select id="myDayTownSelect" class="w-full rounded-lg border border-slatedivider bg-slatecard text-[11px] py-2 px-2 font-bold text-corplight outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
-                            <select id="myDayVisitDaySelect" class="w-full rounded-lg border border-slatedivider bg-slatebg text-[11px] py-2 px-2 font-bold text-corpmuted outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
-                            <select id="myDayRouteSelect" class="w-full rounded-lg border border-slatedivider bg-slatebg text-[11px] py-2 px-2 font-bold text-corpmuted outline-none" disabled><option value="">Route (à¦°à§à¦Ÿ)</option></select>
+                            <select id="myDayTownSelect" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
+                            <select id="myDayVisitDaySelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
+                            <select id="myDayRouteSelect" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Route (à¦°à§à¦Ÿ)</option></select>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slatecard border border-slatedivider p-2.5 rounded-xl shadow-sm mb-2.5">
+                <div class="bg-white border border-gray-200 p-2.5 rounded-xl shadow-sm mb-2.5">
                     <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-slatebg p-1.5 text-center flex flex-col rounded-lg">
-                            <span class="text-[9px] text-corpmuted font-bold uppercase">Total Outlet</span>
-                            <span id="pjpTotalCount" class="text-[14px] font-extrabold text-corplight">0</span>
+                        <div class="bg-gray-50 p-1.5 text-center flex flex-col rounded-lg">
+                            <span class="text-[9px] text-gray-500 font-bold uppercase">Total Outlet</span>
+                            <span id="pjpTotalCount" class="text-[14px] font-extrabold text-gray-800">0</span>
                         </div>
                         <div class="bg-green-50 p-1.5 text-center flex flex-col rounded-lg">
-                            <span class="text-[9px] text-corpgreen font-bold uppercase">Uploaded</span>
+                            <span class="text-[9px] text-green-600 font-bold uppercase">Uploaded</span>
                             <span id="pjpUploadedCount" class="text-[14px] font-extrabold text-green-700">0</span>
                         </div>
-                        <div class="bg-slatebg p-1.5 text-center flex flex-col rounded-lg">
+                        <div class="bg-red-50 p-1.5 text-center flex flex-col rounded-lg">
                             <span class="text-[9px] text-red-500 font-bold uppercase">Remaining</span>
-                            <span id="pjpRemainingCount" class="text-[14px] font-extrabold text-corpred">0</span>
+                            <span id="pjpRemainingCount" class="text-[14px] font-extrabold text-red-600">0</span>
                         </div>
                     </div>
                 </div>
 
                 <div id="myDayLoader" class="hidden flex flex-col items-center justify-center py-6"><div class="loader mb-3"></div></div>
-                <div id="myDayPjpContainer" class="hidden bg-slatecard border border-slatedivider rounded-xl p-3 shadow-sm">
+                <div id="myDayPjpContainer" class="hidden bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
                     <div class="border-b border-gray-100 pb-2 mb-2.5">
-                        <h4 class="font-bold text-[13px] text-corplight mb-2 truncate">à¦°à§à¦Ÿ: <span id="myDaySelectedRouteLabel" class="text-colgate">All</span></h4>
+                        <h4 class="font-bold text-[13px] text-gray-800 mb-2 truncate">à¦°à§à¦Ÿ: <span id="myDaySelectedRouteLabel" class="text-colgate">All</span></h4>
                         <div class="flex gap-2">
                             <div class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Display: <span id="myDayDisplayCount">0</span></div>
-                            <div class="bg-slatebg text-corpmuted px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Regular: <span id="myDayRegularCount">0</span></div>
+                            <div class="bg-gray-50 text-gray-600 px-2 py-1 rounded-md text-[10px] font-bold flex-1 text-center">Regular: <span id="myDayRegularCount">0</span></div>
                         </div>
                     </div>
                     <div id="myDayPjpList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar pb-10"></div>
@@ -489,47 +486,47 @@
             <div id="reportView" class="hidden animate-fade-in">
                 <div class="mb-3 text-left">
                     <div class="flex justify-between items-center mb-2.5 gap-2">
-                        <h3 class="font-bold text-corplight text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
+                        <h3 class="font-bold text-gray-800 text-[13px] sm:text-[14px] flex items-center whitespace-nowrap">
                             <i data-lucide="bar-chart-2" class="h-[16px] w-[16px] mr-1.5 text-colgate"></i> à¦†à¦‰à¦Ÿà¦²à§‡à¦Ÿ à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ
                         </h3>
-                        <div class="flex bg-slatebg p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-slatedivider">
+                        <div class="flex bg-gray-100 p-1 rounded-xl w-[200px] sm:w-[240px] shrink-0 shadow-inner border border-gray-200">
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="report_outlet_type" value="ALL" class="peer hidden" checked>
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">All</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">All</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="report_outlet_type" value="DCC" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">DCC</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="report_outlet_type" value="ROB" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">ROB</div>
                             </label>
                             <label class="flex-1 text-center cursor-pointer m-0">
                                 <input type="radio" name="report_outlet_type" value="SMT" class="peer hidden">
-                                <div class="py-1.5 text-[12px] font-bold text-corpmuted rounded-lg peer-checked:bg-slatecard peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
+                                <div class="py-1.5 text-[12px] font-bold text-gray-500 rounded-lg peer-checked:bg-white peer-checked:text-colgate peer-checked:shadow-sm">SMT</div>
                             </label>
                         </div>
                     </div>
 
                     <div id="onePagerContainer" class="animate-fade-in pb-1">
-                        <div class="bg-slatebg border border-gray-100 p-2.5 rounded-xl shadow-sm mb-3">
+                        <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl shadow-sm mb-3">
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <select id="onePagerTown" class="w-full rounded-lg border border-slatedivider bg-slatecard text-[11px] py-2 px-2 font-bold text-corplight outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
-                                <input type="date" id="onePagerDate" class="w-full rounded-lg border border-slatedivider bg-slatecard text-[11px] py-2 px-2 font-bold text-corplight outline-none">
+                                <select id="onePagerTown" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none" disabled><option value="">Town (à¦Ÿà¦¾à¦‰à¦¨)</option></select>
+                                <input type="date" id="onePagerDate" class="w-full rounded-lg border border-gray-200 bg-white text-[11px] py-2 px-2 font-bold text-gray-700 outline-none">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <select id="onePagerDay" class="w-full rounded-lg border border-slatedivider bg-slatebg text-[11px] py-2 px-2 font-bold text-corpmuted outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
-                                <select id="onePagerCluster" class="w-full rounded-lg border border-slatedivider bg-slatebg text-[11px] py-2 px-2 font-bold text-corpmuted outline-none" disabled><option value="">Cluster</option></select>
+                                <select id="onePagerDay" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Day (à¦¬à¦¾à¦°)</option></select>
+                                <select id="onePagerCluster" class="w-full rounded-lg border border-gray-200 bg-gray-100 text-[11px] py-2 px-2 font-bold text-gray-500 outline-none" disabled><option value="">Cluster</option></select>
                             </div>
                         </div>
 
-                        <div id="snapshotArea" class="bg-slatecard border border-slatedivider rounded-2xl overflow-hidden shadow-sm">
+                        <div id="snapshotArea" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                             <div class="bg-gradient-to-r from-red-600 to-red-500 p-4">
                                 <h3 id="snapshotHeaderMerch" class="text-white text-[16px] font-extrabold">Merchandiser Name</h3>
                                 <p id="snapshotHeaderDetails" class="text-red-100 text-[12px] mt-1 font-medium">All Data</p>
                             </div>
-                            <div id="onePagerStatsContent" class="bg-slatecard p-4"></div>
+                            <div id="onePagerStatsContent" class="bg-white p-4"></div>
                         </div>
 
                         <div class="mt-4">
@@ -542,8 +539,8 @@
             </div>
         </div>
 
-        <div class="pb-6 pt-2 flex flex-col items-center bg-slatecard sm:rounded-b-2xl">
-            <p class="text-[11px] text-center text-corpmuted font-medium">Colgate Smile Corner Program &copy; 2026</p>
+        <div class="pb-6 pt-2 flex flex-col items-center bg-white sm:rounded-b-2xl">
+            <p class="text-[11px] text-center text-gray-400 font-medium">Colgate Smile Corner Program &copy; 2026</p>
         </div>
     </div>
 
@@ -601,7 +598,7 @@
                 if (res.ok) {
                     const settings = await res.json();
                     if (settings.maintenance_mode === true) {
-                        document.body.innerHTML = `<div class="flex flex-col items-center justify-center h-screen bg-slatecard text-center p-6"><h2 class="text-xl font-bold text-corplight mb-2">System Maintenance</h2><p class="text-corpmuted text-[13px]">à¦…à§à¦¯à¦¾à¦ªà¦Ÿà¦¿à¦¤à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨à§‡ à¦†à¦ªà¦¡à§‡à¦Ÿà§‡à¦° à¦•à¦¾à¦œ à¦šà¦²à¦›à§‡à¥¤ à¦¦à¦¯à¦¼à¦¾ à¦•à¦°à§‡ à¦•à¦¿à¦›à§à¦•à§à¦·à¦£ à¦ªà¦° à¦†à¦¬à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à§à¦¨à¥¤</p></div>`;
+                        document.body.innerHTML = `<div class="flex flex-col items-center justify-center h-screen bg-white text-center p-6"><h2 class="text-xl font-bold text-gray-800 mb-2">System Maintenance</h2><p class="text-gray-500 text-[13px]">à¦…à§à¦¯à¦¾à¦ªà¦Ÿà¦¿à¦¤à§‡ à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨à§‡ à¦†à¦ªà¦¡à§‡à¦Ÿà§‡à¦° à¦•à¦¾à¦œ à¦šà¦²à¦›à§‡à¥¤ à¦¦à¦¯à¦¼à¦¾ à¦•à¦°à§‡ à¦•à¦¿à¦›à§à¦•à§à¦·à¦£ à¦ªà¦° à¦†à¦¬à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à§à¦¨à¥¤</p></div>`;
                         return;
                     }
                     if (settings.global_notice && !sessionStorage.getItem('notice_seen')) {
@@ -858,10 +855,10 @@
                 if (isCompleted) completedCount++;
                 if ((out.status || "").toLowerCase().includes('regular')) regularCount++; else displayCount++;
 
-                html += `<div class="flex items-center justify-between p-3 rounded-lg border ${isCompleted ? 'border-green-400 bg-green-50/60' : 'border-red-200 bg-slatecard'} mb-2">
+                html += `<div class="flex items-center justify-between p-3 rounded-lg border ${isCompleted ? 'border-green-400 bg-green-50/60' : 'border-red-200 bg-white'} mb-2">
                     <div>
-                        <div class="font-bold text-[13px] text-corplight">${out.name}</div>
-                        <div class="text-[11px] text-corpmuted">#${outCode} â€¢ ${out.slab || 'Regular'}</div>
+                        <div class="font-bold text-[13px] text-gray-800">${out.name}</div>
+                        <div class="text-[11px] text-gray-500">#${outCode} â€¢ ${out.slab || 'Regular'}</div>
                     </div>
                     <span class="px-2 py-1 rounded text-[10px] font-bold ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-colgate text-white'}">${isCompleted ? 'Uploaded' : 'Pending'}</span>
                 </div>`;
@@ -873,7 +870,7 @@
             document.getElementById('myDayDisplayCount').textContent = displayCount;
             document.getElementById('myDayRegularCount').textContent = regularCount;
             document.getElementById('myDayPjpContainer').classList.remove('hidden');
-            document.getElementById('myDayPjpList').innerHTML = html || '<div class="text-center py-4 text-xs text-corpmuted">No outlets found</div>';
+            document.getElementById('myDayPjpList').innerHTML = html || '<div class="text-center py-4 text-xs text-gray-400">No outlets found</div>';
         }
 
         // One Pager Report
@@ -899,11 +896,11 @@
             const pct = total > 0 ? Math.round((visited / total) * 100) : 0;
             document.getElementById('snapshotHeaderMerch').textContent = localStorage.getItem('colgate_app_merch_name') || 'Sales Team';
             document.getElementById('onePagerStatsContent').innerHTML = `
-                <div class="grid grid-cols-4 gap-2 text-center bg-slatebg p-3 rounded-xl border">
-                    <div><div class="text-[10px] text-corpmuted font-bold uppercase">Count</div><div class="text-lg font-black">${total}</div></div>
-                    <div><div class="text-[10px] text-corpmuted font-bold uppercase">Visited</div><div class="text-lg font-black text-corpgreen">${visited}</div></div>
-                    <div><div class="text-[10px] text-corpmuted font-bold uppercase">Visit %</div><div class="text-lg font-black text-blue-600">${pct}%</div></div>
-                    <div><div class="text-[10px] text-corpmuted font-bold uppercase">Remain</div><div class="text-lg font-black text-corpred">${total - visited}</div></div>
+                <div class="grid grid-cols-4 gap-2 text-center bg-gray-50 p-3 rounded-xl border">
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Count</div><div class="text-lg font-black">${total}</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Visited</div><div class="text-lg font-black text-green-600">${visited}</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Visit %</div><div class="text-lg font-black text-blue-600">${pct}%</div></div>
+                    <div><div class="text-[10px] text-gray-400 font-bold uppercase">Remain</div><div class="text-lg font-black text-red-600">${total - visited}</div></div>
                 </div>`;
         }
 
@@ -912,8 +909,8 @@
         const viewIds = ['formView', 'myDayView', 'reportView'];
         tabBtns.forEach((tabId, idx) => {
             document.getElementById(tabId)?.addEventListener('click', () => {
-                tabBtns.forEach(t => document.getElementById(t).classList.remove('bg-slatecard', 'shadow-sm', 'text-colgate'));
-                document.getElementById(tabId).classList.add('bg-slatecard', 'shadow-sm', 'text-colgate');
+                tabBtns.forEach(t => document.getElementById(t).classList.remove('bg-white', 'shadow-sm', 'text-colgate'));
+                document.getElementById(tabId).classList.add('bg-white', 'shadow-sm', 'text-colgate');
                 viewIds.forEach(v => document.getElementById(v).classList.add('hidden'));
                 document.getElementById(viewIds[idx]).classList.remove('hidden');
                 if (idx === 1) renderMyDayPJP();
@@ -1475,9 +1472,9 @@
 
 
 <!-- DEEP HUMAN-CRAFTED UI SYSTEM: OCEAN-SLATE & MOBILE FLUSH EDITION -->
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style id="deepCraftedUiSystem">
   :root {
@@ -1584,13 +1581,13 @@
   }
 
   /* 6. Convert Light Red Badges / Step Numbers / Highlights into Calm Ice-Teal */
-  .bg-slatebg, .bg-red-100, .bg-rose-50, .bg-rose-100,
-  [class*="bg-slatebg"], [class*="bg-red-100"] {
+  .bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100,
+  [class*="bg-red-50"], [class*="bg-red-100"] {
     background-color: var(--ocean-50) !important;
     border-color: #cde2ec !important;
     color: var(--ocean-800) !important;
   }
-  .text-corpred, .text-red-700, .text-red-500, .text-rose-600, .text-rose-500 {
+  .text-red-600, .text-red-700, .text-red-500, .text-rose-600, .text-rose-500 {
     color: var(--ocean-800) !important;
   }
   .border-red-500, .border-red-600, .border-red-400, .border-red-300, .border-red-200, .border-red-100 {
@@ -1598,7 +1595,7 @@
   }
 
   /* 7. Clean Architectural Cards & Form Controls */
-  .bg-slatecard.shadow-xl, .bg-slatecard.shadow-2xl, .bg-slatecard.shadow-lg, .bg-slatecard.shadow-md {
+  .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white.shadow-lg, .bg-white.shadow-md {
     background-color: var(--card-bg) !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
@@ -1775,9 +1772,9 @@
 </script>
 
 <!-- COLGATE SAFE UI & SUPABASE LISTENER -->
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style id="colgateCleanUi">
   :root {
@@ -1831,7 +1828,7 @@
   }
 
   /* 4. Form Cards & Containers: Crisp white with refined 10px corners */
-  .bg-slatecard {
+  .bg-white {
     background-color: var(--bg-surface) !important;
   }
   .rounded-3xl, .rounded-2xl, .rounded-xl {
@@ -1871,12 +1868,12 @@
   }
 
   /* 7. Step Number Badges (à§§, à§¨) & Soft Tints: Harmonious soft slate/coral instead of clashing blue */
-  .bg-slatebg, .bg-red-100 {
+  .bg-red-50, .bg-red-100 {
     background-color: #f1f5f9 !important;
     color: var(--slate-950) !important;
     border-color: #e2e8f0 !important;
   }
-  .text-corpred, .text-red-500, .text-red-700 {
+  .text-red-600, .text-red-500, .text-red-700 {
     color: var(--brand-coral) !important;
   }
 
@@ -2227,14 +2224,14 @@
     transition: all 0.2s ease !important;
   }
   /* Active Tab */
-  #tabForm.bg-slatecard, #tabMyDay.bg-slatecard, #tabReport.bg-slatecard,
-  #tabForm.text-corpred, #tabMyDay.text-corpred, #tabReport.text-corpred {
+  #tabForm.bg-white, #tabMyDay.bg-white, #tabReport.bg-white,
+  #tabForm.text-red-600, #tabMyDay.text-red-600, #tabReport.text-red-600 {
     background: #ffffff !important;
     color: var(--slate-navy) !important;
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
   }
-  #tabForm.text-corpred svg, #tabMyDay.text-corpred svg, #tabReport.text-corpred svg,
-  #tabForm.text-corpred i, #tabMyDay.text-corpred i, #tabReport.text-corpred i {
+  #tabForm.text-red-600 svg, #tabMyDay.text-red-600 svg, #tabReport.text-red-600 svg,
+  #tabForm.text-red-600 i, #tabMyDay.text-red-600 i, #tabReport.text-red-600 i {
     color: var(--colgate-ruby) !important;
   }
 
@@ -2260,9 +2257,9 @@
   }
 
   /* Soften Step Number Circles (à§§, à§¨) */
-  .bg-slatebg.text-corpred,
-  span.rounded-full.bg-slatebg,
-  div.rounded-full.bg-slatebg {
+  .bg-red-50.text-red-600,
+  span.rounded-full.bg-red-50,
+  div.rounded-full.bg-red-50 {
     background: var(--colgate-ruby-soft) !important;
     color: var(--colgate-ruby) !important;
     border: 1px solid #fecdd3 !important;
@@ -2662,9 +2659,9 @@
 
 
 <!-- GLOBAL ENTERPRISE ADMIN PANEL UI (MINIMAL, SHARP CORNERS, SIDEBAR + CHARTS) -->
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style id="enterpriseAdminStyles">
   :root {
@@ -2741,24 +2738,24 @@
   #adminModal .bg-green-50,
   #adminModal .bg-blue-50,
   #adminModal .bg-orange-50,
-  #adminModal .bg-slatebg,
+  #adminModal .bg-red-50,
   #adminModal .bg-purple-50,
   #adminModal .bg-yellow-50,
   #adminModal .bg-indigo-50,
-  #adminModal .bg-slatebg {
+  #adminModal .bg-gray-50 {
     background: var(--adm-surface) !important;
     border: 1px solid var(--adm-border) !important;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
   }
 
   /* Unify all KPI numbers & labels into Monochrome Slate (No rainbow text) */
-  #adminModal .text-corpgreen,
+  #adminModal .text-green-600,
   #adminModal .text-green-700,
   #adminModal .text-blue-600,
   #adminModal .text-blue-700,
   #adminModal .text-orange-600,
   #adminModal .text-orange-700,
-  #adminModal .text-corpred,
+  #adminModal .text-red-600,
   #adminModal .text-red-700 {
     color: var(--adm-text) !important;
   }
@@ -3100,8 +3097,6 @@
 <!-- ADMIN_HIJACK_END -->
 </body>
 </html>
-
-
 
 
 
