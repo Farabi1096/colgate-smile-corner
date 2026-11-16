@@ -3178,6 +3178,63 @@
   });
 </script>
 <!-- END BULLETPROOF MODAL FIX -->
+<!-- MERCH LOGIN HIJACK -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const originalOpenModal = window.openModal;
+    if(typeof originalOpenModal === 'function') {
+        window.openModal = function(role) {
+            // Let the original modal show up first
+            originalOpenModal(role);
+            
+            // If they clicked Merchandiser, hijack the UI immediately!
+            if(role === 'Merchandiser') {
+                const modal = document.getElementById("loginModal");
+                if(modal) {
+                    const inner = modal.querySelector('div.bg-white');
+                    if(inner) {
+                        inner.innerHTML = 
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="user" class="w-5 h-5 text-red-600"></i>
+                                    <h3 class="font-bold text-gray-800">Merchandiser Login</h3>
+                                </div>
+                                <button onclick="closeModal()" class="p-1.5 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4 font-medium text-center">আপনার ফোন নম্বর এবং পিন দিন</p>
+                            <div class="space-y-4">
+                                <input type="tel" id="merchPhone" placeholder="Phone Number (e.g. 017...)" class="w-full py-3 px-4 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 text-gray-800">
+                                <input type="password" id="merchPin" placeholder="4-Digit PIN" maxlength="4" class="w-full py-3 px-4 border border-gray-200 rounded-xl text-center text-lg tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 text-gray-800 font-bold">
+                            </div>
+                            <button onclick="handleSecureMerchLogin()" class="w-full mt-6 bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-red-700">লগইন করুন</button>
+                        ;
+                        if(typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                }
+            }
+        };
+    }
+
+    // Our new secure login function
+    window.handleSecureMerchLogin = function() {
+        const phone = document.getElementById("merchPhone").value;
+        const pin = document.getElementById("merchPin").value;
+        
+        if(phone === "01700000000" && pin === "1234") {
+            currentUser = { role: "Merchandiser", name: "Test Merch (Local)", phone: phone };
+            closeModal();
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("mainApp").classList.remove("hidden");
+            if(typeof updateProfileHeader === "function") updateProfileHeader();
+            if(typeof showCustomAlert === "function") showCustomAlert("লগইন সফল হয়েছে!"); // Login successful!
+        } else {
+            alert("Invalid Phone or PIN! Try Phone: 01700000000 and PIN: 1234");
+        }
+    };
+  });
+</script>
 </body>
 </html>
 
